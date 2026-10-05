@@ -127,7 +127,7 @@
       H.torso.rotation.z+=(a.giroCarrera||0)*.45*peso;
     }
     const suelas=new WeakMap(),verticeSuela=new THREE.Vector3();
-    function apoyarBotas(m){
+    function apoyarBotas(m,contacto=false){
       if(m.modeloAdreida!=='scenario')return;const mesh=m.mallas[0],g=mesh.geometry;
       let indices=suelas.get(g);
       if(!indices){
@@ -144,9 +144,9 @@
       }
       m.H.raiz.updateMatrixWorld(true);let minimo=Infinity;
       for(const i of indices)minimo=Math.min(minimo,mesh.getVertexPosition(i,verticeSuela).y);
-      // Sólo corrige la penetración al mezclar caminar y correr; conserva los
-      // momentos con ambos pies en el aire que pertenecen al clip de carrera.
-      if(minimo<.008)m.H.cuerpo.position.y+=.008-minimo;
+      // Al caminar siempre hay una suela apoyada, incluso al cambiar de botas.
+      // En la carrera sólo corrige penetración: conserva los cuadros de vuelo del clip.
+      if(minimo<.008||contacto)m.H.cuerpo.position.y+=.008-minimo;
     }
     function marcha(m,a){
       const H=m.H,amp=suave(Math.max(0,Math.min(1,a.paso??1))/.24),run=correr(a.paso),fase=a.fase||0;
@@ -359,6 +359,9 @@
     }
     function resolver(m,a){
       const H=m.H,k=a.k||0,t=a.t||0;
+      // La forma de la suela cambia el apoyo, pero no la actuación del clip.
+      const apoyo=m.mallas[0].geometry.userData.apoyoCarrera;
+      if(a.anim==='andar'&&apoyo){const f=(((a.fase||0)/TAU)%1+1)%1*apoyo.length,i=Math.floor(f),u=f-i;H.cuerpo.position.y-=(apoyo[i]*(1-u)+apoyo[(i+1)%apoyo.length]*u)*correr(a.paso);}
       // Al desplazarse lleva el hacha con la derecha; vuelve a dos manos en combate.
       // El hachazo cargado toma impulso con cadera y torso, hundiendo las rodillas antes del barrido.
       if(a.potencia>0&&['tajoA','revesA','estocadaA'].includes(a.anim)){
@@ -369,7 +372,7 @@
       }
       const clip=clipCombate(a),agarre=clip?agarreCombate(a,clip):agarreAdreida(a);agarre.soltarIzquierda??=0;agarre.brazoLibre??=[0,0,.18,-.4,0,0];alinearFilo(agarre,a);agarre.poloDerecho??=[-.7,-.5,-.35];mezclar(m,a,agarre);
       if(clip||['recogerLlave','mirarLlave'].includes(a.anim))apoyarBotas(m);
-      if(a.anim==='andar'&&(a.mezclar!==true||memoria(m).tiempo>0)){apoyarBotas(m);memoria(m).pos.copy(H.cuerpo.position);}
+      if(a.anim==='andar'&&(a.mezclar!==true||memoria(m).tiempo>0)){apoyarBotas(m,correr(a.paso)===0);memoria(m).pos.copy(H.cuerpo.position);}
       {
         const tela=m.tela||(m.tela={t:t,aperturas:Array(7).fill(0)}),dt=Math.max(0,Math.min(.05,t-tela.t));tela.t=t;
         for(let i=0;i<7;i++){

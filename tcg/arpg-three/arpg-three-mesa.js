@@ -27,7 +27,7 @@
   const COOP=q.get('coop')==='1',DOS_MANDOS=q.get('mandos')==='2',ABIERTO=q.get('mundo')==='abierto';
   const FACTOR_COOP=COOP?2:1;
   const estilo=window.CAOZ_ARPG_ESTILO.crear();
-  let finalMago=null,cinematicaTroll=null,llaveEntradaTroll=null,casaGoblin=null,casaVisitable=null,llaveDelRecaudador=false;
+  let finalMago=null,cinematicaTroll=null,llaveEntradaTroll=null,casaGoblin=null,casaVisitable=null,llaveDelRecaudador=false,alphaTerminada=false;
   window.CAOZ_ARPG_IA.configurar(q.get('ia')==='clasica'?'clasica':'yuka');
   const laboratorio=q.get('inspector')==='1'?{detenido:false,antes:null,despues:null}:null;
   const estado=t=>{$('estado').textContent=t;},aviso=t=>{estado(t);$('info').textContent=t;$('diagnostico').open=true;};
@@ -56,7 +56,7 @@
   const gl=renderer.getContext(),hdr=renderer.extensions.has('EXT_color_buffer_half_float')||renderer.extensions.has('EXT_color_buffer_float'),muestras=Math.min(CAPTURA?4:2,gl.getParameter(gl.MAX_SAMPLES)||0);
   const depura=gl.getExtension('WEBGL_debug_renderer_info'),gpu=String(depura?gl.getParameter(depura.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)).slice(0,60);
   // Bruma azul al fondo: el centro de combate queda despejado. No requiere otra pasada.
-  const escena=new THREE.Scene();escena.matrixWorldAutoUpdate=false;escena.background=new THREE.Color(0x233442);escena.fog=new THREE.Fog(0x233442,13,56);
+  const escena=new THREE.Scene();escena.matrixWorldAutoUpdate=false;escena.background=new THREE.Color(0x233442);escena.fog=new THREE.Fog(0x233442,10,56);
   // Entorno de los reflejos: noche azul arriba y el resplandor naranja del incendio en el horizonte.
   {const e=new THREE.Scene();e.background=new THREE.Color(0x05040a);const caja=(w,h,color,f,pos)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(color).multiplyScalar(f),side:THREE.DoubleSide}));m.position.set(...pos);m.lookAt(0,0,0);e.add(m);};
     caja(8,8,0x6f86c8,.9,[0,9,0]);caja(14,2.5,0xff7a30,1.6,[0,1,-9]);caja(10,2,0xff8a40,1.1,[9,1,3]);caja(10,2,0x2a3050,.8,[-9,1,2]);
@@ -250,17 +250,8 @@
       for(const y of [.65,1.3,1.95,2.6])pieza(ancho,.025,.025,0,y,R-.01,MAT.oscuro);
     }
   }
-  // Bosque exterior de pocas mallas, sin luces ni reflejos en cada árbol.
-  const follaje=std(0x284632),tronco=std(0x594331),rocaExterior=std(0x55595b);
-  for(let i=0;i<(ABIERTO?150:32);i++){
-    const a=i*2.399963,r=32+(ABIERTO?(i*19.73)%72:(i*7.1)%35);
-    if(CALLES.some(c=>Math.abs(difAng(a,c))<.12))continue;
-    const x=Math.cos(a)*r,z=Math.sin(a)*r,h=3+(i%5)*.55;
-    poner(new THREE.CylinderGeometry(.18,.32,h,6),tronco,x,h/2,z);
-    poner(new THREE.ConeGeometry(1.6,h*.85,7),follaje,x,h*.92,z);
-    poner(new THREE.ConeGeometry(1.25,h*.7,7),follaje,x,h*1.2,z);
-    if(ABIERTO)obstaculos.push({x,z,r:.4});
-  }
+  // Materiales compartidos del campamento y del borde de la región abierta.
+  const tronco=std(0x594331),rocaExterior=std(0x55595b);
   if(ABIERTO){
     for(const a of CALLES){const n=calle(a);const camino=poner(new THREE.BoxGeometry(5,.03,65),std(0x625845),n.x*52,-.008,n.z*52,Math.PI/2-a);camino.castShadow=false;}
     for(const [x,z] of [[0,-55],[52,30],[-65,38]]){poner(new THREE.ConeGeometry(2,2.5,4),std(0x66513b),x+7,1.2,z,Math.PI/4);poner(new THREE.CylinderGeometry(.07,.1,4,6),tronco,x,2,z);poner(new THREE.BoxGeometry(1.1,.7,.04),std(0x8b463d),x+.55,3.5,z);obstaculos.push({x:x+7,z,r:1.8});}
@@ -268,6 +259,7 @@
     for(let i=0;i<96;i++){const a=i*TAU/96;poner(new THREE.CylinderGeometry(3.7,4.2,7+(i%3),6),rocaExterior,Math.cos(a)*115,3,Math.sin(a)*115);}
   }
   fundirMundo();
+  window.CAOZ_ARPG_BOSQUE.fabrica(THREE,{grupo:mundo,radioMuralla:R,calles:CALLES,abierto:ABIERTO,reducido,obstaculos});
   // Las casas se funden aparte (su módulo conserva el color por vértice y los atributos de las ventanas).
   const casasFundidas=CASAS.fundir(barrio,{ocultables:true});mundo.add(casasFundidas);
   const iluminarFaroles=CASAS.lucesFaroles(barrio,escena,casasFundidas);
@@ -1314,7 +1306,7 @@
   // DualSense y otros mandos que el navegador presenta con distribución estándar.
   let mando={indice:null,botones:[],activo:false,foco:true,listo:false,dir:new V3(0,0,-1)};
   const pausa={activa:false,boton:false,confirmar:false};
-  function ponerPausa(v){if(rog.abierto||v===pausa.activa)return;pausa.activa=v;sincronizarTiempo();clima.pausar(v||document.hidden||!partidaActiva);
+  function ponerPausa(v){if(alphaTerminada||rog.abierto||v===pausa.activa)return;pausa.activa=v;sincronizarTiempo();clima.pausar(v||document.hidden||!partidaActiva);
     ent.atacando=ent.pendiente=false;ctl.atacar=false;ctl.mov.set(0,0,0);teclas.clear();mando.listo=false;mando.activo=false;
     for(const h of jugadores){h.entrada.atacando=h.entrada.pendiente=false;h.control.atacar=false;h.mando.listo=h.mando.activo=false;if(h.estado==='carga'){h.carga=0;cambiar(h,'quieto');}}
     if(v){$('pausa').showModal();$('continuar').focus();}else{$('pausa').close();lienzo.focus();clima.desbloquearAudio();}}
@@ -1611,7 +1603,7 @@
   esc.addEventListener('wheel',e=>{if(EDITOR_CINE)return;e.preventDefault();vista.dist=Math.max(.65,Math.min(1.45,vista.dist*(e.deltaY>0?1.08:.93)));},{passive:false});
   function pasoCamara(dt,dtReal=dt){const retrato=camara.aspect<.9;const vivos=jugadores.filter(h=>h.vivo),centro=new V3();for(const h of vivos)centro.add(h.pos);centro.divideScalar(vivos.length||1);const planoEntrada=cinematicaTroll?.encuadre();vista.foco.lerp(planoEntrada?.foco||(vivos.length?centro:heroe.pos),Math.min(1,dt*6));vista.temblor=Math.max(0,vista.temblor*Math.exp(-dtReal*9));
     const separacion=vivos.length>1?plano(vivos[0].pos,vivos[1].pos):0,metaD=planoEntrada?planoEntrada.distancia/Math.min(1,camara.aspect):Math.max(21*vista.dist,14+separacion*2.2/Math.min(1,camara.aspect)),D=(vista.distanciaActual+=(metaD-vista.distanciaActual)*(1-Math.exp(-dt*4))),el=.92,tr=vista.temblor,t=(vista.tiempoSacudida+=dtReal);
-    escena.fog.near=D*.62;escena.fog.far=D*2.65;
+    escena.fog.near=D*.48;escena.fog.far=D*2.5;
     camara.position.set(vista.foco.x+(Math.sin(t*43)+Math.sin(t*71)*.3)*tr*.48,vista.foco.y+Math.sin(el)*D+(Math.cos(t*49)+Math.cos(t*67)*.25)*tr*.35,vista.foco.z+Math.cos(el)*D);camara.lookAt(vista.foco.x,vista.foco.y+.8,vista.foco.z);camara.rotateZ(Math.sin(t*47)*tr*.008);
     actualizarCasasOcultas(dtReal);
     luna.position.set(heroe.pos.x-14,22,heroe.pos.z-12);luna.target.position.copy(heroe.pos);luzHeroe.position.set(heroe.pos.x,5.5+(heroe.alto||0),heroe.pos.z+2.2);}
@@ -1709,17 +1701,18 @@
     limpiar:limpiarCombateCasa,interfaz:interfazCasa,
     volver:iniciarFinalMago
   });
-  function volverNivelUno(){if(EDITOR_CINE)return;const u=new URL(location.href);u.searchParams.set('etapa','1');for(const k of ['entrada','captura','mundo','plano','momento','toma'])u.searchParams.delete(k);location.assign(u.href);}
-  finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,piso:()=>suelo.material,reducido,planoDeFase:window.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia:(t,p)=>clima.cinematica(t,p),
+  finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,puertaSalida:casaGoblin.hojaSalida,piso:()=>suelo.material,reducido,planoDeFase:window.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia:(t,p,tormenta)=>clima.cinematica(t,p,tormenta),
     impactar(p){impactoFX.agujero(p,{radio:8.4,profundidad:24,duracion:30});polvo(p,60,4);},
-    interfaz(s){const activa=s.fase!=='inactiva';mostrarEntradaTroll(activa);esc.dataset.cinematicaFase=s.fase;$('cinematicaTexto').textContent='';$('fundidoFinal').style.opacity=String(s.negro);$('fundidoFinal').hidden=!activa;},
-    volver:volverNivelUno
+    interfaz(s){const activa=s.fase!=='inactiva';alphaTerminada=s.fase==='fin';mostrarEntradaTroll(activa);esc.classList.toggle('finAlpha',alphaTerminada);esc.dataset.cinematicaFase=s.fase;$('cinematicaTexto').textContent='';
+      const fundido=$('fundidoFinal');fundido.style.opacity=String(s.negro);fundido.hidden=!activa;fundido.setAttribute('aria-hidden',String(!alphaTerminada));$('finAlphaTexto').hidden=!alphaTerminada;
+      if(alphaTerminada)clima.pausar(true);
+    }
   });
   function iniciarFinalMago(){
-    const salida=casaGoblin.estado(),puerta=new V3().fromArray(salida.puerta),umbral=new V3().fromArray(salida.umbral),normal=new V3().fromArray(salida.normal);limpiarCombateCasa();casaGoblin.cancelar();casaGoblin.abrirSalida();ol.auto=false;ol.cola=[];paron=0;
+    const salida=casaGoblin.estado(),puerta=new V3().fromArray(salida.puerta),umbral=new V3().fromArray(salida.umbral),normal=new V3().fromArray(salida.normal);limpiarCombateCasa();casaGoblin.cancelar();ol.auto=false;ol.cola=[];paron=0;
     for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;
     for(const b of [...botines])quitarBotin(b);for(const o of [...marcas])if(!o.fijo)quitarMarca(o);
-    escena.fog.near=32;escena.fog.far=170;finalMago.iniciar(jugadores,{puerta,umbral,normal});
+    escena.fog.near=14;escena.fog.far=130;finalMago.iniciar(jugadores,{puerta,umbral,normal});
   }
   function pasoFinalMago(dt,dtReal){presion.rutas=0;if(q.get('entrada')==='mago'&&q.has('plano'))dt=0;finalMago.paso(dt);ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dt);tiempo.value=reloj.t;
     const p=finalMago.estado()?.actor;if(p){luna.position.set(p[0]-14,22,p[2]-12);luna.target.position.set(...p);luzHeroe.position.set(p[0],p[1]+5.5,p[2]+2.2);}
@@ -1924,7 +1917,7 @@
     addEventListener('keydown',()=>{if(!partidaActiva)activarPartida();});
     activarPartida();}
   $('reanudarPartida').onclick=activarPartida;
-  document.addEventListener('visibilitychange',()=>{sincronizarTiempo();clima.pausar(document.hidden||!partidaActiva||pausa.activa||rog.abierto);});
+  document.addEventListener('visibilitychange',()=>{sincronizarTiempo();clima.pausar(alphaTerminada||document.hidden||!partidaActiva||pausa.activa||rog.abierto);});
   function simularPaso(dt){
     laboratorio?.antes?.(dt);
     if(paso(dt)===false)return false;
@@ -1941,8 +1934,11 @@
   }
   let antes=performance.now(),siguienteDibujo=0,fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
   function cuadro(ahora){
-    clima.pausar(EDITOR_CINE||document.hidden||!partidaActiva||pausa.activa||rog.abierto||!!laboratorio?.detenido||!!casaGoblin?.interior);
+    clima.pausar(alphaTerminada||EDITOR_CINE||document.hidden||!partidaActiva||pausa.activa||rog.abierto||!!laboratorio?.detenido||!!casaGoblin?.interior);
     if(document.hidden||!partidaActiva){sincronizarTiempo();antes=ahora;siguienteDibujo=0;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
+    // El epílogo ha terminado: el cartel HTML permanece sin mantener activa la escena 3D.
+    // El editor sí puede seguir buscando cuadros anteriores y reanudar la secuencia.
+    if(alphaTerminada&&!EDITOR_CINE){sincronizarTiempo();antes=ahora;requestAnimationFrame(cuadro);return;}
     if(!EDITOR_CINE)leerPausaMando();
     if(pausa.activa){sincronizarTiempo();antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
     const limite=laboratorio?.limite||0;

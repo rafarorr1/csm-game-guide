@@ -28,6 +28,7 @@
   function fabrica(THREE,{pielGoblin=true}={}){
     const goblinScenario=pielGoblin&&window.CAOZ_ARPG_GOBLIN&&window.CAOZ_GOBLIN_DATOS?window.CAOZ_ARPG_GOBLIN.fabrica(THREE):null;
     const adreidaScenario=window.CAOZ_ARPG_ADREIDA&&window.CAOZ_ADREIDA_DATOS?window.CAOZ_ARPG_ADREIDA.fabrica(THREE):null;
+    const rostroAdreida=window.CAOZ_ARPG_ROSTRO_ADREIDA&&window.CAOZ_ADREIDA_ROSTRO_DATOS?window.CAOZ_ARPG_ROSTRO_ADREIDA.fabrica(THREE):null;
     const hachaAdreidaScenario=window.CAOZ_ARPG_HACHA_ADREIDA&&window.CAOZ_HACHA_ADREIDA_DATOS?window.CAOZ_ARPG_HACHA_ADREIDA.fabrica(THREE):null;
     const koboldScenario=window.CAOZ_ARPG_KOBOLD&&window.CAOZ_KOBOLD_DATOS?window.CAOZ_ARPG_KOBOLD.fabrica(THREE):null;
     const animacion=window.CAOZ_ARPG_ADREIDA_ANIMACION.fabrica(THREE);
@@ -576,6 +577,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       if(scenario)goblinScenario.montar(H,M,mallas,varianteGoblin,escala,aspecto.orejas);
       if(nuevaAdreida)adreidaScenario.montar(H,M,mallas);
       const hachaScenario=nuevaAdreida&&hachaAdreidaScenario?hachaAdreidaScenario.montar(H,M,mallas):null;
+      const rostro=nuevaAdreida&&rostroAdreida?rostroAdreida.montar(H,M,mallas):null;
       if(nuevoKobold)koboldScenario.montar(H,M,mallas,varianteKobold);
       if(escala!==1)for(const clave in p)if(typeof p[clave]==='number')p[clave]*=escala;
       // Los goblins suavizan el sombreado sin duplicar la cara visible de sus materiales.
@@ -584,7 +586,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       if(tipo==='adreida'){M.metal.roughness=.62;M.metal.metalness=.65;M.metal.envMapIntensity=.25;const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
       // La boca de la pistola de Mohamed (de donde salen las balas).
       if(tipo==='mohamed'){M.metal.roughness=.78;M.metal.metalness=.4;M.metal.envMapIntensity=.12;const boca=new THREE.Object3D();boca.position.set(0,-.36,0);H.manoD.add(boca);M.boca=boca;M.punta=boca;}
-      return {tipo,H,M,mallas,p,hachaScenario,modeloGoblin:scenario?'scenario':null,modeloAdreida:nuevaAdreida?'scenario':null,modeloKobold:nuevoKobold?'scenario':null,varianteKobold:tipo==='kobold'?varianteKobold:null,raiz:H.raiz,...TIPOS[tipo],alto:nuevoKobold?koboldScenario.alto(varianteKobold):TIPOS[tipo].alto*escala,radio:TIPOS[tipo].radio*escala,varianteGoblin:esGoblin?varianteGoblin:null};
+      return {tipo,H,M,mallas,p,hachaScenario,rostro,modeloGoblin:scenario?'scenario':null,modeloAdreida:nuevaAdreida?'scenario':null,modeloKobold:nuevoKobold?'scenario':null,varianteKobold:tipo==='kobold'?varianteKobold:null,raiz:H.raiz,...TIPOS[tipo],alto:nuevoKobold?koboldScenario.alto(varianteKobold):TIPOS[tipo].alto*escala,radio:TIPOS[tipo].radio*escala,varianteGoblin:esGoblin?varianteGoblin:null};
     }
 
     // Dos mallas estáticas reutilizables, extraídas del hacha real con sus UV y texturas.
@@ -903,7 +905,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       }
       if(m.tipo==='saqueador'&&a.escudazo){H.brazoI.rotation.set(-1.35,0,.15);H.anteI.rotation.x=-.35;H.torso.rotation.x+=.18*a.escudazo;H.torso.position.z=.09*a.escudazo;}
       else if(m.tipo==='saqueador')H.torso.position.z=0;
-      if(m.tipo==='adreida'){animacion.resolver(m,a);adreidaScenario?.posar(m,a);}
+      if(m.tipo==='adreida'){animacion.resolver(m,a);adreidaScenario?.posar(m,a);rostroAdreida?.posar(m,a);}
       else if(['recogerLlave','mirarLlave'].includes(a.anim))animacion.resolverLlave(m,a);
       else{
         if(m.tipo==='mohamed'&&a.armaLista){const r=a.retroceso||0;H.brazoD.rotation.set(-1.52-.3*r,0,.05);H.anteD.rotation.set(-.05-.25*r,0,0);H.manoD.rotation.set(0,0,0);H.torso.rotation.y-=.15;}
@@ -936,7 +938,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       }
     }
     return {crear,crearHachaArrojadiza,crearHachaAdreida,mostrarHacha,posar,TIPOS,VARIANTES_GOBLIN,elegirVarianteGoblin,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte,
-      VARIANTES_KOBOLD:window.CAOZ_ARPG_KOBOLD?.VARIANTES||{},
+      VARIANTES_KOBOLD:window.CAOZ_ARPG_KOBOLD?.VARIANTES||{},rostro:rostroAdreida,
       muertesGoblinImportadas:goblinScenario?.muertes||[],desplazamientoMuerteGoblin:(m,...args)=>m.modeloKobold==='scenario'?koboldScenario.desplazamientoMuerte(m,...args):goblinScenario?.desplazamientoMuerte(m,...args)};
   }
   window.CAOZ_ARPG_MODELOS=Object.freeze({fabrica});

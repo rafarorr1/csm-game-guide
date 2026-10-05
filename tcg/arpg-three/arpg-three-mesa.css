@@ -307,4 +307,9 @@ button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px soli
 /* El negro pertenece al reloj de la escena: también se detiene al pausar. */
 .apFundidoFinal{position:absolute;inset:0;background:#000;opacity:0;z-index:24;pointer-events:none}
 .apFundidoFinal[hidden]{display:none}
+.apFundidoFinal p{position:absolute;inset:0;display:grid;place-items:center;margin:0;padding:24px;color:#eee6d8;text-align:center;font:400 clamp(22px,3vw,38px)/1.4 Georgia,serif;letter-spacing:.06em}
+.apFundidoFinal p[hidden]{display:none}
+/* El cierre permanece en negro; no quedan controles ni rótulos sobre él. */
+.finAlpha .apFundidoFinal{z-index:40;pointer-events:auto}
+.finAlpha :is(.apHerramientas,.apCinematica,.apPausaOtra){display:none!important}
 .cinematica :is(.apAbrirCasa,.apCasaPanel,.apDiagnostico,.apPalanca){visibility:hidden;pointer-events:none}
