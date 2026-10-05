@@ -313,3 +313,19 @@ button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px soli
 .finAlpha .apFundidoFinal{z-index:40;pointer-events:auto}
 .finAlpha :is(.apHerramientas,.apCinematica,.apPausaOtra){display:none!important}
 .cinematica :is(.apAbrirCasa,.apCasaPanel,.apDiagnostico,.apPalanca){visibility:hidden;pointer-events:none}
+
+/* La carga aparece sin esperar al motor ni a sus texturas. */
+.apCargaInicial{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;overflow:hidden;background:#080f14;color:#e9dfc9;text-align:center;padding:30px 24px;font-family:Georgia,serif}
+.apCargaFondo{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,#34515a40,transparent 58%),linear-gradient(155deg,transparent 48%,#af9b6420 48.1%,transparent 48.3%),linear-gradient(25deg,#14212799,transparent 52%);pointer-events:none}
+.apCargaInicial::after{content:"";position:absolute;inset:18px;border:1px solid #b7a37726;pointer-events:none}
+.apCargaContenido{position:relative;width:min(440px,100%);z-index:1}
+.apCargaSello{font-size:29px;letter-spacing:7px;color:#e6d3a6}.apCargaSello span{font:10px system-ui,sans-serif;letter-spacing:4px;display:block;margin-top:10px;color:#a3b0b4}
+.apCargaEmblema{width:92px;height:92px;margin:44px auto 32px;position:relative;display:grid;place-items:center;color:#bfa877}.apCargaEmblema i{position:absolute;inset:7px;border:1px solid #a7976840;border-top-color:#d4b36c;transform:rotate(45deg);animation:apGirarCarga 4s linear infinite}.apCargaEmblema b{font-size:24px;font-weight:400;text-shadow:0 0 22px #bbac5d40}
+.apCargaLugar{font:9px system-ui,sans-serif;letter-spacing:3px;color:#ae9f7e}.apCargaContenido h1{font-size:clamp(22px,4vw,30px);font-weight:400;margin:14px 0 20px;line-height:1.3}
+#cargaTexto{font:13px/1.6 system-ui,sans-serif;color:#bfc8cb;min-height:42px}
+.apCargaMedidor{display:flex;gap:16px;align-items:center;margin:18px auto 12px;max-width:320px}.apCargaMedidor progress{appearance:none;width:100%;height:3px;border:0;background:#ffffff12}.apCargaMedidor progress::-webkit-progress-bar{background:#ffffff12}.apCargaMedidor progress::-webkit-progress-value{background:#c5af78;transition:width .15s}.apCargaMedidor progress::-moz-progress-bar{background:#c5af78}.apCargaMedidor span{min-width:34px;font:10px system-ui,sans-serif;color:#c5af78}
+#cargaDetalle{font:11px/1.6 system-ui,sans-serif;color:#7c919a;min-height:36px}#reintentarCarga{margin-top:16px}.apCargaPie{position:absolute;bottom:36px;font:10px system-ui,sans-serif;letter-spacing:1px;color:#73868e}.apCargaPie span{padding:0 8px;color:#ae9f7e}
+.apCargaInicial[data-error] .apCargaEmblema i{animation:none;border-color:#ae7765}.apCargaInicial[data-error] #cargaTexto{color:#e4bdaa}
+@keyframes apGirarCarga{to{transform:rotate(405deg)}}
+@media(prefers-reduced-motion:reduce){.apCargaEmblema i{animation:none}.apCargaMedidor progress::-webkit-progress-value{transition:none}}
+@media(max-height:580px){.apCargaEmblema{margin:22px auto;width:62px;height:62px}.apCargaPie{bottom:16px}.apCargaInicial{padding:20px}.apCargaContenido h1{margin:10px 0}}
