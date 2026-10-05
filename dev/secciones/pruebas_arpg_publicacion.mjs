@@ -36,7 +36,7 @@ try{
   await new Promise(ok=>servidor.listen(0,'127.0.0.1',ok));
   const base='http://127.0.0.1:'+servidor.address().port+'/arpg-three/';
   const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
-  navegador=await chromium.launch({headless:true});
+  navegador=await chromium.launch({headless:true,...(process.env.CHROME_CHANNEL?{channel:process.env.CHROME_CHANNEL}:{})});
   const casos=[
     {nombre:'Etapa 1 · Adreida',query:'heroe=adreida',tipo:'adreida',nivel:1},
     {nombre:'Etapa 2 · cooperativo',query:'etapa=2&coop=1&mandos=1',tipo:'adreida',nivel:2,equipo:2},

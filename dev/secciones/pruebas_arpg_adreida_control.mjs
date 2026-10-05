@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
 const s=fs.readFileSync(new URL('./arpg-three-mesa.js',import.meta.url),'utf8');
-const c=vm.createContext({console});c.window=c;c.cinematicaTroll=null;c.finalMago=null;c.casaGoblin=null;c.EDITOR_CINE=false;c.impactoFX={agujero(){}};c.clima={pausar(){},desbloquearAudio(){}};c.partidaActiva=true;c.medidorGPU=null;
+const c=vm.createContext({console});c.window=c;c.cinematicaTroll=null;c.finalMago=null;c.casaGoblin=null;c.EDITOR_CINE=false;c.alphaTerminada=false;c.impactoFX={agujero(){}};c.clima={pausar(){},desbloquearAudio(){}};c.partidaActiva=true;c.medidorGPU=null;
 vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.url),'utf8'),c);
 vm.runInContext(fs.readFileSync(new URL('./arpg-three-adreida-animacion.js',import.meta.url),'utf8'),c);
 c.MOD={animacion:c.CAOZ_ARPG_ADREIDA_ANIMACION.fabrica(c.CAOZ_THREE.THREE)};
@@ -71,7 +71,7 @@ run('for(let i=0;i<60;i++)ajustarResolucion(60)');assert.equal(run('escalaRender
 run('CAPTURA=true;for(let i=0;i<10;i++)ajustarResolucion(20)');assert.equal(run('escalaRender'),1);
 console.log('✓ Resolución adaptativa acotada; recupera detalle; capturas sin cambios');
 // Una partida cedida o escondida no consume lógica ni dibuja, aunque siga recibiendo RAF.
-const pausa=vm.createContext({document:{hidden:false},performance:{now:()=>0},EDITOR_CINE:false,editorCine:null,casaGoblin:null});pausa.window=pausa;pausa.clima={pausar(){}};
+const pausa=vm.createContext({document:{hidden:false},performance:{now:()=>0},EDITOR_CINE:false,alphaTerminada:false,editorCine:null,casaGoblin:null});pausa.window=pausa;pausa.clima={pausar(){}};
 vm.runInContext(fs.readFileSync(new URL('./arpg-three-tiempo.js',import.meta.url),'utf8'),pausa);
 vm.runInContext(`const laboratorio=null,pausa={activa:false},rog={abierto:false},temporizador=CAOZ_ARPG_TIEMPO.crearReloj();
 let partidaActiva=false,antes=0,siguienteDibujo=0,fps={n:0,t:0,cpu:0,render:0},cuadrosLentos=0,cuadrosRapidos=0,logica=0,dibujos=0,solicitudes=0;
