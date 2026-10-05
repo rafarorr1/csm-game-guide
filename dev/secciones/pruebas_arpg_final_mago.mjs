@@ -16,8 +16,8 @@ const fx=c.CAOZ_ARPG_IMPACTOS.fabrica(T,escena);fx.actualizarMaterial(new T.Mesh
 const cine=c.CAOZ_ARPG_FINAL_MAGO.fabrica(T,MOD,{escena,camara,casas,planoDeFase:c.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia(t,p,opciones){lluvia=t;tormenta=opciones;},impactar(p){impactos++;fx.agujero(p,{radio:8.4,profundidad:24,duracion:30});},volver(){regresos++;},interfaz(s){negro=s.negro;ultimaInterfaz={...s};if(s.fase==='fin')avisosFin++;}});
 assert.equal(cine.recursos,null,'No reserva geometrías hasta entrar');
 assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES.vertigo,2.8,'El dolly frontal dura un segundo más');
-assert.equal(c.CAOZ_ARPG_CINE_CAMARA.planos[4],'carrera');assert.equal(c.CAOZ_ARPG_CINE_CAMARA.planos[5],'tropezar','El slide conserva el identificador del plano 6 y sus keyframes');
-for(const [fase,segundos]of Object.entries({salida:3.6,descubrir:3.4,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3.7}))assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES[fase],segundos,'El montaje separa slide, incorporación, giro y POV: '+fase);
+assert.equal(c.CAOZ_ARPG_CINE_CAMARA.planos[4],'carrera');assert.equal(c.CAOZ_ARPG_CINE_CAMARA.planos[5],'tropezar','El salto conserva el identificador del plano 6 y sus keyframes');
+for(const [fase,segundos]of Object.entries({salida:3.6,descubrir:3.4,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3.7}))assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES[fase],segundos,'El montaje mantiene despegue, vuelo, aterrizaje y POV: '+fase);
 for(const fps of [30,60,120]){
  camara.position.set(12,16,22);camara.lookAt(actor.pos);const antes=regresos,finAntes=avisosFin,impactosAntes=impactos,posAntes=actor.pos.clone();
  assert(cine.iniciar([actor,otro],{puerta:new T.Vector3(10,0,10)}));assert(!cine.iniciar([actor]));const orden=[],velocidadesPies=[];let ultimoAlto=0,poseAntes=null,inicioPaneo=null,dirAtaque=null,ultimaCamara=null,inicioPOV=null,rematePos=null,inicioPies=null,minBusqueda=Infinity,maxBusqueda=-Infinity,particulasVistas=false,reunionVista=false,observacion=0;
@@ -36,9 +36,10 @@ for(const fps of [30,60,120]){
    assert.equal(magia.estado.fase,'resorte','La liberación del portal continúa al empezar el hechizo');
    if(actual.t>.65)assert.equal(magia.pliegue.value,0,'Las estructuras recuperan exactamente su forma después del rebote');
    assert(!cine.recursos.meteorito.visible,'No aparece el meteorito durante la invocación y su pausa adicional');
-   if(actual.t>1.5&&hechizo.estado.pulsoFinal<.01){assert(escena.background.r<fondoOriginal.r*.45,'El cielo se oscurece después de reconstruirse el mago');assert(ambiente.intensity<.5&&luna.intensity<2);}
+   if(actual.t>1.5&&(hechizo.estado.resplandorFinal??hechizo.estado.pulsoFinal)<.01){assert(escena.background.r<fondoOriginal.r*.45,'El cielo se oscurece después de reconstruirse el mago');assert(ambiente.intensity<.5&&luna.intensity<2);}
    if(hechizo.estado.pulso>.2)assert(hechizo.nucleo.count>0,'El pulso dibuja rayos verdes durante la invocación');
   }
+  if(['techo','hechizo'].includes(actual.fase)){assert(tormenta.portal,'El clima recibe la gravedad durante el portal y su liberación');assert(Math.abs(tormenta.portal.edad-(actual.fase==='techo'?actual.t:1.4+actual.t))<1e-7);assert.equal(tormenta.portal.soltar,1.4*.94);}
   if(actual.inicios.hechizo===undefined)assert(escena.background.equals(fondoOriginal),'El cielo no se oscurece antes de reconstruirse el mago');
   if(['hechizo','cielo'].includes(actual.fase)){
    assert(tormenta.edadHechizo>=0,'La lluvia recibe el reloj absoluto de la tormenta');
@@ -46,7 +47,7 @@ for(const fps of [30,60,120]){
    assert(Math.abs(actor.m.H.torso.rotation.z)<.04&&Math.abs(actor.m.H.cabeza.rotation.z)<.02,'El viento inclina el cuerpo ligeramente');
    if(tormenta.edadHechizo>1)assert(actor.m.H.torso.rotation.z<-.005,'Adreida resiste el viento durante el hechizo');
   }
-  if(actual.fase==='ataquePOV')assert(Math.hypot(camara.position.x-cine.recursos.mago.position.x,camara.position.z-cine.recursos.mago.position.z)>1.2,'El slide no mete la cámara bajo la túnica');
+  if(actual.fase==='ataquePOV')assert(Math.hypot(camara.position.x-cine.recursos.mago.position.x,camara.position.z-cine.recursos.mago.position.z)>1.2,'El salto no mete la cámara bajo la túnica');
   if(actual.fase==='tropezar'&&actual.lluviaLiberada&&actual.total-actual.golpeMago>.24){assert.equal(magia.disolucion.value,1,'El mago deja de dibujarse tras convertirse en partículas');assert(magia.particulas.count>=144);particulasVistas=true;}
   if(actual.fase==='voltear'){
    assert.equal(magia.disolucion.value,1,'El mago no reaparece antes de que llegue la estela');
@@ -62,8 +63,8 @@ for(const fps of [30,60,120]){
   if(actual.fase==='cielo'){assert.equal(cine.recursos.meteorito.children.length,1,'El meteorito sólo dibuja la roca: no lleva estela');assert.equal(magia.disolucion.value,0,'El mago queda completo antes del meteorito');assert.equal(magia.particulas.count,0);}
 
   assert.equal(lluvia,actual.tLluvia,'El clima sigue exactamente el tiempo de la secuencia');
-  if(['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','levantarse'].includes(actual.fase)){assert.equal(actual.lluviaLiberada,false);assert.equal(lluvia,0,'Las gotas siguen suspendidas durante el hechizo');}
-  if(!est.lluviaLiberada&&actual.lluviaLiberada){assert.equal(actual.fase,'tropezar');assert(cine.recursos.particulasMago.capturar(),'El golpe inicia la dispersión del mago');assert.equal(lluvia,0);assert(actual.total-actual.inicios.ataquePOV>=1.36-1e-7&&actual.total-actual.inicios.ataquePOV<=1.36+1/fps+1e-7,'El golpe dispara partículas durante el barrido, sin esperar la recuperación');}
+  if(['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece'].includes(actual.fase)){assert.equal(actual.lluviaLiberada,false);assert.equal(lluvia,0,'Las gotas siguen suspendidas durante el hechizo');}
+  if(!est.lluviaLiberada&&actual.lluviaLiberada){assert.equal(actual.fase,'levantarse');assert(cine.recursos.particulasMago.capturar(),'El golpe inicia la dispersión del mago');assert.equal(lluvia,0);assert(actual.total-actual.inicios.ataquePOV>=.946-1e-7&&actual.total-actual.inicios.ataquePOV<=.946+1/fps+1e-7,'El golpe de salto dispersa el mago al aterrizar, sin esperar la recuperación');}
   if(est.lluviaLiberada)assert(Math.abs(actual.tLluvia-est.tLluvia-1/fps)<1e-8,'La lluvia cae desde que se interrumpe el hechizo');
   assert.equal(actual.plano,c.CAOZ_ARPG_CINE_CAMARA.planoDeFase(actual.fase));
   if(actual.plano===est.plano)assert(Math.abs(actual.tPlano-est.tPlano-1/fps)<1e-8,'El reloj de cámara continúa al cambiar de acción');else assert.equal(actual.tPlano,0,'Un plano nuevo comienza en cero');
@@ -99,16 +100,16 @@ for(const fps of [30,60,120]){
    assert(frenteMago.dot(haciaCamara)>.999,'El dolly mira de frente al mago');
    assert(cine.recursos.aura.visible&&cine.recursos.mago.visible,'El mago está envuelto en el hechizo');
    assert.equal(actual.casaDolly,1,'Sólo selecciona la casa que tapa el inicio del dolly');
-   assert(casas.userData.ocultacion.opacidades[1]<.1);assert.equal(casas.userData.ocultacion.opacidades[0],1);assert.equal(casas.userData.ocultacion.opacidades[2],1);
+   assert.equal(casas.userData.ocultacion.opacidades[1],0);assert.equal(casas.userData.ocultacion.opacidades[0],1);assert.equal(casas.userData.ocultacion.opacidades[2],1);
   }
   if(actual.fase!=='vertigo')assert(casas.userData.ocultacion.opacidades.every(v=>v===1),'Las casas vuelven a su opacidad fuera del dolly');
   if(['carrera','ataquePOV','desaparece','tropezar'].includes(actual.fase)){
    assert(Math.abs(actor.pos.x-actor.pos.z)<1e-7,'Carrera, ataque y tropiezo conservan la misma línea desde la puerta');
    if(['desaparece','tropezar'].includes(actual.fase)&&actual.t>0){const frente=new T.Vector3(Math.sin(actor.dir),0,Math.cos(actor.dir)),vista=camara.getWorldDirection(new T.Vector3()).setY(0).normalize();assert(Math.abs(frente.dot(vista))<1e-6,'El fallo se ve de perfil');}
   }
-  if(est.fase==='desaparece'&&actual.fase==='levantarse'){dirAtaque=actor.dir;rematePos=new T.Vector3(Math.sin(actor.dir),0,Math.cos(actor.dir)).multiplyScalar(-1.6);}
-  if(actual.fase==='levantarse'&&actual.t>.05)assert(actor.pos.distanceTo(rematePos)>.035,'La incorporación conserva impulso después del slide');
-  if(est.fase==='tropezar'&&actual.fase==='buscar'){assert(actor.pos.distanceTo(rematePos)>.40&&actor.pos.distanceTo(rematePos)<.43,'El remate avanza 42 cm después del slide antes de plantar el giro');rematePos=actor.pos.clone();}
+  if(est.fase==='desaparece'&&actual.fase==='levantarse'){dirAtaque=actor.dir;rematePos=new T.Vector3(Math.sin(actor.dir),0,Math.cos(actor.dir)).multiplyScalar(-1.18);}
+  if(actual.fase==='levantarse'&&actual.t>.06)assert(actor.pos.distanceTo(rematePos)<.001,'El aterrizaje planta los pies en el punto del hachazo');
+  if(est.fase==='tropezar'&&actual.fase==='buscar'){assert(actor.pos.distanceTo(rematePos)<.001,'La recuperación no arrastra las botas después del aterrizaje');rematePos=actor.pos.clone();}
   if(['levantarse','tropezar','buscar'].includes(actual.fase)){
    assert.equal(actor.dir,dirAtaque,'No gira hacia el tejado antes de cortar al POV');
    if(actual.fase==='buscar')assert(actor.pos.distanceTo(rematePos)<1e-8,'La búsqueda conserva el apoyo final del giro');
@@ -146,9 +147,9 @@ for(const fps of [30,60,120]){
   if(actual.fase==='ataquePOV'&&actual.t>.15&&actual.t<.80){const mano=cine.recursos.brazosFPS.H.manoD.getWorldPosition(new T.Vector3()).project(camara);assert(Math.abs(mano.x)<1&&Math.abs(mano.y)<1,'El arma empieza su arco dentro del encuadre FPS');}
   if(est.fase==='ataquePOV'&&actual.fase==='desaparece'){
    assert(actor.pos.z<3,'El ataque no reinicia la aproximación al cortar');
-   assert(Math.abs(actual.total-actual.inicios.ataquePOV-Math.ceil(.55*fps-1e-8)/fps)<1e-7,'El corte continúa a los 0,55 s del slide');
-   assert(actual.total-actual.inicios.ataquePOV<.90,'Al entrar al plano 6 todavía se está deslizando');
-   assert(actor.m.H.cabeza.getWorldPosition(new T.Vector3()).y-actor.pos.y<1.35,'El plano 6 continúa con la rodilla baja en pleno slide');
+   assert(Math.abs(actual.total-actual.inicios.ataquePOV-Math.ceil(.55*fps-1e-8)/fps)<1e-7,'El corte continúa a los 0,55 s del salto');
+   assert(actual.total-actual.inicios.ataquePOV<.946,'Al entrar al plano 6 todavía está volando');
+   assert(actor.m.H.cabeza.getWorldPosition(new T.Vector3()).y-actor.pos.y>3,'El plano 6 continúa con Adreida en el aire');
   }
   if(['desaparece','levantarse','tropezar'].includes(actual.fase)&&actual.t>0){const apoyo=actor.m.H.manoD.localToWorld(new T.Vector3(0,-.3,0));assert(apoyo.distanceTo(actor.m.H.manoI.getWorldPosition(new T.Vector3()))<.006,'El hachazo fallido conserva las manos sobre el mango');}
   if(est.fase==='hechizo'&&actual.fase==='cielo'){assert.equal(camara.fov,44,'El meteorito no reinicia el zoom a una focal más abierta');assert(cine.recursos.meteorito.visible);assert.equal(actual.meteorito[1],54,'El primer cuadro del meteorito ya está en el cielo, nunca frente a los brazos');assert(cine.recursos.meteorito.position.distanceTo(camara.position)>50,'La roca queda lejos del plano cercano');}
@@ -190,15 +191,15 @@ for(let j=0;j<2;j++){cine.iniciar([actor,otro]);while(cine.estado().fase!=='vert
 const n=escena.children.length;
 for(let i=0;i<4;i++){cine.iniciar([actor,otro]);cine.cancelar();assert.equal(escena.children.length,n,'Reutiliza los efectos entre revisiones');}
 cine.iniciar([otro]);assert.equal(otro.m.raiz.visible,false);cine.cancelar();assert.equal(escena.children.length,n,'El actor de historia prestado se retira');
-console.log('✓ Final del mago: dolly frontal de 2,8 s, slide en F093 y corte en F126, incorporación y giro continuo, dispersión y reconstrucción del mago, reacción demorada .5s al viaje de partículas, viento y onda verde, POV siguiendo estelas y cierre superwide sin corte, brazos FPS, pausa, dos jugadores, actor Adreida, sima de 24 m de profundidad, ruinas, omisión/reinicio y final permanente sin navegación a 30/60/120 FPS.');
+console.log('✓ Final del mago: dolly frontal de 2,8 s, salto en F093 y corte en F126, salto y aterrizaje continuo, dispersión y reconstrucción del mago, reacción demorada .5s al viaje de partículas, viento y onda verde, POV siguiendo estelas y cierre superwide sin corte, brazos FPS, pausa, dos jugadores, actor Adreida, sima de 24 m de profundidad, ruinas, omisión/reinicio y final permanente sin navegación a 30/60/120 FPS.');
 
 // Se hornea una vez y se puede saltar en ambas direcciones sin ejecutar actuación.
 cine.iniciar([actor,otro]);const cuadros=[];
 while(!cine.estado().terminado){cuadros.push(cine.capturarCuadro());cine.paso(1/60);}
 cuadros.push(cine.capturarCuadro());
 const inicio5=cuadros.findIndex(f=>f.estado.fase==='carrera'),inicioSlide=cuadros.findIndex(f=>f.estado.fase==='ataquePOV'),inicio6=cuadros.findIndex(f=>f.estado.fase==='desaparece');
-assert.equal(inicioSlide-inicio5,93,'F093 del plano 5 inicia exactamente el deslizamiento');
-assert.equal(inicio6-inicio5,126,'F126 corta al plano 6 manteniendo el mismo slide');
+assert.equal(inicioSlide-inicio5,93,'F093 del plano 5 inicia exactamente el salto');
+assert.equal(inicio6-inicio5,126,'F126 corta al plano 6 manteniendo el mismo salto');
 assert.equal(cuadros.filter(f=>f.estado.fase==='hechizo').length,222,'La invocación conserva sus tres segundos y espera otros 42 cuadros antes del meteorito');
 const pulsoManos=cuadros.find(f=>f.estado.fase==='hechizo'&&f.estado.t>=2.72);
 assert(pulsoManos.hechizo.estado.pulsoFinal>.9,'Los rayos de las manos conservan el máximo original; no se estiran al alargar el plano');

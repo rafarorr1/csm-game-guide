@@ -63,3 +63,23 @@ const cuadroFinal=final.capturar(),rayosFinales=final.nucleo.instanceMatrix.arra
 final.actualizar(2.72);assert.deepEqual(final.nucleo.instanceMatrix.array.slice(0,final.nucleo.count*16),rayosFinales,'La forma de las descargas es determinista al rebobinar');final.restaurar();final.mostrar(cuadroFinal);assert.deepEqual(final.capturar().uniformes,cuadroFinal.uniformes);assert.deepEqual(final.capturar().ambiente,cuadroFinal.ambiente);final.restaurar();
 assert.equal(final.nucleo.count,0);assert.equal(final.capturar().uniformes.culminacion,0);assert.equal(final.nucleo.material.isMeshBasicMaterial,true);assert.equal(gFinal.children.filter(n=>n.isMesh).length,3,'Los rayos de las manos reutilizan los lotes de la tormenta');
 console.log('✓ Dos rayos finales unidos a manos móviles, pico antes del corte, mayor iluminación de cielo/nubes y restauración completa sin llamadas adicionales.');
+
+// El resplandor permanece tras los rayos y atraviesa el corte de cámara de3.7s.
+final.preparar({cielo,impacto});final.actualizar(2.5);const sinVerde=final.capturar().ambiente;
+const verdes=new Map();
+for(const t of [2.55,2.61,2.88,3,3.35,3.65,3.7,4.15,4.65,5]){
+ const e=final.actualizar(t,3),cuadro=final.capturar();verdes.set(t,cuadro);
+ assert.equal(cuadro.uniformes.resplandor,e.resplandorFinal,'El shader y el ambiente comparten la persistencia');
+ if(t>=3){assert.equal(final.nucleo.count,0);assert.equal(final.contorno.count,0);assert.equal(e.pulsoFinal,0);assert.equal(e.rayosManos,0);assert(cuadro.uniformes.rayos.every(v=>v[3]===0),'La luz residual no inventa otra descarga');}
+ if(t>=3&&t<=3.65){assert.equal(e.resplandorFinal,1);assert(escena.background.g>sinVerde.fondo[1]*1.6,'El cielo conserva el verde después de los rayos');}
+}
+assert.deepEqual(verdes.get(3).ambiente,verdes.get(3.65).ambiente,'La pausa no acumula ni extingue el color');
+assert(Math.abs(verdes.get(4.15).estado.resplandorFinal-.5)<1e-12,'El desvanecimiento dura un segundo');assert.equal(verdes.get(4.65).estado.resplandorFinal,0);assert.deepEqual(verdes.get(4.65).ambiente,sinVerde,'El final vuelve exactamente al cielo nocturno');
+for(const fps of [30,60,120]){
+ let anterior=1;
+ for(let i=Math.ceil(3.65*fps);i<=Math.ceil(4.65*fps);i++){const e=final.actualizar(i/fps);assert(e.resplandorFinal<=anterior+1e-12);assert(e.resplandorFinal>=0);assert.equal(e.rayosManos,0);anterior=e.resplandorFinal;}
+}
+for(const t of [4.15,3,5,3.65,2.61,3.7]){final.actualizar(t);assert.deepEqual(final.capturar().uniformes,verdes.get(t).uniformes,'Rebobinar no altera el reloj del resplandor');assert.deepEqual(final.capturar().ambiente,verdes.get(t).ambiente);}
+for(const t of [3.35,4.15,3,5]){final.mostrar(verdes.get(t));assert.deepEqual(final.capturar().uniformes,verdes.get(t).uniformes,'El caché repone el brillo de nubes');assert.deepEqual(final.capturar().ambiente,verdes.get(t).ambiente,'El caché repone cielo, niebla y luces');}
+final.restaurar();assert.equal(final.capturar().uniformes.resplandor,0);assert.equal(final.nubes.visible,false);assert.deepEqual(escena.background.toArray(),otroFondo);
+console.log('✓ Resplandor verde estable hasta3.65s, desvanecimiento a4.65s, sin repetir rayos, reversible a30/60/120FPS y restaurable por caché.');

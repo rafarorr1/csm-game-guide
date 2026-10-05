@@ -444,7 +444,7 @@
             sh.fragmentShader='varying float vCasa;uniform float uCasas['+casas.length+'];\n'+sh.fragmentShader;
             sh.fragmentShader=sh.fragmentShader.replace(/void main\(\)\s*\{/,`void main(){
               float muestraCasa=fract(sin(dot(floor(gl_FragCoord.xy),vec2(12.9898,78.233)))*43758.5453);
-              if(muestraCasa>uCasas[int(vCasa+.5)])discard;`);
+              if(uCasas[int(vCasa+.5)]<=0.||muestraCasa>uCasas[int(vCasa+.5)])discard;`);
           };material.customProgramCacheKey=()=> 'casas-ocultables-'+casas.length+'-'+mat.uuid;
         }
         const m=new THREE.Mesh(unir(lista),material);m.castShadow=malla.castShadow;m.receiveShadow=malla.receiveShadow;m.renderOrder=malla.renderOrder;m.frustumCulled=false;grupo.add(m);

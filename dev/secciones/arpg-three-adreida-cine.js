@@ -61,6 +61,10 @@
       return m;
     }
     function fps(m,camara,fase,t,ataque=null,clipAtaque=null){
+      if(ataque!==null&&clipAtaque==='saltoHacha'){
+        fps(m,camara,fase,t,null,'carreraCine');const desde=capturar(m);
+        return fpsSaltoHacha(m,camara,ataque,desde,lim(ataque/.14));
+      }
       const carreraVista=ataque===null&&clipAtaque==='carreraCine';
       MOD.posar(m,{anim:'quieto',dt:0,t,sinHacha:true,agarreDerecha:true,mezclar:false});const H=m.H;
       H.cuerpo.position.set(0,0,0);H.cadera.rotation.set(0,0,0);H.torso.rotation.set(0,0,Math.sin(fase)*.018);
@@ -113,6 +117,49 @@
       // manos cerradas sobre el mango, incluso al venir de la carrera a una mano.
       MOD.posar(m,{anim:'quieto',dt:0,t:0,mezclar:false});
       fbx(m,'deslizarAtaque',k,desde,entrada);
+    }
+    const tiemposSalto=Object.freeze({duracion:1.94,ataque:1.10,impacto:.946,recuperacion:.84});
+    function muestrearSalto(t){
+      const k=lim(t/tiemposSalto.ataque),avance=suave((k-.12)/.74),vuelo=Math.sin(Math.PI*avance)*2.4;
+      return {k,avance,vuelo:avance===1?0:vuelo,impacto:t+1e-8>=tiemposSalto.impacto,recuperacion:lim((t-tiemposSalto.ataque)/tiemposSalto.recuperacion)};
+    }
+    function despejarSueloHacha(m){
+      const mesh=m.hachaScenario;if(!mesh)return;
+      m.raiz.updateMatrixWorld(true);let bajo=Infinity;
+      for(let i=0;i<mesh.geometry.attributes.position.count;i+=7)bajo=Math.min(bajo,mesh.getVertexPosition(i,v).y);
+      if(bajo>=.015)return;
+      // La hoja del salto original baja unos centímetros bajo la suela. En cine
+      // se recoge sólo el mango para no levantar las botas al terminar el golpe.
+      const H=m.H,meta=H.manoD.getWorldPosition(new T.Vector3()).add(new T.Vector3(0,.015-bajo,0)),rot=H.manoD.getWorldQuaternion(new T.Quaternion());
+      brazoHasta(H.brazoD,H.anteD,H.manoD,meta);H.manoD.parent.getWorldQuaternion(padreIK).invert();H.manoD.quaternion.copy(padreIK).multiply(rot);cerrarAgarre(m);
+    }
+    function poseSalto(m,k){
+      // El reloj de tela también parte de la pose: recorrer fotogramas hacia
+      // atrás no arrastra la apertura que dejó otra muestra de la animación.
+      if(m.tela){m.tela.t=0;m.tela.aperturas.fill(0);}
+      MOD.posar(m,{anim:'salto',k,t:0,dt:0,sinHacha:false,mezclar:false});apoyarSalida(m);despejarSueloHacha(m);
+    }
+    function saltoHacha(m,t,desde=null,entrada=1){
+      const estado=muestrearSalto(t);portarHacha(m,'mano');
+      if(t<=tiemposSalto.ataque){poseSalto(m,estado.k);m.H.cuerpo.position.y+=estado.vuelo;}
+      else{
+        poseSalto(m,1);const aterrizaje=capturar(m),piso=alturaSuelo(m),final=posesRemate(m);restaurar(m,final.fin);mezclar(m,aterrizaje,estado.recuperacion);cerrarAgarre(m);apoyarRemate(m,piso+(final.suelo-piso)*suave(estado.recuperacion));
+        if(estado.recuperacion===1)restaurar(m,final.fin);
+      }
+      if(desde&&entrada<1){if(entrada<=0)restaurar(m,desde);else mezclar(m,desde,entrada);}
+      m.raiz.updateMatrixWorld(true);return estado;
+    }
+    function fpsSaltoHacha(m,camara,t,desde=null,entrada=1){
+      const estado=saltoHacha(m,t,desde,entrada),peso=desde?suave(entrada):1;
+      capaFPS(m,true);
+      m.raiz.quaternion.copy(camara.quaternion).multiply(q.setFromAxisAngle(v.set(0,1,0),Math.PI));
+      // La cámara ya sigue el vuelo del cuerpo. El modelo de vista conserva la
+      // pose de salto y anula esa misma altura local para no elevarse dos veces.
+      // El arma elevada queda ligeramente a la derecha del mago; ambas manos
+      // comparten el desplazamiento y dejan libre su rostro en el centro.
+      m.raiz.position.set(.15*peso,-1.75,-.52-.58*peso).applyQuaternion(camara.quaternion).add(camara.position);
+      m.raiz.position.add(v.set(0,-estado.vuelo*peso,0).applyQuaternion(m.raiz.quaternion));
+      m.raiz.updateMatrixWorld(true);return estado;
     }
     function carreraCine(m,k,desde=null,entrada=1){
       const espalda=hachas.get(m)?.modo==='espalda';
@@ -293,7 +340,7 @@
       const apoyo=Math.sin(Math.PI*lim(k/.8));m.H.torso.rotation.x+=apoyo*.48;m.H.rodillaI.rotation.x+=apoyo*.45;
       mezclar(m,desde,k);apoyar(m);
     }
-    return {crearFPS,fps,capaFPS,fbx,deslizar,carreraCine,equiparHacha,patadaPuerta,prepararHacha,portarHacha,visibilidadHacha,capturarHacha,restaurarHacha,salidaConGiro,apoyarSalida,movimientoSalida,tiemposRemate,rematarDeslizamiento,buscarDePie,capturar,restaurar,mezclar,caer,buscar,levantar};
+    return {crearFPS,fps,fpsSaltoHacha,capaFPS,fbx,deslizar,tiemposSalto,muestrearSalto,saltoHacha,carreraCine,equiparHacha,patadaPuerta,prepararHacha,portarHacha,visibilidadHacha,capturarHacha,restaurarHacha,salidaConGiro,apoyarSalida,movimientoSalida,tiemposRemate,rematarDeslizamiento,buscarDePie,capturar,restaurar,mezclar,caer,buscar,levantar};
   }
   window.CAOZ_ARPG_ADREIDA_CINE=Object.freeze({fabrica});
 })();

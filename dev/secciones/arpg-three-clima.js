@@ -7,10 +7,18 @@
   const intensidadHechizo=edad=>{const k=Math.max(0,Math.min(1,edad/DURACION_TORMENTA));return k*k*(3-2*k);};
   function integralHechizo(edad){const k=Math.max(0,Math.min(1,edad/DURACION_TORMENTA));return DURACION_TORMENTA*(k*k*k-.5*k*k*k*k)+Math.max(0,edad-DURACION_TORMENTA);}
   function derivaViento(t,salida,edadHechizo=-1){const tormenta=integralHechizo(edadHechizo);salida.x=8*t-1.6/.55*Math.cos(t*.55)-.65/1.43*Math.cos(t*1.43)+14*tormenta;salida.y=1.7*t-.5/.37*Math.cos(t*.37+.8)+5*tormenta;return salida;}
+  function fuerzasPortal(edad,soltar,salida){
+    if(edad<0||edad>=soltar+.72)return salida.set(0,0);
+    const suave=k=>{k=Math.max(0,Math.min(1,k));return k*k*(3-2*k);},despues=Math.max(0,edad-soltar);
+    const atraer=Math.pow(suave(edad/soltar),1.45)*(1-suave(despues/.34));
+    const expulsar=(1-Math.exp(-despues*14))*Math.exp(-despues*4.5)*(1-suave((despues-.48)/.24));
+    return salida.set(atraer,expulsar);
+  }
   function fabrica(THREE,escena,{obstaculos=[],techos=[],abierto=false,reducido=false,perforar=()=>{}}={}){
     let semilla=731;const azar=()=>((semilla=(semilla*16807)%2147483647)/2147483647);
     const TAU=Math.PI*2,tiempo={value:0},centro={value:new THREE.Vector2()},radio=abierto?108:24;
     const deriva={value:new THREE.Vector2()},cola={value:new THREE.Vector2()},anteriorViento=new THREE.Vector2(),fuerzaTormenta={value:0};
+    const centroPortal={value:new THREE.Vector3()},fuerzaPortal={value:new THREE.Vector4()},portalActual=new THREE.Vector2(),portalAnterior=new THREE.Vector2();let gravedadPortal=null;
     let activo=true,sonido=true,pausado=false,tiempoCine=null,edadTormenta=-1,reloj=0,proximo=14,relampago=-100,trueno=null,totalTruenos=0;
     // Las gotas desaparecen al alcanzar los tejados; el mapa de alturas se calcula una sola vez.
     const lado=256,extension=120,alturas=new Float32Array(lado*lado);
@@ -18,15 +26,16 @@
       const minZ=Math.max(0,Math.floor((caja.min.z+extension)/(2*extension)*lado)),maxZ=Math.min(lado-1,Math.ceil((caja.max.z+extension)/(2*extension)*lado));
       for(let z=minZ;z<=maxZ;z++)for(let x=minX;x<=maxX;x++)alturas[z*lado+x]=Math.max(alturas[z*lado+x],caja.max.y);}
     const refugios=new THREE.DataTexture(alturas,lado,lado,THREE.RedFormat,THREE.FloatType);refugios.needsUpdate=true;
-    const P=[],S=[],E=[],I=[],cantidad=reducido?220:440,cantidadCine=Math.round(cantidad*1.4),reserva=reducido?525:1050,densidadGotas={value:cantidad};
+    const P=[],S=[],E=[],I=[],cantidadOriginal=reducido?220:440,cantidad=Math.round(cantidadOriginal*1.45),cantidadCine=Math.round(cantidadOriginal*1.4*1.45),reserva=Math.round((reducido?525:1050)*1.45),densidadGotas={value:cantidad};
     // Reserva para la tormenta del mago: cambia sólo el rango dibujado, sin crear recursos al buscar un cuadro.
     let semillaPartida;
-    for(let i=0;i<reserva;i++){if(i===cantidad)semillaPartida=semilla;const s=[azar()*44,azar()*16,azar()*44];for(let j=0;j<2;j++){P.push(0,0,0);S.push(...s);E.push(j);I.push(i);}}
+    for(let i=0;i<reserva;i++){if(i===cantidadOriginal)semillaPartida=semilla;const s=[azar()*44,azar()*16,azar()*44];for(let j=0;j<2;j++){P.push(0,0,0);S.push(...s);E.push(j);I.push(i);}}
     semilla=semillaPartida; // Las gotas adicionales no recolocan charcos ni alteran los truenos de la partida.
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aSemilla',new THREE.Float32BufferAttribute(S,3));g.setAttribute('aExtremo',new THREE.Float32BufferAttribute(E,1));g.setAttribute('aGota',new THREE.Float32BufferAttribute(I,1));
     g.setDrawRange(0,cantidad*2);
-    const uniformesLluvia={...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),uT:tiempo,uCentro:centro,uTechos:{value:refugios},uDeriva:deriva,uCola:cola,uTormenta:fuerzaTormenta,uGotas:densidadGotas};
+    const uniformesLluvia={...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),uT:tiempo,uCentro:centro,uTechos:{value:refugios},uDeriva:deriva,uCola:cola,uTormenta:fuerzaTormenta,uGotas:densidadGotas,uCentroPortal:centroPortal,uFuerzaPortal:fuerzaPortal};
     const funcionesLluvia=`uniform float uT;uniform vec2 uCentro;uniform sampler2D uTechos;uniform vec2 uDeriva;uniform vec2 uCola;uniform float uTormenta;uniform float uGotas;
+      uniform vec3 uCentroPortal;uniform vec4 uFuerzaPortal;
       attribute vec3 aSemilla;attribute float aGota;
       float presenciaGota(){return clamp(uGotas-aGota,0.,1.);}
       vec2 envolver(vec2 p){return mod(p-uCentro+22.,44.)-22.+uCentro;}
@@ -38,6 +47,15 @@
         for(int i=0;i<=8;i++){float altura=y+(16.-y)*float(i)/8.;vec2 antes=p-viento*(altura-y)/rapidez;
           visible*=step(techo(antes)+.012,altura);}
         return visible;
+      }
+      vec3 gravedadDePortal(vec3 p,vec2 fuerza){
+        // Toda la lluvia del volumen visible comparte la atracción. Se tensa
+        // en espiral y la liberación proyecta las gotas en dirección radial.
+        if(fuerza.x+fuerza.y<=0.)return p;
+        vec3 radial=p-uCentroPortal;float giro=fuerza.x*.28,c=cos(giro),s=sin(giro);
+        radial.xz=mat2(c,s,-s,c)*radial.xz;
+        vec3 direccion=radial/max(.001,length(radial));
+        return uCentroPortal+radial*(1.-fuerza.x*.58)+direccion*fuerza.y*6.4;
       }`;
     const lluviaMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,fog:true,uniforms:uniformesLluvia,
       vertexShader:funcionesLluvia+`
@@ -47,7 +65,8 @@
           vec2 p=envolver(aSemilla.xz+uDeriva);
           float visible=libreHastaCielo(p,max(.025,y),rapidez);
           // La cola es la posición anterior real: va contra el viento y hacia arriba.
-          vec3 pos=vec3(p.x,y,p.y)+vec3(-uCola.x,rapidez*${EXPOSICION},-uCola.y)*aExtremo;
+          vec3 base=vec3(p.x,y,p.y)+vec3(-uCola.x,rapidez*${EXPOSICION},-uCola.y)*aExtremo;
+          vec3 pos=gravedadDePortal(base,mix(uFuerzaPortal.xy,uFuerzaPortal.zw,aExtremo));
           vAlpha=bordeLluvia(p)*visible*(1.-smoothstep(14.,16.,y))*(1.-aExtremo*.85)*presenciaGota()*(1.+.24*uTormenta);
           vMundo=pos;vec4 mvPosition=modelViewMatrix*vec4(pos,1.);gl_Position=projectionMatrix*mvPosition;
           #include <fog_vertex>
@@ -74,7 +93,7 @@
           vec2 p=envolver(aSemilla.xz+uDeriva-uCola/${EXPOSICION}*edad);
           float visible=step(edad,.16)*step(techo(p),.001)*libreHastaCielo(p,.025,rapidez);
           float radio=.035+k*.13;vec3 pos=vec3(p.x+uv.x*radio,.03,p.y+uv.y*radio*.7);vUv=uv;
-          vAlpha=visible*bordeLluvia(p)*(1.-k)*.22*presenciaGota();
+          vAlpha=visible*bordeLluvia(p)*(1.-k)*.22*presenciaGota()*(1.-smoothstep(.02,.2,uFuerzaPortal.x+uFuerzaPortal.y));
           vec4 mvPosition=modelViewMatrix*vec4(pos,1.);gl_Position=projectionMatrix*mvPosition;
           #include <fog_vertex>
         }`,
@@ -169,6 +188,13 @@
     function cinematica(t,foco,tormenta={}){
       const antes=tiempoCine;tiempoCine=t===null?null:Math.max(0,t);
       edadTormenta=tiempoCine!==null&&Number.isFinite(tormenta?.edadHechizo)?tormenta.edadHechizo:-1;
+      const portal=tormenta?.portal,datosPortal=tiempoCine!==null&&tiempoCine>0&&portal&&Array.isArray(portal.centro)&&portal.centro.length===3&&portal.centro.every(Number.isFinite)&&Number.isFinite(portal.edad)&&portal.edad>=0;
+      if(datosPortal){
+        const soltar=Number.isFinite(portal.soltar)&&portal.soltar>0?portal.soltar:1.316;
+        gravedadPortal={centro:portal.centro.slice(),edad:portal.edad,soltar};centroPortal.value.fromArray(portal.centro);
+        fuerzasPortal(portal.edad,soltar,portalActual);fuerzasPortal(portal.edad-EXPOSICION,soltar,portalAnterior);
+        fuerzaPortal.value.set(portalActual.x,portalActual.y,portalAnterior.x,portalAnterior.y);
+      }else{gravedadPortal=null;centroPortal.value.set(0,0,0);fuerzaPortal.value.set(0,0,0,0);}
       densidadGotas.value=tiempoCine===null?cantidad:cantidadCine+(reserva-cantidadCine)*intensidadHechizo(edadTormenta);
       const gotas=Math.ceil(densidadGotas.value);
       g.setDrawRange(0,gotas*2);sg.setDrawRange(0,Math.ceil(gotas/2)*6);
@@ -192,7 +218,7 @@
       ajustarAudio();
     }
     return {paso,configurar,cinematica,desbloquearAudio,pausar(v){if(pausado!==v){pausado=v;ajustarAudio();}},
-      estado:()=>({activo,sonido,pausado,tiempo:reloj,tiempoCine,edadHechizo:edadTormenta,intensidadTormenta:fuerzaTormenta.value,gotas:g.drawRange.count/2,charcos:charcos.length,mallas:3,truenos:totalTruenos,audio:audio?.state||'pendiente',voces:voces.size}),
+      estado:()=>({activo,sonido,pausado,tiempo:reloj,tiempoCine,edadHechizo:edadTormenta,intensidadTormenta:fuerzaTormenta.value,portal:gravedadPortal?{...gravedadPortal,centro:gravedadPortal.centro.slice(),atraccion:fuerzaPortal.value.x,expulsion:fuerzaPortal.value.y}:null,gotas:g.drawRange.count/2,charcos:charcos.length,mallas:3,truenos:totalTruenos,audio:audio?.state||'pendiente',voces:voces.size}),
       destruir(){for(const voz of voces)voz.stop();lluviaAudio?.stop();audio?.close().catch(()=>{});escena.remove(lluvia,agua,salpicaduras);g.dispose();cg.dispose();sg.dispose();lluviaMat.dispose();charcoMat.dispose();salpicarMat.dispose();refugios.dispose();}};
   }
   window.CAOZ_ARPG_CLIMA=Object.freeze({fabrica,derivaViento});

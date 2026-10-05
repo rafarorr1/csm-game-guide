@@ -64,11 +64,11 @@ const agrupado=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api
 assert.equal($('cePlanos').children.length,10);assert.equal($('ceTiras').children.length,10);
 entrada('ceTiempo',490);await completar();assert.equal(Number($('ceLocal').max),239);
 $('ceLocal').emitir('pointerdown');entrada('ceLocal',200);await completar();comprobar(680,200);assert.equal(api.estado().fase,'ataquePOV');
-assert.equal($('cePlanoTitulo').textContent,'05 / Carrera y deslizamiento');$('ceLocal').emitir('pointerup');
+assert.equal($('cePlanoTitulo').textContent,'05 / Carrera y salto');$('ceLocal').emitir('pointerup');
 $('ceCurva').value='suave';$('ceKey').onclick();assert.equal($('ceCuenta').textContent,1);assert.equal($('ceKeyTiempo').value,'3.333');
 entrada('ceLocal',100);await completar();assert.equal($('ceCuenta').textContent,1);
 entrada('ceTiempo',720);await completar();comprobar(720,0);assert.equal(api.estado().fase,'desaparece');assert.equal(Number($('ceLocal').max),479);
-entrada('ceLocal',479);await completar();comprobar(1199,479);assert.equal(api.estado().fase,'buscar');assert.equal($('cePlanoTitulo').textContent,'06 / Incorporación, golpe y búsqueda');
+entrada('ceLocal',479);await completar();comprobar(1199,479);assert.equal(api.estado().fase,'buscar');assert.equal($('cePlanoTitulo').textContent,'06 / Hachazo, aterrizaje y búsqueda');
 entrada('ceTiempo',710);await completar();$('ceVelocidad').value='1';$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert.equal(simulado,719,'La grabación acaba antes de desaparecer');
 entrada('ceTiempo',830);await completar();$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert(simulado>840,'Cambiar de acción no detiene el plano 06');assert.equal($('ceGrabar').textContent,'■ Detener grabación');$('ceGrabar').onclick();
 console.log('✓ Grupos del editor: diez planos, sliders completos, keyframes compartidos y grabación continua entre acciones.');

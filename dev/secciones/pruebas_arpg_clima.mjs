@@ -9,7 +9,7 @@ const obstaculos=[{x:-5,z:-3,r:1.3},{x:0,z:0,r:2}],techos=[new T.Box3(new T.Vect
 function preparar(opciones={}){const escena=new T.Scene(),impactos=contexto.CAOZ_ARPG_IMPACTOS.fabrica(T,escena);return {escena,clima:contexto.CAOZ_ARPG_CLIMA.fabrica(T,escena,{obstaculos,techos,perforar:impactos.perforar,...opciones})};}
 function avanzar(c,s,hz=60){let pico=0;for(let i=0;i<Math.round(s*hz);i++)pico=Math.max(pico,c.paso(1/hz,{x:0,z:0}));return pico;}
 for(const hz of [20,30,60,144]){
- const {escena,clima}=preparar();assert.equal(escena.children.length,3);assert.equal(clima.estado().gotas,440);assert.equal(clima.estado().charcos,28);
+ const {escena,clima}=preparar();assert.equal(escena.children.length,3);assert.equal(clima.estado().gotas,638);assert.equal(clima.estado().charcos,28);
  const agua=escena.getObjectByName('Charcos de lluvia'),p=agua.geometry.attributes.position;
  for(let i=0;i<p.count;i+=4){let x=0,z=0;for(let j=0;j<4;j++){x+=p.getX(i+j)/4;z+=p.getZ(i+j)/4;assert.equal(p.getY(i+j)>0,true);}
   for(const o of obstaculos)assert.ok(Math.hypot(x-o.x,z-o.z)>o.r);
@@ -23,7 +23,7 @@ for(const hz of [20,30,60,144]){
  clima.configurar({activo:false});assert.ok(escena.children.every(n=>!n.visible));const antes=clima.estado().tiempo;avanzar(clima,60,hz);assert.equal(clima.estado().tiempo,antes);
  clima.configurar({activo:true});assert.ok(escena.children.every(n=>n.visible));clima.destruir();assert.equal(escena.children.length,0);
 }
-{const {clima}=preparar({reducido:true,abierto:true});assert.equal(clima.estado().gotas,220);assert.equal(clima.estado().charcos,130);assert.equal(avanzar(clima,70),0,'Movimiento reducido evita los destellos');assert.ok(clima.estado().truenos>=2);clima.destruir();}
+{const {clima}=preparar({reducido:true,abierto:true});assert.equal(clima.estado().gotas,319);assert.equal(clima.estado().charcos,130);assert.equal(avanzar(clima,70),0,'Movimiento reducido evita los destellos');assert.ok(clima.estado().truenos>=2);clima.destruir();}
 // La estela coincide con el desplazamiento de una gota; también con ráfagas y distintos FPS.
 {const {escena,clima}=preparar();const lluvia=escena.getObjectByName('Lluvia ligera'),u=lluvia.material.uniforms;
  for(let i=0;i<600;i++){clima.paso(1/60,{x:0,z:0});const t=clima.estado().tiempo,a=contexto.CAOZ_ARPG_CLIMA.derivaViento(t,new T.Vector2()),b=contexto.CAOZ_ARPG_CLIMA.derivaViento(t-.028,new T.Vector2());
@@ -31,7 +31,7 @@ for(const hz of [20,30,60,144]){
   assert.ok(u.uCola.value.x/.028>5.7&&u.uCola.value.x/.028<10.3,'Viento sostenido en la misma dirección');}
  const referencia=contexto.CAOZ_ARPG_CLIMA.derivaViento(10,new T.Vector2());
  for(const hz of [20,30,144]){const otro=preparar();avanzar(otro.clima,10,hz);assert.ok(otro.escena.getObjectByName('Lluvia ligera').material.uniforms.uDeriva.value.distanceTo(referencia)<1e-8,'El viento no depende de FPS');otro.clima.destruir();}
- assert.equal(escena.getObjectByName('Salpicaduras de lluvia').geometry.drawRange.count,1320,'La partida dibuja los mismos 220 impactos en una malla');
+ assert.equal(escena.getObjectByName('Salpicaduras de lluvia').geometry.drawRange.count,1914,'La partida dibuja 319 impactos en la misma malla');
  clima.destruir();}
 // Audio simulado sólo para verificar recursos y pausas; la compilación visual se revisa en navegador.
 let creado=0;const fuentes=[];
@@ -66,7 +66,7 @@ console.log('OK: suspensión, liberación, búsqueda reversible del clima y rest
 
 // La cinemática intensifica la lluvia sin cambiar los charcos ni asignar geometrías al recorrerla.
 for(const reducido of [false,true]){
- const {escena,clima}=preparar({reducido}),base=reducido?220:440,cine=Math.round(base*1.4);
+ const {escena,clima}=preparar({reducido}),base=reducido?319:638,cine=Math.round(base*1.4);
  const lluvia=escena.getObjectByName('Lluvia ligera').geometry,salpicaduras=escena.getObjectByName('Salpicaduras de lluvia').geometry;
  const semillas=lluvia.attributes.aSemilla,agua=escena.getObjectByName('Charcos de lluvia').geometry.attributes.position;
  const charcos=agua.array.slice();
@@ -79,11 +79,11 @@ for(const reducido of [false,true]){
  clima.cinematica(null);assert.equal(clima.estado().gotas,base);assert.equal(lluvia.drawRange.count,base*2);
  assert.equal(salpicaduras.drawRange.count,Math.ceil(base/2)*6);clima.destruir();
 }
-console.log('OK: 40% más de lluvia cinematográfica, recursos reutilizados y densidad normal al salir.');
+console.log('OK: 45% más de lluvia general y cinematográfica, recursos reutilizados y densidad de partida al salir.');
 
 // El hechizo aumenta densidad y viento durante tres segundos, sin integrar por pasos.
 for(const reducido of [false,true]){
- const creadosAntes=creado,fuentesAntes=fuentes.length,{escena,clima}=preparar({reducido}),base=reducido?220:440,cine=Math.round(base*1.4),maximo=reducido?525:1050;
+ const creadosAntes=creado,fuentesAntes=fuentes.length,{escena,clima}=preparar({reducido}),base=reducido?319:638,cine=Math.round(base*1.4),maximo=reducido?761:1523;
  const lluvia=escena.getObjectByName('Lluvia ligera'),salpicaduras=escena.getObjectByName('Salpicaduras de lluvia'),u=lluvia.material.uniforms;
  const atributos=lluvia.geometry.attributes,charcos=escena.getObjectByName('Charcos de lluvia').geometry.attributes.position.array.slice();
  assert.equal(atributos.position.count,maximo*2,'La tormenta usa una reserva fija de gotas');
@@ -113,4 +113,41 @@ for(const edad of [0,3]){
  const vAntes=centro.clone().sub(antes).divideScalar(h),vDespues=despues.clone().sub(centro).divideScalar(h);
  assert(centro.distanceTo(antes)<.0003&&centro.distanceTo(despues)<.0003,'La posición no salta al comenzar o terminar el hechizo');assert(vAntes.distanceTo(vDespues)<.001,'El viento entra y sale de la rampa sin cambio brusco de velocidad');
 }
-console.log('OK: tormenta progresiva de 616→1050 gotas (308→525 reducido), viento integral continuo, tres mallas, scrub exacto y audio intacto.');
+console.log('OK: tormenta progresiva de 893→1523 gotas (447→761 reducido), viento integral continuo, tres mallas, scrub exacto y audio intacto.');
+
+// Gravedad del portal: sólo cambian uniformes; cabezas y colas usan relojes
+// absolutos separados por la exposición para seguir la curva y la expulsión.
+for(const reducido of [false,true]){
+ const {escena,clima}=preparar({reducido}),lluvia=escena.getObjectByName('Lluvia ligera'),impactos=escena.getObjectByName('Salpicaduras de lluvia'),u=lluvia.material.uniforms;
+ const atributos=lluvia.geometry.attributes,datos=Object.fromEntries(Object.entries(atributos).map(([k,a])=>[k,a.array.slice()])),centro=[2,8,-10],soltar=1.316,foco={x:2,z:-4};
+ assert.equal(impactos.material.uniforms.uFuerzaPortal,u.uFuerzaPortal,'La lluvia y sus impactos comparten el mismo estado de gravedad');
+ assert(lluvia.material.vertexShader.includes('gravedadDePortal(base,mix(uFuerzaPortal.xy,uFuerzaPortal.zw,aExtremo))'),'Ambos extremos se deforman con sus fuerzas temporales');
+ assert(lluvia.material.vertexShader.includes('libreHastaCielo(p,max(.025,y),rapidez)'),'Se conserva la exclusión de gotas cuya caída atraviesa un refugio');
+ assert(lluvia.material.fragmentShader.includes('vMundo.y<=texture2D(uTechos'),'Las gotas desplazadas tampoco se dibujan dentro de un tejado');
+ assert.equal(u.uTechos.value.image.data[Math.round((5+120)/240*256)*256+Math.round((5+120)/240*256)],6,'El campo de refugios conserva la altura del edificio');
+ const foto=()=>JSON.stringify({fuerzas:u.uFuerzaPortal.value.toArray(),centro:u.uCentroPortal.value.toArray(),deriva:u.uDeriva.value.toArray(),cola:u.uCola.value.toArray(),estado:clima.estado().portal});
+ const situar=edad=>clima.cinematica(10+edad,foco,{edadHechizo:edad-1.4,portal:{centro,edad,soltar}}),fotos=new Map();
+ for(const edad of [0,.15,.5,1,soltar,1.4,1.5,1.65,1.9,2.05,2.1]){situar(edad);fotos.set(edad,foto());}
+ situar(.15);assert(u.uFuerzaPortal.value.x>0&&u.uFuerzaPortal.value.x<.02,'La lluvia ofrece resistencia al principio');
+ situar(soltar);assert.equal(u.uFuerzaPortal.value.x,1,'La atracción culmina al completarse el mago');assert.equal(u.uFuerzaPortal.value.y,0,'La expulsión no anticipa la aparición');
+ const antes=u.uFuerzaPortal.value.clone();situar(soltar+1e-6);assert(u.uFuerzaPortal.value.clone().sub(antes).length()<.0001,'La liberación empieza sin salto de posición');
+ situar(soltar+.1);assert(u.uFuerzaPortal.value.y>.45,'El golpe radial domina inmediatamente después de soltar');
+ situar(2.1);assert.deepEqual(Array.from(u.uFuerzaPortal.value.toArray()),[0,0,0,0],'Cabeza y cola recuperan lluvia normal después del impulso');
+ const comunes=new Map();for(const fps of [30,60,120]){
+  let anterior=0,pico=0;for(let i=0;i<=fps*2.2;i++){
+   const edad=i/fps;situar(edad);const fuerzas=u.uFuerzaPortal.value.clone();assert(fuerzas.toArray().every(Number.isFinite));
+   if(edad<=soltar){assert(fuerzas.x>=anterior,'La lluvia cede progresivamente durante la reunión');assert.equal(fuerzas.y,0);anterior=fuerzas.x;}pico=Math.max(pico,fuerzas.y);
+   if(edad>=.028){situar(edad-.028);assert(Math.abs(u.uFuerzaPortal.value.x-fuerzas.z)<1e-12);assert(Math.abs(u.uFuerzaPortal.value.y-fuerzas.w)<1e-12,'La cola coincide con la posición de esa gota 28 ms antes');}
+   if(i%(fps/30)===0){const clave=Math.round(edad*30),valor=JSON.stringify(fuerzas.toArray());if(comunes.has(clave))assert.equal(valor,comunes.get(clave),'La gravedad no depende de FPS');else comunes.set(clave,valor);}
+  }assert(pico>.45);
+ }
+ clima.pausar(true);for(const edad of [2.1,.15,1.65,0,soltar,1.4,.5,1.9,2.05,1.5,1]){situar(edad);assert.equal(foto(),fotos.get(edad),'El editor restaura exactamente portal, lluvia y viento al buscar cualquier cuadro');}
+ const datosExternos={centro:[2,8,-10],edad:.5,soltar};clima.cinematica(10.5,foco,{portal:datosExternos});datosExternos.centro[0]=999;assert.equal(clima.estado().portal.centro[0],2,'No retiene el array mutable del llamador');const estadoExterno=clima.estado();estadoExterno.portal.centro[0]=999;assert.equal(clima.estado().portal.centro[0],2,'Consultar estado no permite modificar el portal');
+ clima.cinematica(0,foco,{portal:{centro,edad:1,soltar}});assert.equal(clima.estado().portal,null);assert.deepEqual(Array.from(u.uFuerzaPortal.value.toArray()),[0,0,0,0],'La lluvia congelada antes del golpe ignora la gravedad');
+ situar(.8);clima.cinematica(10.8,foco);assert.equal(clima.estado().portal,null);assert.deepEqual(Array.from(u.uFuerzaPortal.value.toArray()),[0,0,0,0],'Omitir portal restaura la caída normal');
+ situar(.8);clima.cinematica(null,foco,{portal:{centro,edad:1,soltar}});assert.equal(clima.estado().portal,null);assert.deepEqual(Array.from(u.uFuerzaPortal.value.toArray()),[0,0,0,0],'Cancelar la cinemática elimina la atracción');assert.deepEqual(Array.from(u.uCentroPortal.value.toArray()),[0,0,0]);
+ clima.cinematica(10,foco,{portal:{centro:[NaN,8,0],edad:1}});assert.equal(clima.estado().portal,null,'Datos incompletos no contaminan los shaders');
+ assert.equal(escena.children.length,3);assert.equal(lluvia.geometry.attributes,atributos);for(const [nombre,a]of Object.entries(atributos)){assert.deepEqual(a.array,datos[nombre],'No simula ni actualiza posiciones de gotas en CPU');assert.equal(a.version,0);}
+ assert(atributos.position.count<=(reducido?1600:3200),'La reserva completa queda acotada en ambos niveles de calidad');clima.destruir();
+}
+console.log('OK: lluvia del portal resistente, expulsión radial, colas coherentes, refugios conservados, 30/60/120 FPS, búsqueda exacta y restauración; tres mallas sin partículas CPU.');

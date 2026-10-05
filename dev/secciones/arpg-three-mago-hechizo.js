@@ -26,7 +26,7 @@
     const nubesCantidad=reducido?24:42,geoNubes=new T.PlaneGeometry(1,1),semillas=new Float32Array(nubesCantidad),densidades=new Float32Array(nubesCantidad);
     for(let i=0;i<nubesCantidad;i++){semillas[i]=azar(i+831)*41;densidades[i]=.57+azar(i+718)*.25;}
     geoNubes.setAttribute('aSemilla',new T.InstancedBufferAttribute(semillas,1));geoNubes.setAttribute('aDensidad',new T.InstancedBufferAttribute(densidades,1));
-    const uniformes={uTiempo:{value:0},uPresencia:{value:0},uNoche:{value:0},uCulminacion:{value:0},uRayos:{value:Array.from({length:8},()=>new T.Vector4())},uMeteorito:{value:new T.Vector4()},uEdadMeteorito:{value:0}};
+    const uniformes={uTiempo:{value:0},uPresencia:{value:0},uNoche:{value:0},uCulminacion:{value:0},uResplandor:{value:0},uRayos:{value:Array.from({length:8},()=>new T.Vector4())},uMeteorito:{value:new T.Vector4()},uEdadMeteorito:{value:0}};
     const matNubes=new T.ShaderMaterial({transparent:true,depthWrite:false,toneMapped:false,side:T.DoubleSide,uniforms:uniformes,
       vertexShader:`attribute float aSemilla;attribute float aDensidad;
         varying vec2 vUv;varying vec3 vMundo;varying float vSemilla;varying float vDensidad;
@@ -43,7 +43,7 @@
           gl_Position=projectionMatrix*viewMatrix*vec4(mundo,1.);
         }`,
       fragmentShader:`varying vec2 vUv;varying vec3 vMundo;varying float vSemilla;varying float vDensidad;
-        uniform float uTiempo;uniform float uPresencia;uniform float uNoche;uniform float uCulminacion;uniform vec4 uRayos[8];uniform vec4 uMeteorito;uniform float uEdadMeteorito;
+        uniform float uTiempo;uniform float uPresencia;uniform float uNoche;uniform float uCulminacion;uniform float uResplandor;uniform vec4 uRayos[8];uniform vec4 uMeteorito;uniform float uEdadMeteorito;
         float hashNube(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
         float ruidoNube(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hashNube(i),hashNube(i+vec2(1.,0.)),f.x),mix(hashNube(i+vec2(0.,1.)),hashNube(i+vec2(1.,1.)),f.x),f.y);}
         float vapor(vec2 p){return ruidoNube(p)*.57+ruidoNube(p*2.07+vec2(13.1,7.7))*.28+ruidoNube(p*4.13+vec2(7.4,17.9))*.15;}
@@ -58,7 +58,7 @@
           float hueco=(1.-smoothstep(1.8,6.8,distancia))*uMeteorito.w;
           vec3 color=mix(vec3(.028,.039,.049),vec3(.017,.024,.033),uNoche)*(0.7+n*.9);
           color+=vec3(.026,.27,.09)*min(3.2,luz)*(.55+n*.75);
-          color+=vec3(.03,.13,.058)*uCulminacion*(.5+n);
+          color+=vec3(.03,.13,.058)*max(uCulminacion,uResplandor)*(.5+n);
           color+=vec3(.065,.55,.18)*meteoro*(.75+.25*sin(uEdadMeteorito*7.));
           alpha*=1.-hueco*.86;if(alpha<.003)discard;
           gl_FragColor=vec4(color,alpha);
@@ -66,7 +66,7 @@
         }`});
     const nubes=new T.InstancedMesh(geoNubes,matNubes,nubesCantidad);nubes.name='Mago · nubes lejanas y paso del meteorito';nubes.count=0;nubes.visible=false;nubes.frustumCulled=false;nubes.castShadow=nubes.receiveShadow=false;nubes.renderOrder=-1;grupo.add(nubes);
     const origen=new V(),frente=new V(),lado=new V(),a=new V(),b=new V(),eje=new V(),medio=new V(),ejeY=new V(0,1,0),objeto=new T.Object3D(),inversa=new T.Matrix4(),giro=new T.Quaternion(),desdeCielo=new V(),impacto=new V(),manoInicio=new V(),manoDestino=new V(),puntoMano=new V(),verdeCielo=new T.Color(.045,.14,.079);
-    const rayos=[];let base=null,preparado=false,estado={t:-1,duracion:3,progreso:0,pulso:0,oscuridad:0,activo:false};
+    const rayos=[];let base=null,preparado=false,estado={t:-1,duracion:3,progreso:0,pulso:0,pulsoFinal:0,resplandorFinal:0,oscuridad:0,activo:false};
     function ambiente(){return {fondo:escena.background?.isColor?escena.background.toArray():null,niebla:escena.fog?.color?.toArray()||null,luces:luces.map(l=>l.intensity)};}
     function ponerAmbiente(datos){if(!datos)return;if(datos.fondo&&escena.background?.isColor)escena.background.fromArray(datos.fondo);if(datos.niebla&&escena.fog?.color)escena.fog.color.fromArray(datos.niebla);luces.forEach((l,i)=>{if(Number.isFinite(datos.luces[i]))l.intensity=datos.luces[i];});}
     function preparar(opciones={}){
@@ -120,7 +120,7 @@
       if(!base)return;const f=1-estado.oscuridad*.64;
       if(base.fondo&&escena.background?.isColor)escena.background.fromArray(base.fondo).multiplyScalar(f);
       if(base.niebla&&escena.fog?.color)escena.fog.color.fromArray(base.niebla).multiplyScalar(f);
-      if(estado.pulsoFinal){if(base.fondo&&escena.background?.isColor)escena.background.lerp(verdeCielo,estado.pulsoFinal*.36);if(base.niebla&&escena.fog?.color)escena.fog.color.lerp(verdeCielo,estado.pulsoFinal*.18);}
+      if(estado.resplandorFinal){if(base.fondo&&escena.background?.isColor)escena.background.lerp(verdeCielo,estado.resplandorFinal*.36);if(base.niebla&&escena.fog?.color)escena.fog.color.lerp(verdeCielo,estado.resplandorFinal*.18);}
       // El hemisferio conserva detalle en la cara y los brazos, incluso cuando
       // el fondo se oscurece. Los rayos no producen flashes a pantalla completa.
       luces.forEach((l,i)=>l.intensity=base.luces[i]*(1-estado.oscuridad*(l.isDirectionalLight?.22:.18)+(estado.pulsoFinal||0)*(l.isDirectionalLight?.22:.30)));
@@ -129,11 +129,14 @@
       if(!Number.isFinite(t)||t<0){restaurar();return {...estado};}preparar();
       const segundos=Math.max(.001,duracion),tiempo=t/segundos*3;
       const pulsoFinal=manos.length===2?suave((tiempo-2.55)/.06)*(1-suave((tiempo-2.88)/.12)):0;
-      estado={t,duracion:segundos,progreso:lim(t/segundos),pulso:0,pulsoFinal,rayosManos:0,primerSegmentoManos:0,oscuridad:suave(t/Math.min(1.45,segundos*.7)),activo:t<segundos};
+      // La luz queda en el cielo después de extinguir las descargas: atraviesa
+      // la pausa y el comienzo del paneo sin volver a encender geometría de rayos.
+      const resplandorFinal=manos.length===2?suave((tiempo-2.55)/.06)*(1-suave((tiempo-3.65)/1)):0;
+      estado={t,duracion:segundos,progreso:lim(t/segundos),pulso:0,pulsoFinal,resplandorFinal,rayosManos:0,primerSegmentoManos:0,oscuridad:suave(t/Math.min(1.45,segundos*.7)),activo:t<segundos};
       pintarAmbiente();grupo.updateWorldMatrix(true,false);inversa.copy(grupo.matrixWorld).invert();let cuenta=0;
-      uniformes.uTiempo.value=t;uniformes.uPresencia.value=suave(t/.75);uniformes.uNoche.value=estado.oscuridad;uniformes.uCulminacion.value=pulsoFinal;uniformes.uEdadMeteorito.value=edadMeteorito;
+      uniformes.uTiempo.value=t;uniformes.uPresencia.value=suave(t/.75);uniformes.uNoche.value=estado.oscuridad;uniformes.uCulminacion.value=pulsoFinal;uniformes.uResplandor.value=resplandorFinal;uniformes.uEdadMeteorito.value=edadMeteorito;
       if(meteorito)uniformes.uMeteorito.value.set(meteorito.x,meteorito.y,meteorito.z,1);else uniformes.uMeteorito.value.set(0,0,0,0);
-      nubes.visible=uniformes.uPresencia.value>0;for(const v of uniformes.uRayos.value)v.w=0;
+      nubes.visible=uniformes.uPresencia.value>0;for(const v of uniformes.uRayos.value)v.set(0,0,0,0);
       for(let ir=0;ir<rayos.length;ir++){const r=rayos[ir];
         const edad=tiempo-r.cuando;if(edad<0||edad>=r.duracion||t>=segundos)continue;
         const ataque=Math.min(.016,r.duracion*.18),meseta=r.duracion*.23,pulso=suave(edad/ataque)*(1-suave((edad-meseta)/(r.duracion-meseta))),descenso=suave(edad/Math.min(.105,r.duracion*.42));estado.pulso=Math.max(estado.pulso,pulso);
@@ -169,13 +172,13 @@
       return {...estado};
     }
     function restaurar(){
-      if(preparado)ponerAmbiente(base);preparado=false;base=null;estado={t:-1,duracion:3,progreso:0,pulso:0,oscuridad:0,activo:false};
+      if(preparado)ponerAmbiente(base);preparado=false;base=null;estado={t:-1,duracion:3,progreso:0,pulso:0,pulsoFinal:0,resplandorFinal:0,oscuridad:0,activo:false};
       for(const m of [nucleo,contorno,nubes]){m.count=0;m.visible=false;}
-      uniformes.uTiempo.value=uniformes.uPresencia.value=uniformes.uNoche.value=uniformes.uEdadMeteorito.value=uniformes.uCulminacion.value=0;for(const v of uniformes.uRayos.value)v.set(0,0,0,0);uniformes.uMeteorito.value.set(0,0,0,0);
+      uniformes.uTiempo.value=uniformes.uPresencia.value=uniformes.uNoche.value=uniformes.uEdadMeteorito.value=uniformes.uCulminacion.value=uniformes.uResplandor.value=0;for(const v of uniformes.uRayos.value)v.set(0,0,0,0);uniformes.uMeteorito.value.set(0,0,0,0);
     }
-    function capturar(){return {estado:{...estado},preparado,base:base?{fondo:base.fondo?.slice()||null,niebla:base.niebla?.slice()||null,luces:base.luces.slice()}:null,ambiente:ambiente(),uniformes:{tiempo:uniformes.uTiempo.value,presencia:uniformes.uPresencia.value,noche:uniformes.uNoche.value,culminacion:uniformes.uCulminacion.value,rayos:uniformes.uRayos.value.map(v=>v.toArray()),meteorito:uniformes.uMeteorito.value.toArray(),edadMeteorito:uniformes.uEdadMeteorito.value}};}
+    function capturar(){return {estado:{...estado},preparado,base:base?{fondo:base.fondo?.slice()||null,niebla:base.niebla?.slice()||null,luces:base.luces.slice()}:null,ambiente:ambiente(),uniformes:{tiempo:uniformes.uTiempo.value,presencia:uniformes.uPresencia.value,noche:uniformes.uNoche.value,culminacion:uniformes.uCulminacion.value,resplandor:uniformes.uResplandor.value,rayos:uniformes.uRayos.value.map(v=>v.toArray()),meteorito:uniformes.uMeteorito.value.toArray(),edadMeteorito:uniformes.uEdadMeteorito.value}};}
     function mostrar(cuadro){if(!cuadro)return;estado={...cuadro.estado};preparado=cuadro.preparado;base=cuadro.base?{fondo:cuadro.base.fondo?.slice()||null,niebla:cuadro.base.niebla?.slice()||null,luces:cuadro.base.luces.slice()}:null;ponerAmbiente(cuadro.ambiente);
-      const u=cuadro.uniformes;if(u){uniformes.uTiempo.value=u.tiempo;uniformes.uPresencia.value=u.presencia;uniformes.uNoche.value=u.noche;uniformes.uCulminacion.value=u.culminacion||0;u.rayos.forEach((v,i)=>uniformes.uRayos.value[i].fromArray(v));uniformes.uMeteorito.value.fromArray(u.meteorito);uniformes.uEdadMeteorito.value=u.edadMeteorito;}
+      const u=cuadro.uniformes;if(u){uniformes.uTiempo.value=u.tiempo;uniformes.uPresencia.value=u.presencia;uniformes.uNoche.value=u.noche;uniformes.uCulminacion.value=u.culminacion||0;uniformes.uResplandor.value=u.resplandor||0;u.rayos.forEach((v,i)=>uniformes.uRayos.value[i].fromArray(v));uniformes.uMeteorito.value.fromArray(u.meteorito);uniformes.uEdadMeteorito.value=u.edadMeteorito;}
     }
     return {preparar,actualizar,restaurar,capturar,mostrar,nucleo,contorno,nubes,get estado(){return {...estado};}};
   }
