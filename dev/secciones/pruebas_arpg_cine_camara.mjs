@@ -14,17 +14,17 @@ assert.equal(C.muestra(a,2-1e-10).pos[0],10,'El error de suma del reloj no retra
 a[0].curva='suave';assert(C.muestra(a,.5).pos[0]<2.5);assert(C.muestra(a,1.5).pos[0]>7.5);
 a[1].rot=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),Math.PI).toArray();const m=C.muestra(a,1);assert(Math.abs(new T.Quaternion().fromArray(m.rot).length()-1)<1e-10);C.aplicar(camara,m);assert.equal(camara.position.x,5);assert.equal(camara.fov,42);
 for(const fps of [30,60,120]){for(let i=0;i<=fps*2;i++){const t=i/fps,r=C.muestra(a,t);assert(r.pos.every(Number.isFinite));assert(r.fov>=22&&r.fov<=62);}assert.equal(C.muestra(a,2).pos[0],10);}
-for(const alterar of [x=>x.version=11,x=>x.revision='otra',x=>x.planos.salida.claves[0].pos=[NaN,0,0],x=>x.planos.salida.claves[0].fov=0,x=>x.planos.salida.claves[0].rot=[0,0,0,0],x=>x.planos.salida.claves[0].t=-1,x=>x.planos.salida.claves.push(k(0,4)),x=>x.planos.inventado={vista:'externa',claves:[]}]){const malo=JSON.parse(JSON.stringify(v));alterar(malo);assert.throws(()=>M.validar(malo));}
+for(const alterar of [x=>x.version=12,x=>x.revision='otra',x=>x.planos.salida.claves[0].pos=[NaN,0,0],x=>x.planos.salida.claves[0].fov=0,x=>x.planos.salida.claves[0].rot=[0,0,0,0],x=>x.planos.salida.claves[0].t=-1,x=>x.planos.salida.claves.push(k(0,4)),x=>x.planos.inventado={vista:'externa',claves:[]}]){const malo=JSON.parse(JSON.stringify(v));alterar(malo);assert.throws(()=>M.validar(malo));}
 const vuelta=M.validar(JSON.parse(JSON.stringify(v)));assert.equal(vuelta.planos.salida.claves.length,2);assert(!vuelta.planos.vertigo,'Un plano sin edición conserva su cámara del guion');
 console.log('✓ Tomas de cámara: posiciones, focal, rotación normalizada, interpolaciones, cortes exactos, 30/60/120 FPS e importación validada.');
 
 // Diez planos estables; el giro se inicia únicamente tras el corte al POV.
-assert.equal(M.planos.length,10);assert.equal(M.VERSION,10);
+assert.equal(M.planos.length,10);assert.equal(M.VERSION,11);
 assert.equal(M.planoDeFase('ataquePOV'),'carrera');assert.equal(M.planoDeFase('desaparece'),'tropezar');
 for(const f of ['tropezar','buscar','levantarse'])assert.equal(M.planoDeFase(f),'tropezar');
 assert.equal(M.planoDeFase('voltear'),'techo');assert.equal(M.planoDeFase('voltear',6),'tropezar');
 assert(M.fases.indexOf('levantarse')<M.fases.indexOf('tropezar'));
-const duracion={salida:1,descubrir:3.4,vertigo:1,pies:79/60,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.3,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3,cielo:1.7,caida:1,impacto:1,negro:1};
+const duracion={salida:3.6,descubrir:3.4,vertigo:1,pies:79/60,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.3,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3,cielo:1.7,caida:1,impacto:1,negro:1};
 const antes={ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7};
 const montaje7={ataquePOV:.48,desaparece:.42,levantarse:.52,tropezar:1,buscar:1.85,voltear:1.6,techo:1.3,cielo:1.7};
 const montaje8={ataquePOV:.96,desaparece:.08,levantarse:.16,tropezar:.74,buscar:1.2,voltear:2.6,techo:1.4,cielo:1.7};
@@ -40,6 +40,7 @@ for(const accion of M.fases){
  total+=Math.ceil(duracion[accion]*60)/60;
 }
 function relojAnterior(version,f){
+ if(f.accion==='salida')return Math.max(0,f.tAccion-1);
  if(f.accion==='descubrir')return f.tAccion*2.4/3.4;
  const duracionPrevia=version>=8?montaje8:version===7?montaje7:antes,orden=version>=7?M.fases.filter(f=>f!=='hechizo'):ordenAnterior;
  const id=M.planoDeFase(f.accion,version),acciones=orden.filter(a=>M.planoDeFase(a,version)===id),e=f.estado;
@@ -58,7 +59,7 @@ for(const version of [1,2,3,4,5,6,7,8]){
   if(accion==='pies'&&version<5)continue;const id=M.planoDeFase(accion,version);if(antigua.planos[id])continue;
   antigua.planos[id]={vista:i%2?'externa':'original',claves:[k(0,i*100,42,'suave'),k(8,i*100+80)]};
  }
- const intacta=JSON.stringify(antigua);M.validar(antigua);const agrupada=C.agrupar(antigua,cuadros);assert.equal(agrupada.version,10);
+ const intacta=JSON.stringify(antigua);M.validar(antigua);const agrupada=C.agrupar(antigua,cuadros);assert.equal(agrupada.version,11);
  assert.equal(JSON.stringify(antigua),intacta,'La migración nunca modifica el documento original');
  for(const f of cuadros){
   const runtime=C.tomaEn(antigua,f.estado),convertida=C.tomaEn(agrupada,f.estado);
@@ -67,7 +68,7 @@ for(const version of [1,2,3,4,5,6,7,8]){
   if(!esperado){assert.equal(runtime.camara,null);assert.equal(convertida.camara,null);assert.equal(runtime.vista,convertida.vista,'El hold y las fases nativas conservan la vista entre runtime y editor');}
   else {assert(Math.abs(convertida.camara.pos[0]-esperado.pos[0])<1e-8,`La migración v${version} conserva el encuadre en ${f.accion} ${f.tAccion}`);assert(Math.abs(runtime.camara.pos[0]-convertida.camara.pos[0])<1e-8,'El juego y el editor evalúan el mismo montaje antiguo');}
  }
- assert.equal(JSON.stringify(agrupada.planos.salida),JSON.stringify(antigua.planos.salida),'Las pistas que no cambian conservan sus keyframes originales');
+ assert.equal(JSON.stringify(agrupada.planos.salida.claves.map(k=>({...k,t:k.t-1}))),JSON.stringify(antigua.planos.salida.claves),'El segundo de patada se antepone sin alterar el recorrido de cámara');
  if(version>=4){
   assert.equal(agrupada.planos.tropezar.claves.length,antigua.planos.tropezar.claves.length,'El plano 06 conserva todas las claves, incluso fuera del intervalo visible');
   assert.equal(agrupada.planos.tropezar.claves[0].curva,'suave');
@@ -130,8 +131,9 @@ const manual9={...M.nueva(),version:9,nombre:'Encuadres conservados',planos:{
  caida:{vista:'externa',claves:[k(0,211)]}
 }};
 const antes9=JSON.stringify(manual9),manual10=C.agrupar(M.validar(manual9),cuadros);
-assert.equal(JSON.stringify(manual9),antes9);assert.equal(manual10.version,10);assert.equal(C.agrupar(manual10,cuadros),manual10,'No se vuelve a estirar una toma v10');
+assert.equal(JSON.stringify(manual9),antes9);assert.equal(manual10.version,11);assert.equal(C.agrupar(manual10,cuadros),manual10,'No se vuelve a estirar una toma v10');
 for(const [id,p]of Object.entries(manual9.planos)){
+ if(id==='salida'){assert.equal(JSON.stringify(manual10.planos[id].claves.map(k=>({...k,t:k.t-1}))),JSON.stringify(p.claves));continue;}
  if(id!=='descubrir'){assert.deepEqual(JSON.parse(JSON.stringify(manual10.planos[id])),JSON.parse(JSON.stringify(p)),'La migración deja intacta toda la pista '+id);continue;}
  assert.equal(manual10.planos[id].claves.length,p.claves.length);
  p.claves.forEach((clave,i)=>{const convertida=manual10.planos[id].claves[i];assert(Math.abs(convertida.t-clave.t*3.4/2.4)<1e-12);assert.equal(JSON.stringify({...convertida,t:clave.t}),JSON.stringify(clave),'Se conservan posición, giro, focal, distancia y curva');});
@@ -152,3 +154,17 @@ assert.equal(C.tomaEn(manual10,{fase:'hechizo',t:0,tPlano:6}).camara.pos[0],180,
 const extremos9={...M.nueva(),version:9,planos:{descubrir:{vista:'original',claves:[k(0,1),k(120,2)],nativasHasta:{descubrir:60}}}};
 const extremos10=C.agrupar(M.validar(extremos9),cuadros);assert.equal(extremos10.planos.descubrir.claves.length,2);assert(Math.abs(extremos10.planos.descubrir.claves[1].t-170)<1e-10);M.validar(extremos10);
 console.log('✓ v9→v10: sólo paneo 2.4→3.4 s; encuadres, easing, cortes, intervalos nativos, hold/hechizo editados y demás pistas intactos.');
+
+// Las tomas v10 reciben sólo el segundo previo a la salida; las otras nueve pistas son idénticas.
+const manualV10={...manual9,version:10,planos:JSON.parse(JSON.stringify(manual9.planos))};
+manualV10.planos.salida.nativasHasta={salida:.25};
+const copiaV10=JSON.stringify(manualV10),manualV11=C.agrupar(M.validar(manualV10),cuadros);
+assert.equal(JSON.stringify(manualV10),copiaV10);assert.equal(manualV11.version,11);
+assert.equal(manualV11.planos.salida.nativasHasta.salida,1.25);
+for(const [id,p] of Object.entries(manualV10.planos))if(id!=='salida')assert.deepEqual(JSON.parse(JSON.stringify(manualV11.planos[id])),JSON.parse(JSON.stringify(p)));
+for(const fps of [30,60,120])for(let i=0;i<3.6*fps;i++){
+ const t=i/fps,estado={fase:'salida',t,tPlano:t};
+ assert.equal(JSON.stringify(C.tomaEn(manualV10,estado)),JSON.stringify(C.tomaEn(manualV11,estado)));
+}
+assert.equal(C.agrupar(manualV11,cuadros),manualV11,'Reabrir no vuelve a desplazar la salida');
+console.log('✓ v10→v11: patada de un segundo antes de la salida, cámaras, curvas y resto del montaje conservados.');

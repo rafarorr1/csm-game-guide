@@ -4,9 +4,9 @@
 (function(){
   // El corte conserva el impulso del slide. La incorporación arma el giro;
   // la búsqueda del tejado comienza desde los ojos, después de mirar a los lados.
-  const RECORTE_PIES=11/60,DURACION_PIES_ORIGINAL=1.5,DURACION_SLIDE=.90,GOLPE_MAGO=1.36,ESPERA_PARTICULAS=2,REACCION_PARTICULAS=.5,VIAJE_PARTICULAS=2.6;
-  const DURACIONES=Object.freeze({salida:2.6,descubrir:3.4,vertigo:2.8,pies:DURACION_PIES_ORIGINAL-RECORTE_PIES,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.20,voltear:ESPERA_PARTICULAS+VIAJE_PARTICULAS,techo:1.4,hechizo:3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
-  function fabrica(T,MOD,{escena,camara,casas,entorno=null,impactar,interfaz,piso=()=>null,reducido=false,planoDeFase=f=>f,ambienteLluvia=()=>{}}){
+  const ANTICIPO_PUERTA=1,RECORTE_PIES=11/60,DURACION_PIES_ORIGINAL=1.5,DURACION_SLIDE=.90,GOLPE_MAGO=1.36,ESPERA_PARTICULAS=2,REACCION_PARTICULAS=.5,VIAJE_PARTICULAS=2.6;
+  const DURACIONES=Object.freeze({salida:2.6+ANTICIPO_PUERTA,descubrir:3.4,vertigo:2.8,pies:DURACION_PIES_ORIGINAL-RECORTE_PIES,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.20,voltear:ESPERA_PARTICULAS+VIAJE_PARTICULAS,techo:1.4,hechizo:3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
+  function fabrica(T,MOD,{escena,camara,casas,entorno=null,puertaSalida=null,impactar,interfaz,piso=()=>null,reducido=false,planoDeFase=f=>f,ambienteLluvia=()=>{}}){
     const V=T.Vector3,TAU=Math.PI*2,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const actuacion=window.CAOZ_ARPG_ADREIDA_CINE.fabrica(T,MOD),POV=['carrera','ataquePOV','voltear','techo','hechizo','cielo'],POV_BRAZOS=['carrera','ataquePOV'];
     const centro=new V(0,0,0),destino=new V(0,0,3.5),techo=new V(),cielo=new V(),desdeCamara=new V(),giroPaneo=new T.Quaternion(),finPaneo=new T.Quaternion(),objeto=new T.Object3D(),raizSalida=new V(),ejeSalida=new V(0,1,0);
@@ -122,8 +122,8 @@
       for(const x of [-.08,.08])pieza(new T.SphereGeometry(.024,6,5),magia,[x,1.79,.404]);
       pieza(new T.TorusGeometry(.235,.042,6,20),borde,[0,1.76,.39]).scale.set(.92,1.18,1);
       pieza(new T.CylinderGeometry(.29,.34,.12,12),borde,[0,1.2,0]);
-      const brazos=[];
-      for(const lado of [-1,1]){const b=new T.Group();b.position.set(lado*.29,1.44,0);mago.add(b);b.rotation.z=lado*.24;brazos.push(b);pieza(new T.CylinderGeometry(.16,.24,.68,10),tela,[0,-.28,0],b);pieza(new T.TorusGeometry(.23,.027,5,12),borde,[0,-.61,0],b).rotation.x=Math.PI/2;pieza(new T.SphereGeometry(.1,8,6),piel,[0,-.72,.015],b);}
+      const brazos=[],manos=[];
+      for(const lado of [-1,1]){const b=new T.Group();b.position.set(lado*.29,1.44,0);mago.add(b);b.rotation.z=lado*.24;brazos.push(b);pieza(new T.CylinderGeometry(.16,.24,.68,10),tela,[0,-.28,0],b);pieza(new T.TorusGeometry(.23,.027,5,12),borde,[0,-.61,0],b).rotation.x=Math.PI/2;manos.push(pieza(new T.SphereGeometry(.1,8,6),piel,[0,-.72,.015],b));}
       const baston=new T.Group();baston.position.set(-.63,.02,.08);mago.add(baston);pieza(new T.CylinderGeometry(.033,.055,2.1,8),borde,[0,1.05,0],baston);pieza(new T.TorusGeometry(.16,.028,6,16),borde,[0,2.23,0],baston);pieza(new T.OctahedronGeometry(.115),magia,[0,2.23,0],baston);
       const sello=new T.Mesh(new T.RingGeometry(.62,.69,48).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0x50c67f,transparent:true,opacity:.3,depthWrite:false,side:T.DoubleSide}));sello.position.y=.055;grupo.add(sello);
       const orbita=new T.Mesh(new T.TorusGeometry(.48,.025,5,32),magia);orbita.visible=false;grupo.add(orbita);
@@ -135,8 +135,8 @@
         const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p,3));g.setIndex(idx);aura.add(new T.Mesh(g,auraMat));
       }
       const motas=new T.InstancedMesh(new T.OctahedronGeometry(.032),magia,28);motas.frustumCulled=false;aura.add(motas);
-      const particulasMago=window.CAOZ_ARPG_MAGO_PARTICULAS.fabrica(T,{grupo,mago,reducido});
-      const hechizoMago=window.CAOZ_ARPG_MAGO_HECHIZO.fabrica(T,{grupo,escena,mago,reducido});
+      const particulasMago=window.CAOZ_ARPG_MAGO_PARTICULAS.fabrica(T,{grupo,mago,materia:casas,reducido});
+      const hechizoMago=window.CAOZ_ARPG_MAGO_HECHIZO.fabrica(T,{grupo,escena,mago,manos,reducido});
       const meteorito=new T.Group();meteorito.name='Meteorito';grupo.add(meteorito);
       const rocaGeo=new T.DodecahedronGeometry(2.15,2),rp=rocaGeo.attributes.position;
       for(let i=0;i<rp.count;i++){const x=rp.getX(i),y=rp.getY(i),z=rp.getZ(i),r=1+.1*Math.sin(x*3.7+y*2.1)*Math.cos(z*4.3)+.06*Math.sin(y*8+z*2);rp.setXYZ(i,x*r,y*r,z*r);}rocaGeo.computeVertexNormals();
@@ -208,14 +208,17 @@
       if(!actor){const m=MOD.crear('adreida');escena.add(m.raiz);actor={tipo:'adreida',m,pos:new V(),radio:m.radio,dir:0,fase:0,vivo:true};prestado=true;}
       visitadas=jugadores.map(h=>({h,visible:h.m.raiz.visible,mallas:h.m.mallas.map(m=>m.visible),pos:h.pos.clone(),dir:h.dir,raiz:h.m.raiz.position.clone(),giro:h.m.raiz.quaternion.clone(),pose:actuacion.capturar(h.m)}));for(const x of visitadas)x.h.m.raiz.visible=x.h===actor;
       const fuera=normal?.clone()||centro.clone().sub(puerta||new V(10,0,10)).normalize(),salida=puerta?.clone()||new V(10,0,10);
+      // La patada nace dentro de la casa. Se traslada también el final de la
+      // caminata para conservar sus pasos y no arrastrar las botas al salir.
+      const retrocesoPuerta=.45+window.CAOZ_ADREIDA_CINE_CLIPS.patadaPuerta.golpe.contactoPie[2];salida.addScaledVector(fuera,-retrocesoPuerta);
       const avance=centro.clone().sub(salida).setY(0).normalize();destino.copy(centro).addScaledVector(avance,-3.5);prepararTecho(salida,avance);
-      actor.pos.copy(umbral||salida.clone().addScaledVector(fuera,-1.8));actor.dir=Math.atan2(fuera.x,fuera.z);actor.giro180=null;actor.alto=0;
-      s={actor,prestado,inicios:{},lluviaLiberada:false,golpeMago:null,tLluvia:0,duracionCarreraAnterior:Math.ceil(Math.min(12,salida.distanceTo(destino)/5.8)*60-1e-8)/60,fase:'salida',t:0,total:0,impactado:false,origen:actor.pos.clone(),salida,inicioCarrera:salida.clone(),fuera,avance,remate:centro.clone().addScaledVector(avance,-1.18),tropiezo:centro.clone().addScaledVector(avance,.8),casaDolly:-1,dollyPreparado:false,mallas:actor.m.mallas.map(m=>m.visible)};nodosCine=null;
+      actor.pos.copy(umbral?umbral.clone().addScaledVector(fuera,-retrocesoPuerta):salida.clone().addScaledVector(fuera,-1.8));actor.dir=Math.atan2(fuera.x,fuera.z);actor.giro180=null;actor.alto=0;
+      s={actor,prestado,puertaInicial:puertaSalida?.rotation.y,inicios:{},lluviaLiberada:false,golpeMago:null,tLluvia:0,duracionCarreraAnterior:Math.ceil(Math.min(12,salida.distanceTo(destino)/5.8)*60-1e-8)/60,fase:'salida',t:0,total:0,impactado:false,origen:actor.pos.clone(),salida,inicioCarrera:salida.clone(),fuera,avance,remate:centro.clone().addScaledVector(avance,-1.18),tropiezo:centro.clone().addScaledVector(avance,.8),casaDolly:-1,dollyPreparado:false,mallas:actor.m.mallas.map(m=>m.visible)};nodosCine=null;
       recursos.particulasMago.restaurar();recursos.hechizoMago.restaurar();recursos.aura.visible=true;recursos.luzMago.intensity=5;recursos.grupo.visible=true;recursos.mago.visible=recursos.sello.visible=false;recursos.meteorito.visible=recursos.onda.visible=recursos.frenteOnda.visible=recursos.losasPiso.visible=false;recursos.fragmentos.count=recursos.humo.count=0;recursos.luz.intensity=0;tiempoPiso.value=-1;centroOnda.value.set(0,0,0);
       casas.userData.ocultacion?.opacidades.fill(1);derrumbe.value=-1;actuacion.prepararHacha(actor.m);actuacion.portarHacha(actor.m,'espalda');posar('quieto',0,0,1,{mezclar:false,sinHacha:true});s.reposoSalida=actuacion.capturar(actor.m);
       actuacion.movimientoSalida(1,raizSalida);s.escalaSalida=s.origen.distanceTo(s.salida)/Math.hypot(raizSalida.x,raizSalida.z);
       s.giroSalida=rumbo(s.origen,s.salida)-Math.atan2(raizSalida.x,raizSalida.z);
-      posarSalida(1.8);s.poseEquipar=actuacion.capturar(actor.m);posarSalida(0);cambio('salida');camaraSalida();ambienteLluvia(0,actor.pos);return true;
+      posarSalida(1.8);s.poseEquipar=actuacion.capturar(actor.m);posarSalida(0);s.poseCaminar=actuacion.capturar(actor.m);s.dirCaminar=actor.dir;posarPatada(0);cambio('salida');camaraSalida();ambienteLluvia(0,actor.pos);return true;
     }
     function posarSalida(t){
       // Walking Left Turn aporta la curva y el giro. La raíz se aplica una sola
@@ -227,19 +230,28 @@
       // El último apoyo desacelera antes de asentarse; el plano conserva su duración.
       actuacion.portarHacha(h.m,'espalda');
       actuacion.salidaConGiro(h.m,k,s.reposoSalida,1-lim((t-1.65)/.35));
-      if(s.poseEquipar&&t>=1.8)equiparAlDetenerse(t);
+      if(s.poseEquipar&&t>=1.8)equiparAlDetenerse(t+ANTICIPO_PUERTA);
       h.m.M.u.uDestello.value=h.m.M.u.uBorde.value=0;
     }
     function equiparAlDetenerse(total){
-      const m=s.actor.m,edad=Math.max(0,total-1.8),duracion=window.CAOZ_ADREIDA_CINE_CLIPS.equiparHacha.duracion;
-      if(edad<duracion)actuacion.equiparHacha(m,edad/duracion,s.poseEquipar,lim(edad/.12));
-      else if(edad<duracion+.25){
-        const reposo=actuacion.capturar(m);actuacion.equiparHacha(m,1);
-        actuacion.mezclar(m,reposo,1-lim((edad-duracion)/.25));actuacion.apoyarSalida(m);
-      }else actuacion.portarHacha(m,'mano');
+      const m=s.actor.m,edad=Math.max(0,total-ANTICIPO_PUERTA-1.8),duracion=window.CAOZ_ADREIDA_CINE_CLIPS.equiparHacha.duracion;
+      // Conserva la guardia baja del FBX. Volver al reposo del combate levantaría
+      // el mango al hombro y se leería como una segunda extracción del hacha.
+      actuacion.equiparHacha(m,lim(edad/duracion),s.poseEquipar,lim(edad/.12));
+    }
+    function posarPatada(t){
+      const h=s.actor,k=lim(t/ANTICIPO_PUERTA),contacto=window.CAOZ_ADREIDA_CINE_CLIPS.patadaPuerta.contacto;
+      const giro=rumbo(s.origen,s.salida);
+      h.pos.copy(s.origen);h.dir=giro+angulo(giro,s.dirCaminar)*suave((k-.82)/.18);
+      h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;actuacion.portarHacha(h.m,'espalda');
+      actuacion.patadaPuerta(h.m,k);
+      // El pie vuelve al suelo y enlaza con el primer apoyo de Walking Left Turn.
+      if(k>.82){actuacion.mezclar(h.m,s.poseCaminar,1-suave((k-.82)/.18));actuacion.apoyarSalida(h.m);}
+      if(puertaSalida){const golpe=lim((t-contacto)/.17),rebote=lim((t-contacto-.17)/.26);puertaSalida.rotation.y=(puertaSalida.userData.sentidoApertura||-1)*(1.68*(1-(1-golpe)**3)-.18*suave(rebote));}
+      h.m.M.u.uDestello.value=h.m.M.u.uBorde.value=0;h.m.raiz.updateMatrixWorld(true);
     }
     function camaraSalida(){const h=s.actor,izquierda=new V(-s.fuera.z,0,s.fuera.x),foco=s.origen.clone().lerp(h.pos,.5).setY(1.1);
-      mirar(s.salida.clone().addScaledVector(s.fuera,5.5).addScaledVector(izquierda,3.5).setY(3.5),foco,42);
+      mirar(s.salida.clone().addScaledVector(s.fuera,5.5).addScaledVector(izquierda,1.2).setY(2.7),foco,42);
       desdeCamara.copy(camara.position);giroPaneo.copy(camara.quaternion);
     }
     function posar(anim,dt,k=0,paso=1,extra={}){const h=s.actor;h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;MOD.posar(h.m,{anim,k,t:s.total,dt,mezclar:true,estado:anim,fase:h.fase,paso:anim==='andar'?paso:0,...extra});if(['salida','descubrir','vertigo'].includes(s.fase))actuacion.apoyarSalida(h.m);h.m.M.u.uDestello.value=h.m.M.u.uBorde.value=0;}
@@ -431,7 +443,7 @@
       r.aura.rotation.y=s.total*.8;for(let i=0;i<28;i++){const k=(i/28+s.total*.19)%1,a=i*2.399+s.total*.7;objeto.position.set(Math.cos(a)*.9,.1+k*2.6,Math.sin(a)*.9);objeto.rotation.set(a,k*5,a*.3);objeto.scale.setScalar(.6+Math.sin(k*Math.PI)*.7);objeto.updateMatrix();r.motas.setMatrixAt(i,objeto.matrix);}r.motas.instanceMatrix.needsUpdate=true;
       visibilidad();
       if(f==='salida'){
-        posarSalida(t);camaraSalida();
+        if(t<ANTICIPO_PUERTA)posarPatada(t);else{if(puertaSalida)puertaSalida.rotation.y=(puertaSalida.userData.sentidoApertura||-1)*1.5;posarSalida(t-ANTICIPO_PUERTA);}camaraSalida();
         if(t>=DURACIONES.salida){r.mago.visible=r.sello.visible=true;cambio('descubrir');}
       }else if(f==='descubrir'){
         h.dir+=angulo(h.dir,rumbo(h.pos,centro))*Math.min(1,dt*3);posar('quieto',dt);
@@ -447,7 +459,7 @@
         posar('andar',dt);camaraPies();
         if(t+1e-8>=DURACIONES.pies){s.inicioCarrera.copy(h.pos);cambio('carrera');vistaOjos(r.mago.position.clone().add(new V(0,1.1,0)),true);}
       }else if(f==='vertigo'){
-        posar('quieto',dt);camaraVertigo(t/DURACIONES.vertigo);if(t>=DURACIONES.vertigo)iniciarPies();
+        posar('quieto',dt);equiparAlDetenerse(s.total);camaraVertigo(t/DURACIONES.vertigo);if(t>=DURACIONES.vertigo)iniciarPies();
       }else if(f==='carrera'){
         // F093 del plano 5 (base 60): el momento depende del montaje, no de la
         // distancia hasta la casa. La zancada sigue la distancia real recorrida.
@@ -498,7 +510,7 @@
     }
 
     function finalizar(){if(!s||terminado)return false;restaurarCasaDolly();terminado=true;interfaz({fase:'fin',negro:1});return true;}
-    function cancelar(){ambienteLluvia(null);restaurarCasaDolly();if(recursos){recursos.particulasMago.restaurar();recursos.hechizoMago.restaurar();recursos.grupo.visible=false;recursos.brazosFPS.raiz.visible=false;recursos.losasPiso.visible=false;recursos.sello.scale.setScalar(1);recursos.sello.material.opacity=.3;}derrumbe.value=tiempoPiso.value=-1;centroOnda.value.set(0,0,0);for(const [m,v]of sombras)m.castShadow=v;sombras=[];
+    function cancelar(){if(puertaSalida&&s)puertaSalida.rotation.y=s.puertaInicial;ambienteLluvia(null);restaurarCasaDolly();if(recursos){recursos.particulasMago.restaurar();recursos.hechizoMago.restaurar();recursos.grupo.visible=false;recursos.brazosFPS.raiz.visible=false;recursos.losasPiso.visible=false;recursos.sello.scale.setScalar(1);recursos.sello.material.opacity=.3;}derrumbe.value=tiempoPiso.value=-1;centroOnda.value.set(0,0,0);for(const [m,v]of sombras)m.castShadow=v;sombras=[];
       for(const x of visitadas){const h=x.h;h.pos.copy(x.pos);h.dir=x.dir;h.m.raiz.position.copy(x.raiz);h.m.raiz.quaternion.copy(x.giro);actuacion.restaurar(h.m,x.pose);h.m.raiz.visible=x.visible;h.m.mallas.forEach((m,i)=>m.visible=x.mallas[i]);}visitadas=[];if(s?.prestado){escena.remove(s.actor.m.raiz);for(const m of s.actor.m.mallas)m.material.dispose();for(const esqueleto of new Set(s.actor.m.mallas.map(m=>m.skeleton)))esqueleto?.dispose();}s=null;terminado=false;camara.fov=camBase.fov;camara.near=camBase.near;camara.updateProjectionMatrix();interfaz({fase:'inactiva',negro:0});}
     function estado(){return s?{fase:s.fase,t:s.t,plano:s.plano,tPlano:s.tPlano,inicios:{...s.inicios},lluviaLiberada:s.lluviaLiberada,tLluvia:s.tLluvia,golpeMago:s.golpeMago,duracionCarreraAnterior:s.duracionCarreraAnterior,total:s.total,impactado:s.impactado,pov:POV.includes(s.fase),brazosFPS:recursos.brazosFPS.raiz.visible,actor:s.actor.pos.toArray(),mago:recursos.mago.position.toArray(),meteorito:recursos.meteorito.position.toArray(),casaDolly:s.casaDolly,derrumbe:derrumbe.value,pisoRoto:{edad:tiempoPiso.value,centro:centroOnda.value.toArray(),losas:recursos.losasPiso.userData.losas.length},terminado}:null;}
     // Sólo el editor hornea la actuación una vez. Se guardan transformaciones y
@@ -509,12 +521,12 @@
       nodosCine.forEach((n,i)=>{const j=i*12;n.position.toArray(poses,j);n.quaternion.toArray(poses,j+3);n.scale.toArray(poses,j+7);poses[j+10]=+n.visible;poses[j+11]=n.intensity||0;
         if(n.morphTargetInfluences)agarres.push({n,pesos:n.morphTargetInfluences.slice()});
         if(n.isInstancedMesh)instancias.push({n,i:n.instanceMatrix.array.slice(0,n.count*16),cantidad:n.count});});
-      return {estado:estado(),poses,instancias,agarres,hachas:[actuacion.capturarHacha(s.actor.m),actuacion.capturarHacha(recursos.brazosFPS)],particulas:recursos.particulasMago.capturar(),hechizo:recursos.hechizoMago.capturar(),rostros:[MOD.rostro?.capturar(s.actor.m)||null,MOD.rostro?.capturar(recursos.brazosFPS)||null],dir:s.actor.dir,faseActor:s.actor.fase,opacidadCasa:s.opacidadCasa,
+      return {estado:estado(),puerta:puertaSalida?.rotation.y,poses,instancias,agarres,hachas:[actuacion.capturarHacha(s.actor.m),actuacion.capturarHacha(recursos.brazosFPS)],particulas:recursos.particulasMago.capturar(),hechizo:recursos.hechizoMago.capturar(),rostros:[MOD.rostro?.capturar(s.actor.m)||null,MOD.rostro?.capturar(recursos.brazosFPS)||null],dir:s.actor.dir,faseActor:s.actor.fase,opacidadCasa:s.opacidadCasa,
         opacidades:casas.userData.ocultacion?.opacidades.slice(),sombras:mallasRuina.map(m=>m.castShadow),
         opacidad:[recursos.sello,recursos.humo,recursos.onda,recursos.frenteOnda].map(m=>m.material.opacity)};
     }
     function mostrarCuadro(c){
-      const e=c.estado;
+      const e=c.estado;if(puertaSalida&&c.puerta!==undefined)puertaSalida.rotation.y=c.puerta;
       for(const k of ['fase','t','plano','tPlano','total','impactado','lluviaLiberada','tLluvia','golpeMago','duracionCarreraAnterior','casaDolly','inicios'])s[k]=e[k];
       s.opacidadCasa=c.opacidadCasa;s.actor.pos.fromArray(e.actor);s.actor.dir=c.dir;s.actor.fase=c.faseActor;terminado=e.terminado;derrumbe.value=e.derrumbe;
       tiempoPiso.value=e.pisoRoto?.edad??(e.impactado?e.derrumbe:-1);centroOnda.value.fromArray(e.pisoRoto?.centro||[0,0,0]);

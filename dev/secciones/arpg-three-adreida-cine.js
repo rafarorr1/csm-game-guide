@@ -82,7 +82,7 @@
       // Como modelo de vista, los antebrazos del slide se dibujan delante del
       // entorno: acercarse al mago no oculta las manos dentro de su túnica.
       capaFPS(m,deslizante);
-      m.raiz.position.set(-.15*entradaAtaque,-(carreraVista?1.68:1.50)-.14*entradaAtaque,-(carreraVista?.52:.20)-.8*entradaAtaque).applyQuaternion(camara.quaternion).add(camara.position);
+      m.raiz.position.set(-.15*entradaAtaque,-(carreraVista?1.75:1.50)-.14*entradaAtaque,-(carreraVista?.52:.20)-.8*entradaAtaque).applyQuaternion(camara.quaternion).add(camara.position);
       m.raiz.quaternion.copy(camara.quaternion);if(deslizante)m.raiz.rotateX(-1.05*entradaAtaque);
       m.raiz.quaternion.multiply(q.setFromAxisAngle(v.set(0,1,0),Math.PI));
       if(deslizante){
@@ -94,9 +94,9 @@
       }
       m.raiz.updateMatrixWorld(true);
       if(carreraVista){
-        // El ciclo conserva hombros y codos; la muñeca sostiene el hacha hacia
-        // el lateral derecho del encuadre, sin barrer al mago con el filo.
-        const y=new T.Vector3(-.72,-.60,.35).normalize(),x=new T.Vector3(0,0,1);x.addScaledVector(y,-x.dot(y)).normalize();const z=new T.Vector3().crossVectors(x,y);
+        // El mango sigue al lateral derecho y el filo real (+Z del hacha) mira
+        // al mago. Girar sobre el mango conserva el puño cerrado y deja leer la palma.
+        const y=new T.Vector3(-.72,-.60,.35).normalize(),z=new T.Vector3(0,0,-1);z.addScaledVector(y,-z.dot(y)).normalize();const x=new T.Vector3().crossVectors(y,z);
         const orientacion=new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(x,y,z)).premultiply(camara.quaternion),padre=H.manoD.parent.getWorldQuaternion(new T.Quaternion()).invert();H.manoD.quaternion.copy(padre).multiply(orientacion);m.raiz.updateMatrixWorld(true);
       }
     }
@@ -124,6 +124,15 @@
       MOD.posar(m,{anim:'quieto',dt:0,t:0,sinHacha:true,agarreDerecha:tomada,mezclar:false});fbx(m,'equiparHacha',k);
       if(clip.giros){const f=lim(k)*(clip.muestras-1),i=Math.floor(f),j=Math.min(clip.muestras-1,i+1),giro=clip.giros[i]+(clip.giros[j]-clip.giros[i])*(f-i);m.H.cadera.quaternion.premultiply(q.setFromAxisAngle(v.set(0,1,0),giro));}
       if(desde)mezclar(m,desde,entrada);apoyarSalida(m);portarHacha(m,tomada?'mano':'espalda');
+    }
+    function patadaPuerta(m,k,desde=null,entrada=1){
+      const clip=window.CAOZ_ADREIDA_CINE_CLIPS.patadaPuerta;
+      portarHacha(m,'espalda');MOD.posar(m,{anim:'quieto',dt:0,t:0,sinHacha:true,mezclar:false});fbx(m,'patadaPuerta',k);
+      const f=lim(k)*(clip.muestras-1),i=Math.floor(f),j=Math.min(clip.muestras-1,i+1),giro=clip.giroBasePuerta+clip.giros[i]+(clip.giros[j]-clip.giros[i])*(f-i);
+      // La guardia empieza de costado: se repone también su ángulo inicial para
+      // que la bota izquierda golpee +Z hacia la puerta. La raíz la dirige el guion.
+      m.H.cadera.quaternion.premultiply(q.setFromAxisAngle(v.set(0,1,0),giro));
+      if(desde)mezclar(m,desde,entrada);apoyarSalida(m);
     }
     function salidaConGiro(m,k,desde=null,entrada=1){
       // Inicializa dedos y correctivos del mango. La pose FBX reemplaza después
@@ -284,7 +293,7 @@
       const apoyo=Math.sin(Math.PI*lim(k/.8));m.H.torso.rotation.x+=apoyo*.48;m.H.rodillaI.rotation.x+=apoyo*.45;
       mezclar(m,desde,k);apoyar(m);
     }
-    return {crearFPS,fps,capaFPS,fbx,deslizar,carreraCine,equiparHacha,prepararHacha,portarHacha,visibilidadHacha,capturarHacha,restaurarHacha,salidaConGiro,apoyarSalida,movimientoSalida,tiemposRemate,rematarDeslizamiento,buscarDePie,capturar,restaurar,mezclar,caer,buscar,levantar};
+    return {crearFPS,fps,capaFPS,fbx,deslizar,carreraCine,equiparHacha,patadaPuerta,prepararHacha,portarHacha,visibilidadHacha,capturarHacha,restaurarHacha,salidaConGiro,apoyarSalida,movimientoSalida,tiemposRemate,rematarDeslizamiento,buscarDePie,capturar,restaurar,mezclar,caer,buscar,levantar};
   }
   window.CAOZ_ARPG_ADREIDA_CINE=Object.freeze({fabrica});
 })();

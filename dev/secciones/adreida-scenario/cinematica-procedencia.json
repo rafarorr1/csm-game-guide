@@ -35,10 +35,16 @@
       "sha256": "2176323121080d1215b9e14401e81074ed48b9671c375a7aa3ba316624118a06",
       "duracion": 1.6666666666666667,
       "muestras": 51
+    },
+    {
+      "fuente": "Mma Kick.fbx",
+      "sha256": "7be0af62cb32e291879b0eedc28c514e9b572cd428b0fa5aa330db7370057e39",
+      "duracion": 1.6,
+      "muestras": 49
     }
   ],
   "adaptacion": "Veintidós huesos, proporciones del modelo actual, agarre del hacha resuelto con IK en Crouching. Falling conserva las poses sin corrección de suelo: la gravedad y el desplazamiento los dirige el epílogo. Sin mallas ni texturas de los FBX.",
-  "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Great Sword Slide Attack.fbx\" slide.json; node preparar-cinematica.mjs --deslizar slide.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Walking Left Turn.fbx\" walking-left-turn.json; node preparar-cinematica.mjs --salir walking-left-turn.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Running.fbx\" running.json; node preparar-cinematica.mjs --correr running.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Unarmed Equip Over Shoulder.fbx\" equip-over-shoulder.json; node preparar-cinematica.mjs --equipar equip-over-shoulder.json",
+  "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Great Sword Slide Attack.fbx\" slide.json; node preparar-cinematica.mjs --deslizar slide.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Walking Left Turn.fbx\" walking-left-turn.json; node preparar-cinematica.mjs --salir walking-left-turn.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Running.fbx\" running.json; node preparar-cinematica.mjs --correr running.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Unarmed Equip Over Shoulder.fbx\" equip-over-shoulder.json; node preparar-cinematica.mjs --equipar equip-over-shoulder.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Mma Kick.fbx\" mma-kick.json; node preparar-cinematica.mjs --patada mma-kick.json",
   "deslizarAtaque": {
     "clip": "deslizarAtaque",
     "modelo": "adreida-piernas-scenario/datos.js",
@@ -140,6 +146,48 @@
       "fotogramaLibre": 45
     },
     "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Unarmed Equip Over Shoulder.fbx\" equip-over-shoulder.json; node preparar-cinematica.mjs --equipar equip-over-shoulder.json",
+    "licencia": "Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente."
+  },
+  "patadaPuerta": {
+    "clip": "patadaPuerta",
+    "modelo": "adreida-piernas-scenario/datos.js",
+    "fps": 120,
+    "muestras": 121,
+    "escalaPiernas": 1.0954248554703117,
+    "tramoFuente": {
+      "inicio": 0.06666666666666667,
+      "fin": 1.0666666666666667,
+      "fotogramaInicio": 2,
+      "fotogramaFin": 32,
+      "fps": 30,
+      "duracionCompleta": 1.6
+    },
+    "contacto": 0.5666666666666667,
+    "golpe": {
+      "segundo": 0.5666666666666667,
+      "fotogramaFuente": 19,
+      "fotogramaHorneado": 68,
+      "pierna": "I",
+      "apoyo": "D",
+      "contactoPie": [
+        0.01345,
+        1.350824,
+        0.982673
+      ]
+    },
+    "recobro": {
+      "inicio": 0.6333333333333333,
+      "apoyo": 0.9666666666666667,
+      "enlace": 1
+    },
+    "giroBasePuerta": -0.752125537521343,
+    "desplazamientoFinal": [
+      0.187083,
+      0,
+      0.061668
+    ],
+    "adaptacion": "Mma Kick: patada izquierda con apoyo derecho; fuente F002–F032 a velocidad natural para un segundo de anticipación, contacto y recobro. Veintidós huesos aprobados; brazos fuente sin IK de combate, manos libres y hacha en espalda gestionada por actuación. Poses locales sin yaw ni traslación XZ; raiz y giros separados. Para patear al plano +Z de la puerta, la actuación repone giroBasePuerta+giros sobre la cadera; aplicar sólo giros orientaría la patada hacia el lado. contactoPie es la punta más adelantada de la bota aprobada en ese espacio +Z, sin añadir raiz. La raíz de puerta y el empalme a Walking pertenecen al guion.",
+    "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Mma Kick.fbx\" mma-kick.json; node preparar-cinematica.mjs --patada mma-kick.json",
     "licencia": "Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente."
   }
 }

@@ -1,8 +1,8 @@
-/* El mago se deshace en su propia superficie y la reúne sobre el tejado.
-   Dos mallas instanciadas; no añade luces ni trabajo fuera de la cinemática. */
+/* El mago se deshace en su superficie y abre un pliegue de materia al volver.
+   Cuatro mallas, sin postproceso ni luces adicionales. */
 'use strict';
 (function(){
-  function fabrica(T,{grupo,mago,reducido=false}){
+  function fabrica(T,{grupo,mago,materia=null,reducido=false}){
     const V=T.Vector3,TAU=Math.PI*2,N=reducido?144:256,R=reducido?16:28,TRAMOS=8;
     const lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const azar=i=>{const x=Math.sin(i*127.1+31.7)*43758.5453;return x-Math.floor(x);};
@@ -16,6 +16,46 @@
     particulas.name='Mago · fragmentos verdes de la silueta';estelas.name='Mago · estelas hacia el tejado';
     for(const m of [particulas,estelas]){m.count=0;m.visible=false;m.frustumCulled=false;m.castShadow=m.receiveShadow=false;m.instanceMatrix.setUsage(T.DynamicDrawUsage);grupo.add(m);}
     const color=new T.Color();for(let i=0;i<N;i++){color.setHex(i%9===0?0xd1ffe2:i%3===0?0x70e6a1:0x46bd7e);particulas.setColorAt(i,color);}particulas.instanceColor.needsUpdate=true;
+    const centroPortal={value:new V()},pliegue={value:0},relojPortal={value:0},brilloPortal={value:0},portalQ=new T.Quaternion(),grupoQ=new T.Quaternion();
+    const portal=new T.Mesh(new T.RingGeometry(.68,1,96,8),new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending,toneMapped:false,
+      uniforms:{uPortalTiempo:relojPortal,uPortalBrillo:brilloPortal},
+      vertexShader:`varying vec2 vPortal;uniform float uPortalTiempo;
+        void main(){vec3 p=position;float a=atan(p.y,p.x),r=length(p.xy);vPortal=p.xy;
+          p.xy*=1.+.035*sin(a*7.-uPortalTiempo*19.)+.022*sin(a*13.+uPortalTiempo*11.);
+          p.z+=sin(a*4.-uPortalTiempo*14.)*.15*(1.-r);
+          gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
+      fragmentShader:`varying vec2 vPortal;uniform float uPortalTiempo;uniform float uPortalBrillo;
+        void main(){float r=length(vPortal),a=atan(vPortal.y,vPortal.x);
+          float hilo=pow(.5+.5*sin(a*8.+r*41.-uPortalTiempo*24.),7.);
+          float borde=exp(-pow((r-.86)/.025,2.))+.5*exp(-pow((r-.74)/.013,2.));
+          float corte=smoothstep(.68,.74,r)*(1.-smoothstep(.94,1.,r));
+          float alpha=(borde*.85+hilo*.38)*corte*uPortalBrillo;
+          if(alpha<.003)discard;gl_FragColor=vec4(mix(vec3(.025,.65,.26),vec3(.64,1.5,.9),min(1.,borde)),alpha);
+          #include <colorspace_fragment>
+        }`}));
+    portal.name='Mago · umbral de materia';portal.visible=false;portal.frustumCulled=false;portal.castShadow=portal.receiveShadow=false;grupo.add(portal);
+    const restosCantidad=reducido?20:42,restos=new T.InstancedMesh(new T.BoxGeometry(1,.24,1,2,1,2),new T.MeshStandardMaterial({color:0x79747a,roughness:.96,metalness:0,emissive:0x073a21,emissiveIntensity:.35,flatShading:true}),restosCantidad);
+    restos.name='Mago · tejas en el pliegue';restos.count=0;restos.visible=false;restos.frustumCulled=false;restos.castShadow=restos.receiveShadow=false;restos.instanceMatrix.setUsage(T.DynamicDrawUsage);grupo.add(restos);
+    for(let i=0;i<restosCantidad;i++){color.setHex(i%3===0?0x9b8991:i%3===1?0x52655b:0x777181);restos.setColorAt(i,color);}restos.instanceColor.needsUpdate=true;
+    // La casa conserva su geometría y sus otros efectos. Se encadena el shader
+    // existente; fuera de este segundo, el desplazamiento es exactamente cero.
+    const materialesMateria=new Set();materia?.traverse(m=>{
+      if(!m.isMesh)return;for(const mat of Array.isArray(m.material)?m.material:[m.material]){
+        if(!mat?.isMeshStandardMaterial||materialesMateria.has(mat))continue;materialesMateria.add(mat);
+        const anterior=mat.onBeforeCompile,clave=mat.customProgramCacheKey();
+        mat.onBeforeCompile=function(sh,r){anterior.call(this,sh,r);sh.uniforms.uCentroPortal=centroPortal;sh.uniforms.uPlieguePortal=pliegue;
+          sh.vertexShader='uniform vec3 uCentroPortal;uniform float uPlieguePortal;\n'+sh.vertexShader;
+          sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+            if(uPlieguePortal>0.){
+              vec3 mundoPortal=(modelMatrix*vec4(transformed,1.)).xyz,radialPortal=mundoPortal-uCentroPortal;
+              float distanciaPortal=length(radialPortal.xz),cercaPortal=(1.-smoothstep(1.2,3.5,distanciaPortal))*(1.-smoothstep(1.6,3.1,abs(radialPortal.y)));
+              float fPortal=uPlieguePortal*cercaPortal;
+              vec3 deltaPortal=vec3(-radialPortal.z*.20-radialPortal.x*.13,.85*exp(-pow((distanciaPortal-1.45)/1.1,2.)),radialPortal.x*.20-radialPortal.z*.13)*fPortal;
+              transformed+=vec3(dot(modelMatrix[0].xyz,deltaPortal)/dot(modelMatrix[0].xyz,modelMatrix[0].xyz),dot(modelMatrix[1].xyz,deltaPortal)/dot(modelMatrix[1].xyz,modelMatrix[1].xyz),dot(modelMatrix[2].xyz,deltaPortal)/dot(modelMatrix[2].xyz,modelMatrix[2].xyz));
+            }`);
+        };mat.customProgramCacheKey=()=>clave+'-portal-materia-v1';mat.needsUpdate=true;
+      }
+    });
     // La magia que ya orbita al mago no forma parte de su cuerpo. Separar los
     // materiales evita que disolver la túnica borre también sus efectos vecinos.
     const excluida=m=>{for(let n=m;n&&n!==mago;n=n.parent)if(n.name==='Hechizo verde')return true;return false;};
@@ -93,7 +133,7 @@
     function reunir(i,t,duracion,salida){
       const k=lim(t/Math.max(.001,duracion));viajar(i,duracionViaje,duracionViaje,salida);puntoSuperficie(muestras[i],c);
       const unir=suave(k/.83);salida.lerp(c,unir);
-      const m=muestras[i],radio=Math.sin(k*Math.PI)*.28;salida.x+=Math.cos(m.giro+k*4)*radio;salida.z+=Math.sin(m.giro+k*4)*radio;return salida;
+      const m=muestras[i],radio=Math.sin(k*Math.PI)*.72;salida.x+=Math.cos(m.giro+k*9)*radio;salida.z+=Math.sin(m.giro+k*9)*radio;salida.y+=Math.sin(m.giro+k*9)*radio*.42;return salida;
     }
     function posicion(i,desfase,salida){
       if(estado.fase==='explosion')return estallar(i,Math.max(0,estado.desdeImpacto-desfase),salida);
@@ -101,13 +141,28 @@
       return reunir(i,Math.max(0,estado.t-desfase),estado.duracion,salida);
     }
     function aplicarSombras(){for(const [m,original]of sombras)m.castShadow=disolucion.value===0&&original;}
-    function restaurar(){estado={fase:'oculto',t:0,duracion:1,desdeImpacto:0};disolucion.value=0;particulas.count=estelas.count=0;particulas.visible=estelas.visible=false;aplicarSombras();}
+    function actualizarPortal(){
+      const t=estado.t,activo=estado.fase==='reunion'&&t>0&&t<1,abrir=activo?suave(t/.17)*(1-suave((t-.70)/.30)):0;
+      relojPortal.value=t;brilloPortal.value=abrir;pliegue.value=activo?Math.sin(Math.PI*t)**2*(reducido?.55:1):0;
+      mago.getWorldPosition(centroPortal.value);centroPortal.value.y+=1.15;
+      portal.visible=restos.visible=activo;restos.count=activo?restosCantidad:0;if(!activo)return;
+      mago.getWorldQuaternion(portalQ);grupo.getWorldQuaternion(grupoQ).invert();
+      portal.position.copy(centroPortal.value).applyMatrix4(inversa);portal.quaternion.copy(grupoQ).multiply(portalQ);portal.scale.set(1.85*abrir,2.05*abrir,1);
+      for(let i=0;i<restosCantidad;i++){
+        const semilla=azar(i+181),radio=2.2+semilla*1.05,angulo=i*2.399963+t*TAU*(.75+semilla*.7),levantar=Math.sin(Math.PI*t),r=radio*(1-.45*levantar);
+        a.set(Math.cos(angulo)*r,-1.05+levantar*(.75+semilla*1.15),Math.sin(angulo)*r).add(centroPortal.value);
+        objeto.position.copy(a).applyMatrix4(inversa);objeto.rotation.set(t*5+semilla*4,angulo,-t*7+semilla*3);
+        const tam=(.13+semilla*.17)*Math.sqrt(abrir);objeto.scale.set(tam,tam*(.6+levantar*.3),tam*.65);objeto.updateMatrix();restos.setMatrixAt(i,objeto.matrix);
+      }restos.instanceMatrix.needsUpdate=true;
+    }
+    function restaurar(){estado={fase:'oculto',t:0,duracion:1,desdeImpacto:0};disolucion.value=0;particulas.count=estelas.count=restos.count=0;particulas.visible=estelas.visible=portal.visible=restos.visible=false;pliegue.value=brilloPortal.value=relojPortal.value=0;aplicarSombras();}
     function actualizar({fase='oculto',t=0,duracion,desdeImpacto=t}={}){
       if(!preparado||fase==='oculto'){restaurar();return;}
       estado={fase,t:Math.max(0,t),duracion:Math.max(.001,duracion||(fase==='viaje'?2.6:fase==='reunion'?1.4:1)),desdeImpacto:Math.max(0,desdeImpacto)};
       if(fase==='viaje'){edadSalida=Math.max(0,estado.desdeImpacto-estado.t);duracionViaje=estado.duracion;}
       if(fase==='reunion')edadSalida=Math.max(0,estado.desdeImpacto-estado.t-duracionViaje);
       mago.updateWorldMatrix(true,true);grupo.updateWorldMatrix(true,false);inversa.copy(grupo.matrixWorld).invert();
+      actualizarPortal();
       const k=lim(estado.t/estado.duracion),salida=fase==='reunion'?1-suave((k-.56)/.44):fase==='explosion'?suave(estado.desdeImpacto/.13):1;
       disolucion.value=fase==='explosion'?suave(estado.desdeImpacto/.22):fase==='reunion'?1-suave((k-.28)/.66):1;
       // El mapa de sombras no ejecuta el shader de color. Durante la materia
@@ -132,9 +187,9 @@
     }
     // Las matrices ya se guardan en el cache de cuadros del editor. Sólo faltan
     // el umbral del material y el reloj usado al inspeccionar la secuencia.
-    function capturar(){return {disolucion:disolucion.value,estado:{...estado},edadSalida,duracionViaje};}
-    function mostrar(cuadro){if(!cuadro)return;disolucion.value=cuadro.disolucion;estado={...cuadro.estado};edadSalida=cuadro.edadSalida;duracionViaje=cuadro.duracionViaje;aplicarSombras();}
-    return {preparar,actualizar,focoViaje,restaurar,capturar,mostrar,particulas,estelas,disolucion,get estado(){return {...estado};},get cantidad(){return muestras.length;}};
+    function capturar(){return {disolucion:disolucion.value,estado:{...estado},edadSalida,duracionViaje,portal:{centro:centroPortal.value.toArray(),pliegue:pliegue.value,t:relojPortal.value,brillo:brilloPortal.value}};}
+    function mostrar(cuadro){if(!cuadro)return;disolucion.value=cuadro.disolucion;estado={...cuadro.estado};edadSalida=cuadro.edadSalida;duracionViaje=cuadro.duracionViaje;const p=cuadro.portal;centroPortal.value.fromArray(p?.centro||[0,0,0]);pliegue.value=p?.pliegue||0;relojPortal.value=p?.t||0;brilloPortal.value=p?.brillo||0;aplicarSombras();}
+    return {preparar,actualizar,focoViaje,restaurar,capturar,mostrar,particulas,estelas,portal,restos,pliegue,disolucion,get estado(){return {...estado};},get cantidad(){return muestras.length;}};
   }
   window.CAOZ_ARPG_MAGO_PARTICULAS={fabrica};
 })();

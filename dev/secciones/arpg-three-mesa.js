@@ -1709,7 +1709,7 @@
     limpiar:limpiarCombateCasa,interfaz:interfazCasa,
     volver:iniciarFinalMago
   });
-  finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,piso:()=>suelo.material,reducido,planoDeFase:window.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia:(t,p,tormenta)=>clima.cinematica(t,p,tormenta),
+  finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,puertaSalida:casaGoblin.hojaSalida,piso:()=>suelo.material,reducido,planoDeFase:window.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia:(t,p,tormenta)=>clima.cinematica(t,p,tormenta),
     impactar(p){impactoFX.agujero(p,{radio:8.4,profundidad:24,duracion:30});polvo(p,60,4);},
     interfaz(s){const activa=s.fase!=='inactiva';alphaTerminada=s.fase==='fin';mostrarEntradaTroll(activa);esc.classList.toggle('finAlpha',alphaTerminada);esc.dataset.cinematicaFase=s.fase;$('cinematicaTexto').textContent='';
       const fundido=$('fundidoFinal');fundido.style.opacity=String(s.negro);fundido.hidden=!activa;fundido.setAttribute('aria-hidden',String(!alphaTerminada));$('finAlphaTexto').hidden=!alphaTerminada;
@@ -1717,7 +1717,7 @@
     }
   });
   function iniciarFinalMago(){
-    const salida=casaGoblin.estado(),puerta=new V3().fromArray(salida.puerta),umbral=new V3().fromArray(salida.umbral),normal=new V3().fromArray(salida.normal);limpiarCombateCasa();casaGoblin.cancelar();casaGoblin.abrirSalida();ol.auto=false;ol.cola=[];paron=0;
+    const salida=casaGoblin.estado(),puerta=new V3().fromArray(salida.puerta),umbral=new V3().fromArray(salida.umbral),normal=new V3().fromArray(salida.normal);limpiarCombateCasa();casaGoblin.cancelar();ol.auto=false;ol.cola=[];paron=0;
     for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;
     for(const b of [...botines])quitarBotin(b);for(const o of [...marcas])if(!o.fijo)quitarMarca(o);
     escena.fog.near=32;escena.fog.far=170;finalMago.iniciar(jugadores,{puerta,umbral,normal});

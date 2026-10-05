@@ -11,11 +11,12 @@
     const propia=(color,o={})=>new THREE.MeshStandardMaterial({color,roughness:.9,...o});
     const roble=materiales.tablas.clone();roble.vertexColors=false;const metal=propia(0x66533c,{metalness:.35});
     function caja(g,w,h,d,p,mat){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(...p);m.castShadow=m.receiveShadow=true;g.add(m);return m;}
-    caja(marco,.98,1.98,.025,[0,1,-.045],new THREE.MeshBasicMaterial({color:0x070808}));
-    hoja.position.x=-.5;marco.add(hoja);caja(hoja,1,2,.08,[.5,1,0],roble);
-    for(const y of [.35,1.55])caja(hoja,.91,.085,.025,[.5,y,.058],metal);
-    caja(hoja,.1,.2,.05,[.82,.95,.08],metal);
-    const marca=new THREE.Mesh(new THREE.TorusGeometry(.105,.025,5,12),propia(0xd2ab61));marca.position.set(.31,1.24,.065);hoja.add(marca);
+    // El fondo queda dentro de la casa: permite ver la patada tras abrir la hoja.
+    const fondoPuerta=caja(marco,2.4,2.6,.025,[.4,1.3,-2.4],new THREE.MeshBasicMaterial({color:0x070808}));fondoPuerta.castShadow=false;
+    hoja.position.x=.5;hoja.userData.sentidoApertura=1;marco.add(hoja);caja(hoja,1,2,.08,[-.5,1,0],roble);
+    for(const y of [.35,1.55])caja(hoja,.91,.085,.025,[-.5,y,.058],metal);
+    caja(hoja,.1,.2,.05,[-.82,.95,.08],metal);
+    const marca=new THREE.Mesh(new THREE.TorusGeometry(.105,.025,5,12),propia(0xd2ab61));marca.position.set(-.31,1.24,.065);hoja.add(marca);
     const entrada=new THREE.Mesh(new THREE.PlaneGeometry(1.25,2.3),new THREE.MeshBasicMaterial({visible:false}));entrada.position.set(0,1,.14);marco.add(entrada);
     const halo=new THREE.Mesh(new THREE.RingGeometry(.45,.53,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xc5a166,transparent:true,opacity:.55,depthWrite:false}));halo.position.copy(aproximacion).setY(.035);halo.visible=false;plaza.add(halo);
     const camara=new THREE.PerspectiveCamera(36,1,.1,60);camara.position.set(6.8,8.5,11.5);camara.lookAt(0,.6,-.2);
@@ -62,7 +63,7 @@
       if(fase==='acercarse'){
         const listo=caminar(actor,aproximacion,dt);actor.m.raiz.position.copy(actor.pos);actor.m.raiz.rotation.y=actor.dir;MOD.posar(actor.m,{anim:listo?'quieto':'andar',t:total,dt,fase:actor.fase,paso:.5,mezclar:true});if(listo)abrir();
       }else if(fase==='abrir'){
-        hoja.rotation.y=-1.5*suave(t/.8);actor.dir=Math.atan2(-normal.x,-normal.z);actor.pos.lerp(umbral,Math.min(1,dt*2.3));actor.m.raiz.position.copy(actor.pos);actor.m.raiz.rotation.y=actor.dir;MOD.posar(actor.m,{anim:'andar',t:total,dt,fase:total*6,paso:.5,mezclar:true});
+        hoja.rotation.y=1.5*suave(t/.8);actor.dir=Math.atan2(-normal.x,-normal.z);actor.pos.lerp(umbral,Math.min(1,dt*2.3));actor.m.raiz.position.copy(actor.pos);actor.m.raiz.rotation.y=actor.dir;MOD.posar(actor.m,{anim:'andar',t:total,dt,fase:total*6,paso:.5,mezclar:true});
         if(t>=1.1&&decorado.listo){soltado=false;botones=[];cambiar('entrar');}
       }else if(fase==='entrar'){
         const k=suave(t/1.9);protagonista.raiz.position.set(decorado.entrada.x*(1-k),0,3.25-3.9*k);posarHeroe('andar',0,dt);if(t>=1.9)cambiar('decision');
@@ -83,7 +84,7 @@
     function estado(){return {fase,interior:enInterior(),golpeDado,vivos:habitantes.filter(n=>n.vivo).length,puerta:aproximacion.toArray(),umbral:umbral.toArray(),normal:normal.toArray(),accion:peticion,decorado:decorado?.estadisticas||null,ambiente:decorado?.estado()||null};}
     return {habilitar,solicitar,cerca,paso,golpear,salir,mando,cancelar,estado,contiene:ray=>ray.intersectObject(entrada,false).length>0,
       get activa(){return fase!=='cerrada';},get bloquea(){return !['cerrada','plaza'].includes(fase);},get interior(){return enInterior();},
-      abrirSalida(){hoja.rotation.y=-1.5;},get escena(){return interior;},camara(aspecto){camara.aspect=aspecto;camara.fov=aspecto<1?48:36;camara.updateProjectionMatrix();return camara;}};
+      abrirSalida(){hoja.rotation.y=1.5;},get hojaSalida(){return hoja;},get escena(){return interior;},camara(aspecto){camara.aspect=aspecto;camara.fov=aspecto<1?48:36;camara.updateProjectionMatrix();return camara;}};
   }
   window.CAOZ_ARPG_CASA_GOBLIN=Object.freeze({fabrica});
 })();

@@ -40,3 +40,26 @@ fx.mostrar(muestras.get(2.53).cuadro);assert.deepEqual(fx.capturar().ambiente,mu
 hemi.intensity=.7;escena.background.setHex(0x456789);const otroFondo=escena.background.toArray();fx.actualizar(2);assert(Math.abs(hemi.intensity-.7*.82)<1e-12);fx.restaurar();assert.equal(hemi.intensity,.7);assert.deepEqual(escena.background.toArray(),otroFondo);
 const reducido=c.CAOZ_ARPG_MAGO_HECHIZO.fabrica(T,{grupo:new T.Group(),escena,mago,reducido:true});let total=0,previo=false;for(let i=0;i<=180;i++){reducido.actualizar(i/60);const v=reducido.nucleo.count>0;if(v&&!previo)total++;previo=v;}assert.equal(total,3,'La versión reducida mantiene tres rayos completos');reducido.restaurar();
 console.log('✓ Hechizo del mago: rayos a distancia, nubes procedurales iluminadas localmente, cruce del meteorito y ambiente reversible en tres llamadas de dibujo.');
+
+// Las dos descargas finales nacen de las manos animadas, incluso al mover el
+// mago o montar el efecto dentro de un grupo transformado.
+const manos=[new T.Object3D(),new T.Object3D()];manos[0].position.set(-.55,2.2,.4);manos[1].position.set(.55,2.2,.4);mago.add(...manos);
+const gFinal=new T.Group();gFinal.position.set(3,0,-2);gFinal.rotation.y=.27;escena.add(gFinal);
+const final=c.CAOZ_ARPG_MAGO_HECHIZO.fabrica(T,{grupo:gFinal,escena,mago,manos});final.preparar({cielo,impacto});
+final.actualizar(2.5);const oscuro=final.capturar().ambiente;assert.equal(final.estado.rayosManos,0,'No anticipa los rayos de manos');
+for(const fps of [30,60,120]){
+ let vistos=0;for(let i=0;i<=fps*3.1;i++){
+  const t=i/fps,e=final.actualizar(t);assert(final.nucleo.count<=final.nucleo.instanceMatrix.count);assert(final.nucleo.instanceMatrix.array.every(Number.isFinite));
+  if(t>2.55&&t<3){assert.equal(e.rayosManos,2);vistos++;}else assert.equal(e.rayosManos,0);
+ }
+ assert(vistos>=Math.floor(fps*.4),'Se leen ambas descargas durante el cierre del hechizo');
+}
+final.actualizar(2.72);assert.equal(final.estado.pulsoFinal,1,'El pico permanece visible 0.28 s antes de revelar el meteorito');assert.equal(final.estado.rayosManos,2);
+assert(escena.background.g>oscuro.fondo[1]*1.6,'Los rayos iluminan visiblemente el cielo oscuro');assert(hemi.intensity>oscuro.luces[0],'La descarga alcanza también el rebote de luz del escenario');
+assert(final.capturar().uniformes.rayos.slice(6).every(v=>v[3]>2),'Los dos rayos iluminan regiones amplias de las nubes');
+function comprobarManos(){const tramos=(final.nucleo.count-final.estado.primerSegmentoManos)/2;for(let i=0;i<2;i++){final.nucleo.getMatrixAt(final.estado.primerSegmentoManos+i*tramos,matriz);const inicio=new T.Vector3(0,-.5,0).applyMatrix4(matriz).applyMatrix4(gFinal.matrixWorld),fin=new T.Vector3(0,.5,0).applyMatrix4(matriz).applyMatrix4(gFinal.matrixWorld),mano=manos[i].getWorldPosition(new T.Vector3());assert(inicio.distanceTo(mano)<1e-5,'El rayo '+i+' está unido a la mano real');assert(inicio.distanceTo(fin)<1,'El rayo empieza a quebrarse a menos de un metro de la mano');}}
+comprobarManos();manos[0].position.x-=.2;manos[1].position.y+=.15;final.actualizar(2.72);comprobarManos();
+const cuadroFinal=final.capturar(),rayosFinales=final.nucleo.instanceMatrix.array.slice(0,final.nucleo.count*16);final.actualizar(3);assert.equal(final.estado.rayosManos,0);assert.equal(final.capturar().uniformes.culminacion,0,'El pulso termina antes del meteorito');
+final.actualizar(2.72);assert.deepEqual(final.nucleo.instanceMatrix.array.slice(0,final.nucleo.count*16),rayosFinales,'La forma de las descargas es determinista al rebobinar');final.restaurar();final.mostrar(cuadroFinal);assert.deepEqual(final.capturar().uniformes,cuadroFinal.uniformes);assert.deepEqual(final.capturar().ambiente,cuadroFinal.ambiente);final.restaurar();
+assert.equal(final.nucleo.count,0);assert.equal(final.capturar().uniformes.culminacion,0);assert.equal(final.nucleo.material.isMeshBasicMaterial,true);assert.equal(gFinal.children.filter(n=>n.isMesh).length,3,'Los rayos de las manos reutilizan los lotes de la tormenta');
+console.log('✓ Dos rayos finales unidos a manos móviles, pico antes del corte, mayor iluminación de cielo/nubes y restauración completa sin llamadas adicionales.');

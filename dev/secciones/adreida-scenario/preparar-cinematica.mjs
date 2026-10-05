@@ -1,12 +1,12 @@
 /* Adapta los FBX del meteorito, sin incorporar el maniquí ni sus texturas.
    Extraer con extraer-combate.py; uso: node preparar-cinematica.mjs crouching.json falling.json
    Incrementales: --deslizar slide.json, --salir walking-left-turn.json,
-   --correr running.json o --equipar equip-over-shoulder.json. */
+   --correr running.json, --equipar equip-over-shoulder.json o --patada mma-kick.json. */
 import fs from 'node:fs';
 import vm from 'node:vm';
-const argumentos=process.argv.slice(2),soloDeslizar=argumentos[0]==='--deslizar',soloSalir=argumentos[0]==='--salir',soloCorrer=argumentos[0]==='--correr',soloEquipar=argumentos[0]==='--equipar',brazosFuente=soloSalir||soloCorrer||soloEquipar,incremental=soloDeslizar||brazosFuente;
+const argumentos=process.argv.slice(2),soloDeslizar=argumentos[0]==='--deslizar',soloSalir=argumentos[0]==='--salir',soloCorrer=argumentos[0]==='--correr',soloEquipar=argumentos[0]==='--equipar',soloPatada=argumentos[0]==='--patada',brazosFuente=soloSalir||soloCorrer||soloEquipar||soloPatada,incremental=soloDeslizar||brazosFuente;
 const fuentes=argumentos.slice(incremental?1:0).map(p=>JSON.parse(fs.readFileSync(p,'utf8')));
-if(fuentes.length!==(incremental?1:2))throw Error('Indica Crouching y Falling o un modo incremental --deslizar, --salir, --correr, --equipar seguido del JSON extraído con extraer-combate.py.');
+if(fuentes.length!==(incremental?1:2))throw Error('Indica Crouching y Falling o un modo incremental --deslizar, --salir, --correr, --equipar, --patada seguido del JSON extraído con extraer-combate.py.');
 // El modo incremental conserva sin retargetear las tomas ya aprobadas.
 const previos=vm.createContext({window:{}});
 if(incremental)vm.runInContext(fs.readFileSync(new URL('cinematica.js',import.meta.url),'utf8'),previos);
@@ -83,14 +83,17 @@ for(const [indice,nombre]of (brazosFuente?[]:soloDeslizar?['deslizarAtaque']:['p
   }
 }
 if(brazosFuente){
-  const fuente=densificar(fuentes[0],4),rest=fuente.reposo,filas=[],raiz=[],giros=[],ejeY=new T.Vector3(0,1,0),frente=new T.Vector3();planos.clear();
-  const nombre=soloCorrer?'carreraCine':soloEquipar?'equiparHacha':'salidaConGiro';
+  // Mma Kick vuelve después a su guardia inicial. El montaje usa anticipación,
+  // contacto y primer apoyo recuperado, sin esa espera antes de caminar.
+  const seleccion=soloPatada?{...fuentes[0],poses:fuentes[0].poses.slice(2,33),duracion:1,muestras:31}:fuentes[0];
+  const fuente=densificar(seleccion,4),rest=fuente.reposo,filas=[],raiz=[],giros=[],ejeY=new T.Vector3(0,1,0),frente=new T.Vector3();planos.clear();
+  const nombre=soloCorrer?'carreraCine':soloEquipar?'equiparHacha':soloPatada?'patadaPuerta':'salidaConGiro';
   const referenciasSuelo=['LeftFoot','LeftToeBase','LeftToe_End','RightFoot','RightToeBase','RightToe_End'];
   const sueloFuente=soloCorrer?Math.min(...fuente.poses.flatMap(f=>referenciasSuelo.map(n=>f[n].p[1]))):0;
   const escala=(m.p.muslo+m.p.pierna)/(pos(rest,'LeftUpLeg').distanceTo(pos(rest,'LeftLeg'))+pos(rest,'LeftLeg').distanceTo(pos(rest,'LeftFoot')));
   const delta=(f,n)=>q(f[n].q).multiply(q(rest[n].q).invert()),inicio=pos(fuente.poses[0],'Hips');
-  let yawInicial=null,yawAnterior=0;
-  for(const f of fuente.poses){
+  let yawInicial=null,yawAnterior=0,contactoPatada=null;
+  for(const [indiceFuente,f]of fuente.poses.entries()){
     for(const o of originales){o.b.position.copy(o.p);o.b.quaternion.copy(o.q);}
     frente.set(0,0,1).applyQuaternion(delta(f,'Hips'));let yaw=Math.atan2(frente.x,frente.z);
     if(yawInicial===null)yawInicial=yaw;
@@ -119,13 +122,26 @@ if(brazosFuente){
     // cada muestra. En salida/equipar el apoyo coincide con la suela aprobada.
     const vuelo=soloCorrer?Math.max(0,Math.min(...referenciasSuelo.map(n=>f[n].p[1]))-sueloFuente)*escala:0;
     H.cuerpo.position.y+=.012+vuelo-minimo;H.raiz.updateMatrixWorld(true);
+    if(soloPatada&&indiceFuente===(19-2)*4){
+      // Alcance medido sobre la bota real con el yaw fuente repuesto. El plano
+      // frontal de la puerta es +Z; no coincide con el frente de la pelvis.
+      let alcance=-Infinity;const punto=new T.Vector3();
+      for(const i of botas)if(cuerpo.geometry.attributes.position.getX(i)>0){cuerpo.getVertexPosition(i,punto).applyMatrix4(cuerpo.matrixWorld);if(punto.z>alcance){alcance=punto.z;contactoPatada=punto.toArray();}}
+    }
     filas.push([...H.cuerpo.position.toArray(),...huesos.flatMap(n=>H[n].quaternion.toArray())]);
     const p=pos(f,'Hips').sub(inicio).multiplyScalar(escala).applyAxisAngle(ejeY,-yawInicial);raiz.push(p.x,0,p.z);giros.push(yaw-yawInicial);
   }
   for(let i=1;i<filas.length;i++)for(let j=0;j<huesos.length;j++){const o=3+j*4;if(filas[i].slice(o,o+4).reduce((s,x,k)=>s+x*filas[i-1][o+k],0)<0)for(let k=0;k<4;k++)filas[i][o+k]*=-1;}
-  clips[nombre]={huesos,ancho:filas[0].length,muestras:filas.length,duracion:fuente.duracion,fps:120,datos:filas.flat().map(x=>+x.toFixed(6)),raiz:raiz.map(x=>+x.toFixed(6)),giros:giros.map(x=>+x.toFixed(6)),escalaFuente:escala,yawInicialFuente:yawInicial,agarre:soloCorrer?'libre':'derecha'};
+  clips[nombre]={huesos,ancho:filas[0].length,muestras:filas.length,duracion:fuente.duracion,fps:120,datos:filas.flat().map(x=>+x.toFixed(6)),raiz:raiz.map(x=>+x.toFixed(6)),giros:giros.map(x=>+x.toFixed(6)),escalaFuente:escala,yawInicialFuente:yawInicial,agarre:soloCorrer||soloPatada?'libre':'derecha'};
   if(soloCorrer)clips[nombre].ciclico=true;
   if(soloEquipar)clips[nombre].transferencia={contacto:.9,extraccion:1,libre:1.5,fpsFuente:30,fotogramaContacto:27,fotogramaExtraccion:30,fotogramaLibre:45};
+  if(soloPatada){
+    clips[nombre].tramoFuente={inicio:2/30,fin:32/30,fotogramaInicio:2,fotogramaFin:32,fps:30,duracionCompleta:fuentes[0].duracion};
+    clips[nombre].golpe={segundo:17/30,fotogramaFuente:19,fotogramaHorneado:68,pierna:'I',apoyo:'D',contactoPie:contactoPatada.map(x=>+x.toFixed(6))};
+    clips[nombre].contacto=clips[nombre].golpe.segundo;
+    clips[nombre].recobro={inicio:19/30,apoyo:29/30,enlace:1};
+    clips[nombre].giroBasePuerta=yawInicial;
+  }
 }
 fs.writeFileSync(new URL('cinematica.js',import.meta.url),'/* FBX aportados por el usuario; generado por preparar-cinematica.mjs. */\nwindow.CAOZ_ADREIDA_CINE_CLIPS='+JSON.stringify(clips)+';\n');
 const procedencia=incremental?{...procedenciaAnterior}:{fuentes:[],adaptacion:'Veintidós huesos, proporciones del modelo actual, agarre del hacha resuelto con IK en Crouching. Falling conserva las poses sin corrección de suelo: la gravedad y el desplazamiento los dirige el epílogo. Sin mallas ni texturas de los FBX.',reproduccion:'Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json'};
@@ -159,6 +175,14 @@ if(soloCorrer||soloEquipar){
     reproduccion:`Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- "${fuente.fuente}" ${soloCorrer?'running':'equip-over-shoulder'}.json; node preparar-cinematica.mjs ${soloCorrer?'--correr running':'--equipar equip-over-shoulder'}.json`,
     licencia:'Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente.'};
   if(!procedencia.reproduccion.includes(procedencia[nombre].reproduccion))procedencia.reproduccion+='; '+procedencia[nombre].reproduccion;
+}
+if(soloPatada){
+  const clip=clips.patadaPuerta;
+  procedencia.patadaPuerta={clip:'patadaPuerta',modelo:'adreida-piernas-scenario/datos.js',fps:120,muestras:clip.muestras,escalaPiernas:clip.escalaFuente,tramoFuente:clip.tramoFuente,contacto:clip.contacto,golpe:clip.golpe,recobro:clip.recobro,giroBasePuerta:clip.giroBasePuerta,desplazamientoFinal:clip.raiz.slice(-3),
+    adaptacion:'Mma Kick: patada izquierda con apoyo derecho; fuente F002–F032 a velocidad natural para un segundo de anticipación, contacto y recobro. Veintidós huesos aprobados; brazos fuente sin IK de combate, manos libres y hacha en espalda gestionada por actuación. Poses locales sin yaw ni traslación XZ; raiz y giros separados. Para patear al plano +Z de la puerta, la actuación repone giroBasePuerta+giros sobre la cadera; aplicar sólo giros orientaría la patada hacia el lado. contactoPie es la punta más adelantada de la bota aprobada en ese espacio +Z, sin añadir raiz. La raíz de puerta y el empalme a Walking pertenecen al guion.',
+    reproduccion:'Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- "Mma Kick.fbx" mma-kick.json; node preparar-cinematica.mjs --patada mma-kick.json',
+    licencia:'Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente.'};
+  if(!procedencia.reproduccion.includes(procedencia.patadaPuerta.reproduccion))procedencia.reproduccion+='; '+procedencia.patadaPuerta.reproduccion;
 }
 fs.writeFileSync(new URL('cinematica-procedencia.json',import.meta.url),JSON.stringify(procedencia,null,2)+'\n');
 console.log(JSON.stringify(Object.fromEntries(Object.entries(clips).map(([n,v])=>[n,{duracion:v.duracion,muestras:v.muestras}]))));

@@ -107,7 +107,7 @@ console.log('✓ Keyframes conservan la representación del actor; contador de c
 const M=c.CAOZ_ARPG_CINE_CAMARA,clave=M.CLAVE,backup=clave+'.respaldo-v7',anterior={...M.nueva(),version:7,nombre:'Cámara manual',planos:{techo:{vista:'original',claves:[{t:0,pos:[42,2,10],rot:[0,0,0,1],fov:42,distancia:10,curva:'lineal'}]}}};
 almacenamiento.set(backup,'otro respaldo manual');
 async function importar(toma){const texto=JSON.stringify(toma);$('ceArchivo').files=[{size:texto.length,text:async()=>texto}];await $('ceArchivo').onchange();}
-await importar(anterior);assert.equal(almacenamiento.get(backup),'otro respaldo manual');assert.equal(almacenamiento.get(backup+'.1'),JSON.stringify(anterior));assert.equal(JSON.parse(almacenamiento.get(clave)).version,10);
+await importar(anterior);assert.equal(almacenamiento.get(backup),'otro respaldo manual');assert.equal(almacenamiento.get(backup+'.1'),JSON.stringify(anterior));assert.equal(JSON.parse(almacenamiento.get(clave)).version,11);
 await importar(anterior);assert(!almacenamiento.has(backup+'.2'),'Reimportar la misma toma reutiliza su copia exacta');
 entrada('ceTiempo',1210);await completar();agrupado.antesDibujo();assert.equal(camara.position.x,1210,'El nuevo hold conserva su cámara nativa al importar');assert.equal(JSON.parse(almacenamiento.get(clave)).planos.techo.nativasHasta.voltear,2);
 entrada('ceTiempo',1330);await completar();agrupado.antesDibujo();assert.equal(camara.position.x,42,'La cámara manual v7 se conserva tras el hold');
@@ -120,6 +120,6 @@ $('ceKey').onclick();assert(!JSON.parse(almacenamiento.get(clave)).planos.techo.
 console.log('✓ Formato 10 en editor: respaldos sin sobrescritura, importación manual, hold y hechizo nativos, edición explícita de ambas acciones.');
 
 const manual9={...M.nueva(),version:9,nombre:'Paneo conservado',planos:{descubrir:{vista:'externa',claves:[{t:0,pos:[12,2,10],rot:[0,0,0,1],fov:42,distancia:10,curva:'suave'},{t:2.4,pos:[24,2,10],rot:[0,0,0,1],fov:55,distancia:10,curva:'corte'}]},techo:{vista:'original',claves:[{t:0,pos:[85,2,10],rot:[0,0,0,1],fov:44,distancia:10,curva:'lineal'}]}}};
-await importar(manual9);const guardada10=JSON.parse(almacenamiento.get(clave));assert.equal(guardada10.version,10);assert.equal(almacenamiento.get(clave+'.respaldo-v9'),JSON.stringify(manual9));assert(Math.abs(guardada10.planos.descubrir.claves[1].t-3.4)<1e-10);assert.equal(JSON.stringify(guardada10.planos.techo),JSON.stringify(manual9.planos.techo));
+await importar(manual9);const guardada10=JSON.parse(almacenamiento.get(clave));assert.equal(guardada10.version,11);assert.equal(almacenamiento.get(clave+'.respaldo-v9'),JSON.stringify(manual9));assert(Math.abs(guardada10.planos.descubrir.claves[1].t-3.4)<1e-10);assert.equal(JSON.stringify(guardada10.planos.techo),JSON.stringify(manual9.planos.techo));
 for(const f of [1210,1330,1450,1570]){entrada('ceTiempo',f);await completar();agrupado.antesDibujo();assert.equal(camara.position.x,85,'La cámara guardada de v9 continúa en todas las acciones del plano 07');assert.equal($('cePOV').checked,false);assert.equal($('cePOV').disabled,true);assert.equal($('cePOVControl').hidden,true);assert.equal($('cePOVControl').style.display,'none');assert.equal(vistaExterna,false);}
 console.log('✓ Importar v9 respalda la toma, estira sólo el paneo y conserva las cámaras de POV7 con su opción de brazos bloqueada.');
