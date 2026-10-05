@@ -18,7 +18,7 @@
     let semilla=731;const azar=()=>((semilla=(semilla*16807)%2147483647)/2147483647);
     const TAU=Math.PI*2,tiempo={value:0},centro={value:new THREE.Vector2()},radio=abierto?108:24;
     const deriva={value:new THREE.Vector2()},cola={value:new THREE.Vector2()},anteriorViento=new THREE.Vector2(),fuerzaTormenta={value:0};
-    const centroPortal={value:new THREE.Vector3()},fuerzaPortal={value:new THREE.Vector4()},portalActual=new THREE.Vector2(),portalAnterior=new THREE.Vector2();let gravedadPortal=null;
+    const centroPortal={value:new THREE.Vector3()},fuerzaPortal={value:new THREE.Vector4(0,0,0,0)},portalActual=new THREE.Vector2(),portalAnterior=new THREE.Vector2();let gravedadPortal=null;
     let activo=true,sonido=true,pausado=false,tiempoCine=null,edadTormenta=-1,reloj=0,proximo=14,relampago=-100,trueno=null,totalTruenos=0;
     // Las gotas desaparecen al alcanzar los tejados; el mapa de alturas se calcula una sola vez.
     const lado=256,extension=120,alturas=new Float32Array(lado*lado);

@@ -8,6 +8,22 @@ const T=contexto.CAOZ_THREE.THREE;
 const obstaculos=[{x:-5,z:-3,r:1.3},{x:0,z:0,r:2}],techos=[new T.Box3(new T.Vector3(3,0,3),new T.Vector3(8,6,8))];
 function preparar(opciones={}){const escena=new T.Scene(),impactos=contexto.CAOZ_ARPG_IMPACTOS.fabrica(T,escena);return {escena,clima:contexto.CAOZ_ARPG_CLIMA.fabrica(T,escena,{obstaculos,techos,perforar:impactos.perforar,...opciones})};}
 function avanzar(c,s,hz=60){let pico=0;for(let i=0;i<Math.round(s*hz);i++)pico=Math.max(pico,c.paso(1/hz,{x:0,z:0}));return pico;}
+// Una partida recién abierta nunca pasa por cinematica(). Vector4() dejaría
+// w=1: sólo la cola recibiría la expulsión de 6.4 m y formaría una telaraña.
+for(const reducido of [false,true]){const {escena,clima}=preparar({reducido}),lluvia=escena.getObjectByName('Lluvia ligera'),u=lluvia.material.uniforms,a=lluvia.geometry.attributes;
+ const normal=()=>{
+  assert.equal(clima.estado().portal,null);assert.deepEqual(Array.from(u.uFuerzaPortal.value.toArray()),[0,0,0,0],'Cabeza y cola nacen sin gravedad, antes de abrir cualquier cinemática');
+  for(let i=0;i<lluvia.geometry.drawRange.count;i+=2){
+   assert.deepEqual([a.aSemilla.getX(i),a.aSemilla.getY(i),a.aSemilla.getZ(i)],[a.aSemilla.getX(i+1),a.aSemilla.getY(i+1),a.aSemilla.getZ(i+1)],'Los extremos pertenecen a la misma gota');
+   assert.equal(a.aExtremo.getX(i),0);assert.equal(a.aExtremo.getX(i+1),1);
+   const rapidez=12+a.aSemilla.getX(i)*.075,recorrido=new T.Vector3(-u.uCola.value.x,rapidez*.028,-u.uCola.value.y);
+   assert(recorrido.y>0&&recorrido.length()<.6,'La cola sin portal es sólo el recorrido corto de los últimos 28 ms');
+  }
+ };
+ normal();for(let i=0;i<120;i++){clima.paso(1/60,{x:i/60,z:4});normal();}
+ clima.cinematica(12,{x:2,z:4},{portal:{centro:[2,8,-10],edad:1.45,soltar:1.316}});assert(u.uFuerzaPortal.value.length()>0);
+ clima.cinematica(null,{x:2,z:4});normal();clima.paso(1/60,{x:2,z:4});normal();clima.destruir();
+}
 for(const hz of [20,30,60,144]){
  const {escena,clima}=preparar();assert.equal(escena.children.length,3);assert.equal(clima.estado().gotas,638);assert.equal(clima.estado().charcos,28);
  const agua=escena.getObjectByName('Charcos de lluvia'),p=agua.geometry.attributes.position;
