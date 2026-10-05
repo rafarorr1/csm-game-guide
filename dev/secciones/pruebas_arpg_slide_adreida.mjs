@@ -1,4 +1,4 @@
-/* El ataque deslizante usa el FBX sobre Adreida, sin sustituir su cuerpo ni su agarre. */
+/* El slide, la incorporación, el giro y la búsqueda conservan cuerpo y agarre. */
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -34,4 +34,58 @@ for(const [nombre,q] of Object.entries(poseOtro.rot))assert(q.angleTo(otro.H[nom
 const estados=new Map();for(const k of [0,.18,.43,.67,.84,1]){A.deslizar(m,k);estados.set(k,A.capturar(m));}
 for(const k of [1,.18,.84,0,.67,.43,.18]){A.deslizar(m,k);const p=estados.get(k);assert(m.H.cuerpo.position.distanceTo(p.pos)<1e-8);for(const [nombre,q] of Object.entries(p.rot))assert(q.angleTo(m.H[nombre].quaternion)<1e-6,'Buscar restaura el mismo hueso: '+nombre);}
 const guardada=A.capturar(m);A.deslizar(m,.91);A.restaurar(m,guardada);assert(m.H.cuerpo.position.equals(guardada.pos));for(const [nombre,q] of Object.entries(guardada.rot))assert(q.angleTo(m.H[nombre].quaternion)<1e-6);
+
+const mismaPose=(esperada,mensaje,tolerancia=1e-6)=>{assert(m.H.cuerpo.position.distanceTo(esperada.pos)<tolerancia,mensaje+' (posición)');for(const [n,q]of Object.entries(esperada.rot))assert(q.angleTo(m.H[n].quaternion)<tolerancia,mensaje+' ('+n+')');};
+A.deslizar(m,.9/clip.duracion);const finSlide=A.capturar(m);A.rematarDeslizamiento(m,0);mismaPose(finSlide,'La incorporación nace del cuadro exacto a los 0.90 s');
+const origen=m.raiz.position.clone(),orientacion=m.raiz.quaternion.clone();let pisoRemate=Infinity,agarreRemate=0;
+const comprobarPose=etiqueta=>{
+ const error=m.H.manoD.localToWorld(new T.Vector3(0,-.3,0)).distanceTo(m.H.manoI.getWorldPosition(v));agarreRemate=Math.max(agarreRemate,error);assert(error<.006,etiqueta+': las dos manos siguen en el mango');
+ assert(m.raiz.position.distanceTo(origen)<1e-8&&m.raiz.quaternion.angleTo(orientacion)<1e-7,etiqueta+': el giro no mueve la raíz de la plaza');
+ assert(Math.hypot(m.H.cuerpo.position.x,m.H.cuerpo.position.z)<.35,etiqueta+': el cuerpo transfiere su peso alrededor del pivote sin avanzar por la plaza');
+ for(const mesh of m.mallas)for(let j=0;j<mesh.geometry.attributes.position.count;j+=13)pisoRemate=Math.min(pisoRemate,mesh.getVertexPosition(j,v).y);
+ for(const b of Object.values(m.H))assert(Number.isFinite(b.position.length()+b.quaternion.lengthSq())&&Math.abs(b.quaternion.lengthSq()-1)<.00002,etiqueta+': pose finita y normalizada');
+ assert.deepEqual(Array.from(m.mallas[0].morphTargetInfluences),[1,1],etiqueta+': los dedos permanecen cerrados');
+};
+for(let i=0;i<=152;i++){A.rematarDeslizamiento(m,i/152);comprobarPose('Remate '+i);}
+const finRemate=A.capturar(m),alturaDePie=m.H.cabeza.getWorldPosition(v).y;assert(alturaDePie>alturaReposo-.035,'Termina erguida antes de buscar al mago');
+A.buscarDePie(m,0);mismaPose(finRemate,'La búsqueda empieza en la misma pose del freno');
+let cabezaIzquierda=0,cabezaDerecha=0,espacioCabeza=Infinity;
+for(let i=0;i<=74;i++){
+ A.buscarDePie(m,i/40);comprobarPose('Búsqueda '+i);cabezaIzquierda=Math.min(cabezaIzquierda,m.H.cabeza.rotation.y);cabezaDerecha=Math.max(cabezaDerecha,m.H.cabeza.rotation.y);const alturaCabeza=m.H.cabeza.getWorldPosition(v).y;assert(alturaCabeza>alturaReposo-.035,'Busca al mago de pie');
+ let techoArma=-Infinity;for(let j=0;j<m.mallas[1].geometry.attributes.position.count;j++)techoArma=Math.max(techoArma,m.mallas[1].getVertexPosition(j,v).y);
+ espacioCabeza=Math.min(espacioCabeza,alturaCabeza-techoArma);assert(alturaCabeza-techoArma>.25,'La guardia baja deja libre la cabeza durante la búsqueda');
+}
+assert(cabezaIzquierda<-.9&&cabezaDerecha>1,'La cabeza comprueba ambos lados antes de pasar a POV');
+assert(pisoRemate>0,`Cuerpo y hacha quedan sobre el suelo durante toda la actuación (${pisoRemate} m)`);
+// La orientación puede coincidir al principio y al final, pero el arco recorre
+// una vuelta completa, siempre en el mismo sentido y sin el atajo de slerp.
+let anteriorAngulo=null,vuelta=0,elevacionDerecha=0,flexionIzquierda=0;
+A.rematarDeslizamiento(m,.52/1.52);const pivoteInicial=m.H.pieI.getWorldPosition(new T.Vector3()),alturaInicioGiro=m.H.cabeza.getWorldPosition(v).y;let alturaGiro=alturaInicioGiro;
+for(let i=0;i<=116;i++){
+ A.rematarDeslizamiento(m,(.52+.58*i/116)/1.52);v.set(0,0,1).applyQuaternion(m.H.cadera.quaternion);const angulo=Math.atan2(v.x,v.z);
+ if(anteriorAngulo!==null){const paso=Math.atan2(Math.sin(angulo-anteriorAngulo),Math.cos(angulo-anteriorAngulo));assert(paso>=-1e-8,'El giro no invierte el sentido al cruzar 180°');vuelta+=paso;}anteriorAngulo=angulo;
+ const pivote=m.H.pieI.getWorldPosition(new T.Vector3()),pieLibre=m.H.pieD.getWorldPosition(v);
+ assert(Math.hypot(pivote.x-pivoteInicial.x,pivote.z-pivoteInicial.z)<1e-7,'La bota izquierda pivota en su punto de apoyo sin patinar por el suelo');
+ elevacionDerecha=Math.max(elevacionDerecha,pieLibre.y-pivote.y);flexionIzquierda=Math.max(flexionIzquierda,m.H.rodillaI.rotation.x);alturaGiro=Math.min(alturaGiro,m.H.cabeza.getWorldPosition(v).y);
+}
+assert(Math.abs(vuelta-Math.PI*2)<1e-6,'La cadera ejecuta los 360° completos');
+assert(elevacionDerecha>.12&&flexionIzquierda>1&&alturaInicioGiro-alturaGiro>.05,'El giro carga una rodilla, recoge la otra pierna y baja el peso del cuerpo');
+for(const t of [.52,.81,1.10,1.52]){A.rematarDeslizamiento(m,t/1.52);for(const mesh of m.mallas)for(let i=0;i<mesh.geometry.attributes.position.count;i++)assert(mesh.getVertexPosition(i,v).y>0,'Todos los vértices respetan el suelo en apoyo, carga y freno');}
+for(let i=0;i<=21;i++){A.rematarDeslizamiento(m,(1.10+i*.02)/1.52);for(let j=0;j<m.mallas[1].geometry.attributes.position.count;j+=7)assert(m.mallas[1].getVertexPosition(j,v).y<1.45,'El freno recoge el arma por abajo sin levantarla sobre la cabeza');}
+// Todos los empalmes son continuos, incluso al evaluar instantes separados por
+// una milésima de cuadro, y las búsquedas son independientes del orden de lectura.
+for(const t of [.52,1.10,1.52]){A.rematarDeslizamiento(m,(t-1e-6)/1.52);const antes=A.capturar(m);A.rematarDeslizamiento(m,Math.min(1,(t+1e-6)/1.52));mismaPose(antes,'Empalme continuo a '+t+' s',.0001);}
+for(const [animar,tiempos]of [[k=>A.rematarDeslizamiento(m,k),[0,.13,.3421,.52,.7237,.91,1]],[t=>A.buscarDePie(m,t),[0,.23,.43,.79,1.10,1.62,1.85]]]){
+ const poses=new Map();for(const t of tiempos){animar(t);poses.set(t,A.capturar(m));}
+ for(const t of [...tiempos].reverse()){animar(t);mismaPose(poses.get(t),'La actuación absoluta restaura '+t);}
+ const guardada=A.capturar(m);A.deslizar(m,.71);A.restaurar(m,guardada);mismaPose(guardada,'Capturar y restaurar conserva la nueva actuación');
+}
+A.rematarDeslizamiento(m,.19,finSlide,0);mismaPose(finSlide,'La entrada cero conserva la pose anterior');
+A.rematarDeslizamiento(m,.19,finSlide,.45);comprobarPose('Mezcla de incorporación');
+A.buscarDePie(m,.7,finRemate,0);mismaPose(finRemate,'La entrada cero conserva el freno');
+A.buscarDePie(m,.7,finRemate,.45);comprobarPose('Mezcla de búsqueda');
+assert.equal(m.mallas.length,2);assert.equal(mesh.geometry,otro.mallas[0].geometry);assert.deepEqual(g.attributes.position.array,vertices);assert.deepEqual(g.index.array,indices,'El remate tampoco modifica la geometría compartida');
+for(const [nombre,q]of Object.entries(poseOtro.rot))assert(q.angleTo(otro.H[nombre].quaternion)<1e-7,'El remate no modifica otro personaje');
 console.log(`✓ Slide de Adreida: ${clip.muestras} muestras, 61 poses, cuerpo ${(alturaReposo-alturaMin).toFixed(2)} m más bajo, agarre ${(errorManos*1000).toFixed(2)} mm, suelo ${(pisoMin*1000).toFixed(1)} mm y búsquedas reversibles sin cambiar geometría.`);
+console.log(`✓ Remate y búsqueda: 228 poses, vuelta completa ${(vuelta*180/Math.PI).toFixed(0)}°, agarre ${(agarreRemate*1000).toFixed(3)} mm, suelo ${(pisoRemate*1000).toFixed(1)} mm y empalmes continuos, absolutos y reversibles.`);
+console.log(`✓ Peso del giro: pivote izquierdo fijo, pierna derecha ${(elevacionDerecha*100).toFixed(1)} cm más alta, carga vertical ${((alturaInicioGiro-alturaGiro)*100).toFixed(1)} cm y guardia ${(espacioCabeza*100).toFixed(1)} cm por debajo de la cabeza.`);

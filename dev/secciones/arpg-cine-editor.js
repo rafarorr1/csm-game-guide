@@ -2,7 +2,7 @@
 'use strict';
 window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
   const M=window.CAOZ_ARPG_CINE_CAMARA,C=M.crear(T),V=T.Vector3,$=id=>document.getElementById(id),clonar=v=>JSON.parse(JSON.stringify(v));
-  const nombres={salida:'Sale de la casa',descubrir:'Descubre al mago',pies:'Pies · arranque de carrera',vertigo:'Dolly zoom',carrera:'Carrera e inicio del ataque',ataquePOV:'Inicia el hachazo',desaparece:'El mago desaparece',tropezar:'Fallo, caída y recuperación',buscar:'Busca al mago',levantarse:'Se incorpora',voltear:'Mira hacia atrás',techo:'Mago en el techo y meteorito',cielo:'Revela el meteorito',caida:'Se prepara al impacto',impacto:'Impacto y caída',negro:'Fundido a negro'};
+  const nombres={salida:'Sale de la casa',descubrir:'Descubre al mago',pies:'Pies · arranque de carrera',vertigo:'Dolly zoom',carrera:'Carrera e inicio del ataque',ataquePOV:'Inicia el hachazo',desaparece:'El mago desaparece',tropezar:'Deslizamiento, giro y búsqueda',buscar:'Busca al mago',levantarse:'Se incorpora',voltear:'Mira hacia atrás',techo:'POV · búsqueda y hechizo',cielo:'Revela el meteorito',caida:'Se prepara al impacto',impacto:'Impacto y caída',negro:'Fundido a negro'};
   let toma=M.nueva(),deshacer=[],rehacer=[],guion=[],frames=[],cuadro=0,acumulado=0,ocupado=true,reproduce=false,grabando=false,libre=null,nativa=null,seleccion=null,token=0,ultimoUI=0,arrastre=null,destino=null,arrastreTiempo=null;
   const teclas=new Set(),vistasPrevias=new Map();
   document.body.classList.add('cineEditor');document.title='Cine · Caoz ARPG';
@@ -40,11 +40,11 @@ window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
   function capturarNativa(){nativa=C.capturar(camara,Math.max(1,camara.position.distanceTo(new V().fromArray(api.estado().actor).add(new V(0,1,0)))));}
   async function preparar(){
     try{
-      api.reiniciar();frames=[{fase:fase(),accion:api.estado().fase,tAccion:0,t:0,camara:C.capturar(camara),cuadro:api.capturar()}];guion=[{fase:fase(),inicio:0,fin:0}];
+      api.reiniciar();frames=[{fase:fase(),accion:api.estado().fase,tAccion:0,t:0,estado:api.estado(),camara:C.capturar(camara),cuadro:api.capturar()}];guion=[{fase:fase(),inicio:0,fin:0}];
       for(let i=1;i<3600;i++){
         api.paso(1/60);const e=api.estado(),id=M.planoDeFase(e.fase);
         if(id!==guion.at(-1).fase){guion.at(-1).fin=i;guion.push({fase:id,inicio:i,fin:0});}
-        frames.push({fase:id,accion:e.fase,tAccion:e.t,t:(i-guion.at(-1).inicio)/60,camara:C.capturar(camara),cuadro:api.capturar()});
+        frames.push({fase:id,accion:e.fase,tAccion:e.t,t:(i-guion.at(-1).inicio)/60,estado:e,camara:C.capturar(camara),cuadro:api.capturar()});
         if(e.terminado)break;if(i%90===0)await ceder();
       }
       if(!api.estado().terminado)throw Error('La acción excede un minuto; revisa el guion antes de editarlo.');
@@ -68,7 +68,7 @@ window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
       const tira=document.createElement('button');tira.title=nombres[p.fase];tira.textContent=String(i+1).padStart(2,'0');tira.style.flexGrow=p.fin-p.inicio;tira.onclick=()=>buscar(p.inicio);tira.dataset.fase=p.fase;$('ceTiras').append(tira);
     });$('ceTiempo').max=frames.length-1;$('ceDuracion').textContent=`${guion.length} planos · ${((frames.length-1)/60).toFixed(2)} s`;
   }
-  function vistaActual(){const p=toma.planos[fase()];return libre||C.muestra(p?.claves,tiempoLocal())||nativa;}
+  function vistaActual(){return libre||C.tomaEn(toma,{...api.estado(),tPlano:tiempoLocal()}).camara||nativa;}
   function camposCamara(){const k=vistaActual();if(!k)return;const objetivo=new V(0,0,-1).applyQuaternion(new T.Quaternion().fromArray(k.rot)).multiplyScalar(k.distancia).add(new V().fromArray(k.pos));
     ['x','y','z'].forEach((a,i)=>{if(document.activeElement!==$('cePos'+a))$('cePos'+a).value=k.pos[i].toFixed(2);if(document.activeElement!==$('ceMira'+a))$('ceMira'+a).value=objetivo[a].toFixed(2);});$('ceFov').value=k.fov;$('ceFovTexto').textContent=k.fov.toFixed(1)+'°';
   }

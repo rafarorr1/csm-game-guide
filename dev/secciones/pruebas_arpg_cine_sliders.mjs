@@ -59,7 +59,7 @@ const css=fs.readFileSync(new URL('arpg-cine-editor.css',import.meta.url),'utf8'
 console.log('✓ Sliders: arrastre con render activo, búsqueda durante el gesto, reversa, último destino, cancelación concurrente, plano local estable, extremos, teclado y pausa.');
 
 // El corte a tercera persona pertenece al plano 06, desde desaparece.
-fases.splice(3,0,'pies');fases.push('carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro');
+fases.splice(3,0,'pies');fases.push('carrera','ataquePOV','desaparece','levantarse','tropezar','buscar','voltear','techo','cielo','caida','impacto','negro');
 const agrupado=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api);await completar();
 assert.equal($('cePlanos').children.length,10);assert.equal($('ceTiras').children.length,10);
 entrada('ceTiempo',490);await completar();assert.equal(Number($('ceLocal').max),239);
@@ -67,13 +67,13 @@ $('ceLocal').emitir('pointerdown');entrada('ceLocal',200);await completar();comp
 assert.equal($('cePlanoTitulo').textContent,'05 / Carrera e inicio del ataque');$('ceLocal').emitir('pointerup');
 $('ceCurva').value='suave';$('ceKey').onclick();assert.equal($('ceCuenta').textContent,1);assert.equal($('ceKeyTiempo').value,'3.333');
 entrada('ceLocal',100);await completar();assert.equal($('ceCuenta').textContent,1);
-entrada('ceTiempo',720);await completar();comprobar(720,0);assert.equal(api.estado().fase,'desaparece');assert.equal(Number($('ceLocal').max),599);
-entrada('ceLocal',599);await completar();comprobar(1319,599);assert.equal($('cePlanoTitulo').textContent,'06 / Fallo, caída y recuperación');
+entrada('ceTiempo',720);await completar();comprobar(720,0);assert.equal(api.estado().fase,'desaparece');assert.equal(Number($('ceLocal').max),479);
+entrada('ceLocal',479);await completar();comprobar(1199,479);assert.equal(api.estado().fase,'buscar');assert.equal($('cePlanoTitulo').textContent,'06 / Deslizamiento, giro y búsqueda');
 entrada('ceTiempo',710);await completar();$('ceVelocidad').value='1';$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert.equal(simulado,719,'La grabación acaba antes de desaparecer');
 entrada('ceTiempo',830);await completar();$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert(simulado>840,'Cambiar de acción no detiene el plano 06');assert.equal($('ceGrabar').textContent,'■ Detener grabación');$('ceGrabar').onclick();
 console.log('✓ Grupos del editor: diez planos, sliders completos, keyframes compartidos y grabación continua entre acciones.');
 
-entrada('ceTiempo',1330);await completar();assert.equal(Number($('ceLocal').max),239);entrada('ceLocal',239);await completar();comprobar(1559,239);assert.equal(api.estado().fase,'cielo');assert.equal($('cePlanoTitulo').textContent,'07 / Mago en el techo y meteorito');
+entrada('ceTiempo',1210);await completar();assert.equal(api.estado().fase,'voltear');assert.equal(Number($('ceLocal').max),359);entrada('ceLocal',359);await completar();comprobar(1559,359);assert.equal(api.estado().fase,'cielo');assert.equal($('cePlanoTitulo').textContent,'07 / POV · búsqueda y hechizo');
 // Una cámara libre no contamina la cámara programada al continuar hacia adelante.
 const antesAvance=reinicios;entrada('ceTiempo',1570);await completar();assert.equal(reinicios,antesAvance,'Avanzar restaura el cuadro preparado');
 entrada('ceTiempo',1520);await completar();assert.equal(reinicios,antesAvance,'Retroceder restaura un cuadro ya preparado');assert.equal(simulado,1520);
@@ -83,15 +83,15 @@ const pasosAntes=pasos,reiniciosAntes=reinicios;for(const f of [0,1820,20,1620,1
 console.log('✓ Búsquedas instantáneas por caché, sin simulación ni reinicios; actuación independiente del encuadre.');
 
 // Los keyframes no sustituyen el cuerpo completo por brazos POV ni al revés.
-entrada('ceTiempo',1330);await completar();agrupado.antesDibujo();assert.equal(vistaExterna,false);assert.equal($('cePOV').checked,true);
-assert.equal($('ceFrames').textContent,'Plano F010 · Global F1330');
+entrada('ceTiempo',1210);await completar();agrupado.antesDibujo();assert.equal(vistaExterna,false);assert.equal($('cePOV').checked,true);
+assert.equal($('ceFrames').textContent,'Plano F010 · Global F1210');
 $('ceKey').onclick();agrupado.antesDibujo();assert.equal(vistaExterna,false,'El primer keyframe conserva los brazos originales');
 const seleccionar=$('ceLista').children[0].onclick();await completar();await seleccionar;agrupado.antesDibujo();assert.equal(vistaExterna,false,'Seleccionar un keyframe no cambia el actor');
 $('cePOV').checked=false;$('cePOV').emitir('change');agrupado.antesDibujo();assert.equal(vistaExterna,true,'Sólo la opción explícita puede cambiar su visibilidad');
 $('ceKey').onclick();agrupado.antesDibujo();assert.equal(vistaExterna,true);
 $('ceEliminar').onclick();agrupado.antesDibujo();assert.equal(vistaExterna,true,'Borrar el último keyframe tampoco cambia la representación');
 $('ceBase').onclick();agrupado.antesDibujo();assert.equal(vistaExterna,true,'Convertir la cámara original conserva la representación');
-entrada('ceTiempo',1440);await completar();assert.equal($('ceFrames').textContent,'Plano F120 · Global F1440');
-$('ceVelocidad').value='.25';agrupado.paso(.1);assert.equal($('ceFrames').textContent,'Plano F120 · Global F1440','La referencia de cuadros no depende de la velocidad');
+entrada('ceTiempo',1440);await completar();assert.equal($('ceFrames').textContent,'Plano F240 · Global F1440');
+$('ceVelocidad').value='.25';agrupado.paso(.1);assert.equal($('ceFrames').textContent,'Plano F240 · Global F1440','La referencia de cuadros no depende de la velocidad');
 entrada('ceTiempo',1560);await completar();assert.equal($('ceFrames').textContent,'Plano F000 · Global F1560','El contador local se reinicia al cambiar de plano');
 console.log('✓ Keyframes conservan la representación del actor; contador de cuadros local/global con base 60 e índices desde cero.');
