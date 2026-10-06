@@ -24,7 +24,8 @@
     return {paso,estado};
   }
   // Comparación del inspector: desactivar refracción conserva los reflejos precalculados.
-  let refraccion=true;
+  // El líquido y los reflejos siguen animados sin volver a filtrar el lienzo 3D diez veces.
+  let refraccion=false;
   const lentesActivas=new Map();
   function crearLente(elemento,config){
     const lente=new window.CAOZ_QUICK_LIQUID.LiquidGlassEngine(elemento,{...config,...(!refraccion?{refractionStrength:0,saturation:1}:{})});

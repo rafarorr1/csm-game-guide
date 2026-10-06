@@ -3,24 +3,36 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-piernas-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','arpg-three-impactos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-mago-particulas.js','arpg-three-mago-hechizo.js','arpg-three-final-mago.js','arpg-cine-camara.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-piernas-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','arpg-three-impactos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-mago-particulas.js','arpg-three-mago-hechizo.js','arpg-three-final-mago.js','arpg-three-bosque.js','arpg-cine-camara.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,MOD=c.CAOZ_ARPG_MODELOS.fabrica(T),escena=new T.Scene(),camara=new T.PerspectiveCamera(32,16/9,.5,1200),casas=new T.Group();
 escena.background=new T.Color(0x233442);escena.fog=new T.Fog(0x233442,30,80);const ambiente=new T.HemisphereLight(0xaaccee,0x332211,.5),luna=new T.DirectionalLight(0xaaccff,2);escena.add(ambiente,luna);const fondoOriginal=escena.background.clone();
 const g=new T.BoxGeometry(6,7,5).toNonIndexed();g.translate(5,3.5,-17);const casa=new T.Mesh(g,new T.MeshStandardMaterial());casa.castShadow=true;casas.add(casa);escena.add(casas);
 const tapa=new T.Mesh(new T.BoxGeometry(6,9,6).toNonIndexed(),new T.MeshStandardMaterial());tapa.position.set(0,4.5,20);casas.add(tapa);
 const salidaCasa=new T.Mesh(new T.BoxGeometry(6,7,5).toNonIndexed(),new T.MeshStandardMaterial());salidaCasa.position.set(17,3.5,17);casas.add(salidaCasa);
+tapa.frustumCulled=false;
+const descarteOriginal=casas.children.map(m=>m.frustumCulled);
+const entorno=new T.Group();escena.add(entorno);entorno.add(casas);
+const bosque=c.CAOZ_ARPG_BOSQUE.fabrica(T,{grupo:entorno});
+// Dos geometrías distintas también pueden compartir material; ambas necesitan aRuina.
+const copas=bosque.grupo.children.filter(m=>!m.geometry.index),copaDistinta=copas.at(-1);copaDistinta.geometry=copaDistinta.geometry.clone();
 casas.userData.ocultacion={cajas:[casa,tapa,salidaCasa].map(m=>new T.Box3().setFromObject(m)),opacidades:new Float32Array([1,1,1])};
 const actor={tipo:'adreida',vivo:true,m:MOD.crear('adreida'),pos:new T.Vector3(10,0,10),dir:0,fase:0};escena.add(actor.m.raiz);
 const otro={tipo:'mohamed',vivo:true,m:MOD.crear('mohamed'),pos:new T.Vector3(),dir:0,fase:0};escena.add(otro.m.raiz);
 const fx=c.CAOZ_ARPG_IMPACTOS.fabrica(T,escena);fx.actualizarMaterial(new T.MeshStandardMaterial());let impactos=0,regresos=0,negro=0,lluvia=null,tormenta=null,avisosFin=0,ultimaInterfaz=null;
-const cine=c.CAOZ_ARPG_FINAL_MAGO.fabrica(T,MOD,{escena,camara,casas,planoDeFase:c.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia(t,p,opciones){lluvia=t;tormenta=opciones;},impactar(p){impactos++;fx.agujero(p,{radio:8.4,profundidad:24,duracion:30});},volver(){regresos++;},interfaz(s){negro=s.negro;ultimaInterfaz={...s};if(s.fase==='fin')avisosFin++;}});
+const cine=c.CAOZ_ARPG_FINAL_MAGO.fabrica(T,MOD,{escena,camara,casas,entorno,planoDeFase:c.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia(t,p,opciones){lluvia=t;tormenta=opciones;},impactar(p){impactos++;fx.agujero(p,{radio:8.4,profundidad:24,duracion:30});},volver(){regresos++;},interfaz(s){negro=s.negro;ultimaInterfaz={...s};if(s.fase==='fin')avisosFin++;}});
 assert.equal(cine.recursos,null,'No reserva geometrías hasta entrar');
 assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES.vertigo,2.8,'El dolly frontal dura un segundo más');
 assert.equal(c.CAOZ_ARPG_CINE_CAMARA.planos[4],'carrera');assert.equal(c.CAOZ_ARPG_CINE_CAMARA.planos[5],'tropezar','El salto conserva el identificador del plano 6 y sus keyframes');
 for(const [fase,segundos]of Object.entries({salida:3.6,descubrir:3.4,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3.7}))assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES[fase],segundos,'El montaje mantiene despegue, vuelo, aterrizaje y POV: '+fase);
 for(const fps of [30,60,120]){
  camara.position.set(12,16,22);camara.lookAt(actor.pos);const antes=regresos,finAntes=avisosFin,impactosAntes=impactos,posAntes=actor.pos.clone();
- assert(cine.iniciar([actor,otro],{puerta:new T.Vector3(10,0,10)}));assert(!cine.iniciar([actor]));const orden=[],velocidadesPies=[];let ultimoAlto=0,poseAntes=null,inicioPaneo=null,dirAtaque=null,ultimaCamara=null,inicioPOV=null,rematePos=null,inicioPies=null,minBusqueda=Infinity,maxBusqueda=-Infinity,particulasVistas=false,reunionVista=false,observacion=0;
+ assert(cine.iniciar([actor,otro],{puerta:new T.Vector3(10,0,10)}));assert(!cine.iniciar([actor]));assert(casas.children.every(m=>!m.frustumCulled),'Cada reproducción permite desplazar ruinas fuera de sus límites, también al reutilizar los recursos');const orden=[],velocidadesPies=[];let ultimoAlto=0,poseAntes=null,inicioPaneo=null,dirAtaque=null,ultimaCamara=null,inicioPOV=null,rematePos=null,inicioPies=null,minBusqueda=Infinity,maxBusqueda=-Infinity,particulasVistas=false,reunionVista=false,observacion=0;
+ const materialesProbados=new Set();entorno.traverse(m=>{if(!m.isMesh||!m.material.isMeshStandardMaterial||m.geometry.index)return;
+  assert.equal(m.geometry.attributes.aRuina.count,m.geometry.attributes.position.count,'Todas las geometrías reciben el atributo de ruina, aunque compartan material');
+  if(materialesProbados.has(m.material))return;materialesProbados.add(m.material);
+  const sh={uniforms:{},vertexShader:T.ShaderLib.standard.vertexShader,fragmentShader:T.ShaderLib.standard.fragmentShader};m.material.onBeforeCompile(sh);
+  for(const declaracion of ['attribute vec4 aRuina;','uniform float uDerrumbe;','uniform vec3 uCentroOnda;'])assert.equal(sh.vertexShader.split(declaracion).length-1,1,'Una sola inyección por material compartido: '+declaracion);
+ });assert(materialesProbados.has(copas[0].material),'El bosque real participa en la comprobación del shader');
  for(let i=0;i<fps*40&&!cine.estado().terminado;i++){
   const est=cine.estado();if(orden.at(-1)!==est.fase)orden.push(est.fase);
   const fijo=JSON.stringify(est);cine.paso(0);assert.equal(JSON.stringify(cine.estado()),fijo,'La pausa no avanza');cine.paso(1/fps);
@@ -185,6 +197,8 @@ for(const fps of [30,60,120]){
  assert(cine.estado().derrumbe>2);assert.equal(casa.castShadow,false);
  const estadoTerminado=JSON.stringify(cine.estado());for(let i=0;i<120;i++)cine.paso(1/fps);assert.equal(regresos,antes,'La pantalla final no navega después');assert.equal(avisosFin,finAntes+1);assert.equal(JSON.stringify(cine.estado()),estadoTerminado,'El final permanece detenido');
  cine.cancelar();fx.limpiar();assert(!cine.activa);assert(actor.pos.equals(posAntes),'Cancelar restaura al actor, sin dejarlo bajo el piso');assert.equal(actor.m.raiz.visible,true);assert.equal(otro.m.raiz.visible,true);assert.equal(casa.castShadow,true);assert.equal(camara.fov,32);assert.equal(camara.near,.5);
+ assert.deepEqual(casas.children.map(m=>m.frustumCulled),descarteOriginal,'Cancelar recupera el descarte original de cada malla, sin activar el de las que ya estaban exentas');
+ assert(copas.every(m=>m.frustumCulled),'Todos los sectores del bosque recuperan su descarte al cancelar');
 }
 for(const segundos of [0,4,6,8,13,20]){const antes=regresos,finAntes=avisosFin;cine.iniciar([actor,otro]);for(let i=0;i<segundos*60;i++)cine.paso(1/60);assert(cine.finalizar());assert(casas.userData.ocultacion.opacidades.every(v=>v===1),'Omitir restaura la casa aunque se interrumpa el dolly');assert(!cine.finalizar());cine.paso(1);assert.equal(regresos,antes,'Omitir llega al mismo final sin navegar');assert.equal(avisosFin,finAntes+1);assert.equal(ultimaInterfaz.fase,'fin');assert.equal(negro,1);cine.cancelar();fx.limpiar();}
 for(let j=0;j<2;j++){cine.iniciar([actor,otro]);while(cine.estado().fase!=='vertigo')cine.paso(1/60);assert(casas.userData.ocultacion.opacidades[1]<.1);cine.cancelar();assert(casas.userData.ocultacion.opacidades.every(v=>v===1),'Cancelar también restaura la casa, incluso al repetir la toma');}
@@ -211,7 +225,7 @@ const muestras=[0,cuadros.findIndex(f=>f.estado.fase==='ataquePOV'&&f.estado.t>.
 const recursosAntes=escena.children.length;
 for(const i of [...muestras,...muestras.slice().reverse(),...muestras]){
  for(const x of cuadros[i].agarres)x.n.morphTargetInfluences.fill(-1);
- const f=cuadros[i];cine.mostrarCuadro(f);const actual=cine.estado();for(const clave of ['mago','meteorito']){assert(actual[clave].every((v,j)=>Math.abs(v-f.estado[clave][j])<1e-5),'Posiciones visuales conservadas con precisión submilimétrica');actual[clave]=f.estado[clave];}assert.equal(JSON.stringify(actual),JSON.stringify(f.estado),'Restaurar conserva fase, relojes, lluvia y posiciones');
+ const f=cuadros[i];casa.frustumCulled=true;cine.mostrarCuadro(f);assert(casas.children.every(m=>!m.frustumCulled),'Mostrar un cuadro mantiene visibles las ruinas deformadas');const actual=cine.estado();for(const clave of ['mago','meteorito']){assert(actual[clave].every((v,j)=>Math.abs(v-f.estado[clave][j])<1e-5),'Posiciones visuales conservadas con precisión submilimétrica');actual[clave]=f.estado[clave];}assert.equal(JSON.stringify(actual),JSON.stringify(f.estado),'Restaurar conserva fase, relojes, lluvia y posiciones');
  assert.deepEqual(cine.recursos.particulasMago.capturar(),f.particulas,'Scrub restaura exactamente la disolución y el estado de las partículas');
  assert.deepEqual(cine.recursos.hechizoMago.capturar(),f.hechizo,'Scrub restaura exactamente cielo, nubes, niebla y luces del hechizo');
  assert.equal(tormenta.edadHechizo,f.estado.inicios.hechizo===undefined?-1:Math.max(0,f.estado.total-f.estado.inicios.hechizo),'La lluvia y el viento recuperan su intensidad al retroceder');
@@ -227,4 +241,8 @@ for(const i of [...muestras,...muestras.slice().reverse(),...muestras]){
 const bytes=cuadros.reduce((n,f)=>n+f.poses.byteLength+f.instancias.reduce((m,x)=>m+x.i.byteLength,0),0);
 assert(bytes<64*1024*1024,'La actuación almacenada debe caber en 64 MiB sin duplicar texturas');
 cine.cancelar();fx.limpiar();assert(escena.background.equals(fondoOriginal));assert.equal(ambiente.intensity,.5);assert.equal(luna.intensity,2);
+assert.deepEqual(casas.children.map(m=>m.frustumCulled),descarteOriginal,'El editor tampoco deja desactivado el descarte al salir');
+// Se captura la política al comenzar cada sesión, no una copia obsoleta de preparar().
+casa.frustumCulled=false;cine.iniciar([actor,otro]);cine.cancelar();assert.equal(casa.frustumCulled,false);casa.frustumCulled=true;
+assert.deepEqual(casas.children.map(m=>m.frustumCulled),descarteOriginal);
 console.log(`✓ Actuación bloqueada: caché reversible de ${cuadros.length} cuadros (${(bytes/1024/1024).toFixed(1)} MiB), brazos anclados, instancias y sombras restauradas sin resimular.`);

@@ -64,12 +64,12 @@ for(const [pad,mov,esperado] of [[true,-1,4],[true,0,5],[true,1,5],[false,-1,5]]
 run("reset();mando.activo=true;usar('salto',new V3(0,0,5));ctl.mov.set(0,0,-1);avanzar(.25);ctl.mov.set(0,0,1);avanzar(.47)");
 assert.ok(Math.abs(run('heroe.pos.z')-5)<.001,'Adelante recupera la distancia original sin rebasarla');
 console.log('✓ Salto de 0,72 s: alcance 4–5 m, freno y recuperación; mouse conserva destino');
-// La resolución reacciona a carga sostenida, con límites e histéresis; no altera capturas.
-vm.runInContext(`let escalaRender=1,cuadrosLentos=0,cuadrosRapidos=0,redimensionados=0;let CAPTURA=false;const laboratorio=null;function medir(){redimensionados++;}${extraer('ajustarResolucion')}`,c);
-run('document.hidden=false;for(let i=0;i<30;i++)ajustarResolucion(25)');assert.ok(Math.abs(run('escalaRender')-.7)<1e-9);
-run('for(let i=0;i<60;i++)ajustarResolucion(60)');assert.equal(run('escalaRender'),1);
-run('CAPTURA=true;for(let i=0;i<10;i++)ajustarResolucion(20)');assert.equal(run('escalaRender'),1);
-console.log('✓ Resolución adaptativa acotada; recupera detalle; capturas sin cambios');
+// Los perfiles se adaptan sin alterar capturas ni las reglas de combate.
+vm.runInContext(`let redimensionados=0;let CAPTURA=false;const laboratorio=null,medidorGPU=null,fps={cpu:2,render:2};${extraer('crearCalidad')}const calidad=crearCalidad();function aplicarCalidad(){redimensionados++;}${extraer('ajustarResolucion')}`,c);
+run('document.hidden=false;for(let i=0;i<30;i++)ajustarResolucion(25)');assert.equal(run('calidad.estado().nivel'),0);
+run('for(let i=0;i<100;i++)ajustarResolucion(60)');assert.equal(run('calidad.estado().nivel'),3);
+run('CAPTURA=true;for(let i=0;i<10;i++)ajustarResolucion(20)');assert.equal(run('calidad.estado().nivel'),3);
+console.log('✓ Calidad adaptativa acotada; recupera detalle; capturas sin cambios');
 // Una partida cedida o escondida no consume lógica ni dibuja, aunque siga recibiendo RAF.
 const pausa=vm.createContext({document:{hidden:false},performance:{now:()=>0},EDITOR_CINE:false,alphaTerminada:false,editorCine:null,casaGoblin:null});pausa.window=pausa;pausa.clima={pausar(){}};
 vm.runInContext(fs.readFileSync(new URL('./arpg-three-tiempo.js',import.meta.url),'utf8'),pausa);

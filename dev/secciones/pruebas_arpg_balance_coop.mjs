@@ -9,7 +9,7 @@ for(const factor of [1,2]){
  const cuerpoDe=()=>({radio:.4,caja:{userData:{}},raiz:{position:new V3()}}),sectorLibre=()=>0,rnd=()=>.5,rumbo=()=>0,calle=a=>new V3(Math.cos(a),0,Math.sin(a));
  const iniciarDestino=()=>{},banner=()=>{},cambiar=(e,s)=>e.estado=s,pintarMapa=()=>{},descubrirMapa=()=>{},plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
  ${['DEF','OLEADAS','ol','RITMO','exploracion'].map(n=>get(n,'const')).join('\n')}
- ${['crearEnemigo','pasoOleadas','pasoExploracion','suavizarCarta'].map(n=>get(n)).join('\n')}
+ ${['crearEnemigo','pasoOleadas','pasoExploracion','suavizarCarta','materialCartaBotin'].map(n=>get(n)).join('\n')}
  `);
  for(const tipo of ['goblin','kobold','saqueador','can','troll']){assert.equal(run(`crearEnemigo('${tipo}',0,0).vidaMax`),run(`DEF.${tipo}.vida`)*factor);}
  run('rog.vuelta=3');assert.equal(run("crearEnemigo('goblin',0,0).vidaMax"),51*factor);
@@ -18,7 +18,7 @@ for(const factor of [1,2]){
  run('enemigos.length=0;Object.assign(ol,{i:5,cola:[],descanso:0});pasoOleadas(.1)');assert.equal(run("ol.cola.filter(([t])=>t==='troll').length"),factor-1);assert.equal(run('ol.cola.length+enemigos.length'),7*factor);
  run('ABIERTO=true;enemigos.length=0;heroe.pos.set(0,0,-55);pasoExploracion(.01)');assert.equal(run('enemigos.length'),6*factor);
  assert.equal(run('RITMO.cuerpo'),2*factor);
- run('const mat=new THREE.MeshPhysicalMaterial({metalness:1,clearcoat:1,iridescence:1});mat.roughnessMap=new THREE.Texture();mat.userData.u={uDestellos:{value:1}};const carta=new THREE.Group();carta.add(new THREE.Mesh(new THREE.PlaneGeometry(),mat));suavizarCarta(carta)');
- assert.equal(run('mat.clearcoat'),0);assert.equal(run('mat.iridescence'),0);assert.equal(run('mat.roughnessMap'),null);assert.equal(run('mat.userData.u.uDestellos.value'),0);assert.ok(run('mat.roughness>.9&&mat.envMapIntensity<.1'));
+ run('const mat=materialCartaBotin({map:new THREE.Texture()},"dorado"),carta=new THREE.Group();carta.add(new THREE.Mesh(new THREE.PlaneGeometry(),mat));suavizarCarta(carta)');
+ assert.equal(run('mat.isMeshPhysicalMaterial'),undefined,'El botín no tiene laca, refracción ni iridiscencia');assert.equal(run('mat.normalMap'),null);assert.equal(run('mat.roughnessMap'),null);assert.equal(run('mat.metalness'),0);assert.ok(run('mat.roughness>.9&&mat.envMapIntensity<.1'));assert.equal(run('carta.children[0].castShadow'),false);
 }
 console.log('✓ Solo intacto; cooperativo duplica vida, jefes, oleadas, campamentos y población; cartas mates sin laca ni destellos');

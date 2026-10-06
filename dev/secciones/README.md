@@ -1263,9 +1263,9 @@ El cajón «Diagnóstico», cerrado al entrar, reúne FPS, CPU, render, resoluci
 
 ### Resolución interna y objetivo de 1080p
 
-El presupuesto de renderizado normal pasa de 1.000.000 a 2.073.600 píxeles. A pantalla completa de 1920 × 1080, la escena se dibuja a 1920 × 1080 con escala adaptativa 1; anteriormente quedaba cerca de 1333 × 750 y se ampliaba. El HUD permanece a resolución nativa. En monitores mayores se mantiene el presupuesto de 1080p, respetando su proporción; en ventanas pequeñas se conserva el límite de densidad 1,25×. Las capturas mantienen su configuración de hasta 2×.
+El perfil **Alta** admite un presupuesto de 2.073.600 píxeles (1920×1080); el HUD permanece a resolución nativa. En monitores mayores se conserva ese presupuesto respetando la proporción, y en ventanas pequeñas se limita la densidad a 1,25×. Las capturas mantienen su configuración de hasta 2×.
 
-La partida normal conserva la resolución adaptativa: ante menos de 45 FPS sostenidos puede reducir cada dimensión hasta el 70 %, y recupera nitidez cuando el rendimiento mejora. El diagnóstico inferior muestra el ancho y alto internos efectivos. No confundir estos valores con el tamaño CSS del escenario ni con la resolución del monitor.
+Desde el 5 de octubre, la partida entra en **Automática** con el perfil Equilibrada (presupuesto 1600×900). Ajusta resolución y efectos según CPU, GPU y presentación; puede recuperar Alta o bajar hasta Mínima (960×540). El selector manual está en pausa y el diagnóstico indica el tamaño interno efectivo. Los detalles y mediciones actuales están en «Optimización web para equipos modestos» al final de esta sección.
 
 El inspector inicia con **1920 × 1080 fijos**, sin adaptación. Su vista previa es 16:9 y puede ser menor; el renderizador y todos los efectos procesan el búfer completo. «Adaptada a la ventana» permite volver al modo anterior. El informe v3 registra por separado dimensiones de la vista y del búfer WebGL; cualquier cambio durante una captura la cancela. `node dev/secciones/pruebas_arpg_resolucion.mjs` verifica 1080p, Retina/4K, móvil, adaptación, capturas y el modo fijo del inspector.
 
@@ -1666,3 +1666,33 @@ Validación local: Apple M2 Max / ANGLE Metal, 1920 × 1080 internos, HDR/MSAA 2
 
 
 Repetición tras recuperar la presentación de alta frecuencia, sin cambiar código, equipo ni resolución: **120,02 FPS** con 12 enemigos (GPU **5,55 ms**, p95 **8,9 ms**) y **117,65 FPS** con 24 enemigos en cooperativo (GPU **6,60 ms**, p95 **9,3 ms**). Cada caso registró 600 cuadros, sin intervalos superiores a 33,34 ms y sin errores de consola. Esto verifica superar 60 FPS en esas escenas; la restricción intermitente previa también afectó la página vacía y no se atribuye exclusivamente a la carga del juego.
+
+### Optimización web para equipos modestos — 5 de octubre de 2026
+
+La partida empieza en **Automática**, con presupuesto de 1600×900 píxeles, sombras y render directo. **Pausa → Calidad gráfica** permite elegir Automática, Alta (presupuesto 1920×1080, resplandor), Equilibrada (1600×900), Rendimiento (1280×720, sin sombras) o Mínima (960×540, sin sombras). Se mantiene la proporción real de la ventana; son presupuestos de píxeles, no un cambio de encuadre. La preferencia manual se guarda localmente; `?calidad=auto|3|2|1|0` tiene prioridad. Captura, inspector y editor conservan su calidad explícita.
+
+El regulador observa GPU, CPU y cuadros presentados, incluyendo el coste del compositor del navegador. Baja tras dos muestras lentas (inmediatamente por debajo de 26 FPS) y necesita veinte muestras buenas para recuperar un nivel. No degrada una pestaña limitada a 30 Hz si CPU y GPU están libres. Nunca modifica cantidad de enemigos, daño, IA, duración de animaciones o ventanas de parry. Sustituye el anterior límite mínimo de escala 0,7: ahora puede retirar posproceso/sombras y llegar hasta 540p en equipos muy lentos. No garantiza 60 FPS en hardware sin presupuesto suficiente.
+
+Cambios de coste fijo:
+
+- HUD conserva líquido, cifras y reflejos de QuickLiquid, pero la refracción del fondo queda apagada por defecto: no filtra diez veces la escena 3D que hay detrás.
+- MSAA desactivado en partida; captura conserva 4×. Cuando no hay resplandor ni oclusión se dibuja directamente; los destinos inactivos permanecen en 2×2, y el saneado contra NaN se conserva cuando hay posproceso.
+- Casas por zonas de 18 metros y bosque por estrato/octante: misma geometría, árboles y colisiones, con descarte fuera del encuadre. El epílogo suspende y restaura el descarte por sesión. Las inyecciones GLSL de destrucción se aplican una vez por material compartido.
+- Botín con una textura de color de 256×359 por carta y dorso compartido, en lugar de cuatro mapas de 512×717. Estimación RGBA más mipmaps, CPU+GPU: **352,8 → 21,25 MiB (−94%)**; no es una medida de toda la memoria del proceso. Se conservan la ilustración y los contratos; el acabado es mate. Se precalientan las variantes directo/compositor y con/sin sombras bajo la pantalla de carga.
+- La comprobación síncrona del controlador (`readPixels`) queda dentro de la pantalla de carga: no interrumpe los primeros combates ni los drops.
+- Las búsquedas del cursor actualizan únicamente las cajas de impacto. El árbol completo se actualiza al dibujar, sin una segunda pasada global antes de simular. Las consultas de huesos/agarre conservan sus actualizaciones propias.
+- Morir, reiniciar y entrar al epílogo liberan geometrías, materiales y esqueletos privados de actores. Los atlas, geometrías compartidas y material de hitboxes sobreviven; la retirada es idempotente.
+
+Medición comparativa en Chrome con **ANGLE Metal / Apple M2 Max**, ventana 1920×1080 y doce goblins, sin otros perfiles GPU simultáneos:
+
+| Configuración | GPU media / p95 | Triángulos enviados por cuadro |
+| --- | --- | --- |
+| Antes, 1080p + HDR/MSAA2/resplandor | 12,14 / 17,16 ms | 844.430 |
+| Nueva Alta, 1080p | 9,60 / 12,92 ms | 622.868 |
+| Nueva Equilibrada | 4,54 / 6,48 ms | 622.827 |
+| Nueva Rendimiento | 2,74 / 3,98 ms | 243.536 |
+| Nueva Mínima | 2,19 / 3,15 ms | 243.543 |
+
+Una segunda prueba controlada, doce goblins quietos y CPU ralentizada 4× mediante CDP, redujo simulación+envío de **11,62 a 7,11 ms** en Equilibrada; Rendimiento dio 5,88 ms. En esta segunda ronda el navegador pasó de presentar a 60 Hz a 30 Hz pese a los menores tiempos de CPU/GPU; no se convierte esa cadencia en una afirmación sobre los equipos que reportaron 10 FPS. Se necesitan sus dispositivos/navegadores para confirmar ese caso. Los resultados brutos locales quedan en `outputs/optimizacion-web/` del espacio de trabajo.
+
+Regresiones focalizadas: resolución/perfiles, control de Adreida, disparos, cooperativo, cartas, Troll, recursos de 50 actores, bosque, arquitectura y cinemática/editor. La prueba GPU de cartas cubre arranques en Alta/Equilibrada/Rendimiento, ambos jugadores y transición 2→1; verifica que el drop no añade programas/shaders. El paquete exportado comprueba las dos etapas, cooperativo, Troll, casa, mago, mundo abierto y controles táctiles con CSP real. `CAOZ_ARPG_THREE_REVISION.rendimiento()` expone perfil, CPU/GPU, geometrías/texturas y tamaño efectivo para investigar nuevos reportes.

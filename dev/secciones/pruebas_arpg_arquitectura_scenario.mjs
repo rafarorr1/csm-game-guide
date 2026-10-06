@@ -56,3 +56,18 @@ const junto=F.fundir([...casas,carreta],{ocultables:true});
 assert.equal(junto.children.length,F.fundir(casas).children.length+1,'La carreta añade un único material agrupado');
 assert.equal(junto.userData.ocultacion.opacidades.length,casas.length+1,'La carreta participa en ocultación e impacto');
 console.log('✓ Carreta: suelo, dimensiones, colisión visual y un material agrupado.');
+
+// Dos barrios con el mismo atlas dejan de formar una esfera que cubra toda la plaza.
+const cercanas=[],lejanas=[];
+for(const [lista,x,z]of [[cercanas,0,0],[lejanas,60,60]])for(let i=0;i<3;i++){const casa=F.casa(tipos[i]);casa.position.set(x+i*5,0,z);lista.push(casa);}
+const edificios=[...cercanas,...lejanas],sectores=F.fundir(edificios,{ocultables:true});sectores.updateMatrixWorld(true);
+assert.equal(sectores.userData.ocultacion.cajas.length,edificios.length);
+const porCasa=new Uint32Array(edificios.length);
+for(const m of sectores.children){assert(m.frustumCulled,'Las casas estáticas conservan descarte por encuadre');assert(!m.matrixAutoUpdate);for(const id of m.geometry.attributes.aCasa.array)porCasa[id]++;}
+for(let i=0;i<edificios.length;i++)assert.equal(porCasa[i],edificios[i].children.reduce((n,m)=>n+m.geometry.attributes.position.count,0),'El fundido conserva todos los vértices y el índice original de la casa');
+const cam=new T.PerspectiveCamera(32,16/9,.5,1200);cam.position.set(0,17,17);cam.lookAt(0,.8,4);cam.updateMatrixWorld(true);
+const frustum=new T.Frustum().setFromProjectionMatrix(new T.Matrix4().multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse));
+const visibles=sectores.children.filter(m=>frustum.intersectsObject(m));assert(visibles.length>0&&visibles.length<sectores.children.length);
+for(const m of visibles)assert(!m.geometry.attributes.aCasa.array.some(id=>id>=cercanas.length),'Ningún lote del barrio lejano se envía al encuadre de combate');
+assert.equal(new Set(sectores.children.map(m=>m.material)).size,sectores.children.length,'Cada lote mantiene su hook independiente para la destrucción del epílogo');
+console.log('✓ Sectores: mismos vértices, cajas e índices de ocultación; descarte del barrio lejano y materiales independientes para el meteorito.');

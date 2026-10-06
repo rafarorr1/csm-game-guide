@@ -53,7 +53,7 @@ const escena=new THREE.Scene(),enemigos=[],obstaculos=[],PLANOS_MURALLA=[{x:0,z:
 let heroe={id:0,pos:new V3(0,0,-3),dir:0},particulasPolvo=[],paron=0;
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),difAng=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a)),plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 let azarPrueba=.5;const numero=()=>{},brasas=()=>{},cancelarAtaque=e=>e.ataque=null,limpiarPeligrosTroll=()=>{},activarFaseTroll=()=>{},blindadoTroll=()=>false,rnd=()=>azarPrueba,particula=(...p)=>particulasPolvo.push(p);
-${['cambiar','danar','morir','avanzarCaidaGoblin','dentroPlaza','pasoEnemigo'].map(get).join('\n')}
+${['cambiar','danar','morir','avanzarCaidaGoblin','dentroPlaza','pasoEnemigo','liberarModeloTroll'].map(get).join('\n')}
 function blanco(tipo='kobold'){const e={tipo,pos:new V3(),dir:.63,m:MOD.crear(tipo),d:{},vida:10,estado:'quieto',emp:new V3(),sinBotin:true,radio:.3,provocado:0,destello:0,cd:0,dentro:true,fase:0,paso:0};enemigos.push(e);escena.add(e.m.raiz);return e;}
 `);
 const reparto=[0,0,0,0];
