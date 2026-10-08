@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('./arpg-three-mesa.js',import.meta.url),'utf8');
 const get=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
-const c=vm.createContext({console});c.window=c;
+const c=vm.createContext({console,enTutorial:()=>false});c.window=c;
 for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 vm.runInContext(`
 const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,reloj={t:0},escena=new THREE.Scene(),enemigos=[],jugadores=[],presion={siguiente:0,primeraLinea:new Set()};
@@ -63,7 +63,7 @@ run("can=iniciar();cancelarAtaque(can,true);empezarComboCan(can,1);heroe.pos.cop
 assert.deepEqual(Array.from(run('jugadores.map(h=>h.alma)')),[120,120]);assert.equal(run('can.comboCan'),null);
 run("can=iniciar();heroe.estado='parry';heroe.t=.25;resolverAtaque(can);");assert.equal(run('heroe.alma'),110);assert.equal(run('can.comboCan.paso'),0,'Un bloqueo tardío no cancela la cadena');
 run("can=iniciar();heroe.invul=.1;resolverAtaque(can);");assert.equal(run('heroe.alma'),120,'El dash evita el golpe');
-run('can=iniciar();reloj.t=can.ataque.dur-.1;colocarAtaque(can);');assert.equal(run('can.ataque.m.children[0].material.uniforms.uC.value.getHex()'),0xbfffff,'Señal de parry en la ventana final');
+run('can=iniciar();reloj.t=can.ataque.dur-.1;colocarAtaque(can);');assert.equal(run('can.ataque.m.children[0].material.uniforms.uC.value.getHex()'),0xffd050,'Señal dorada de parry en la ventana final');
 run('cancelarAtaque(can);');assert.equal(run('can.comboCan'),null);assert.equal(run('escena.children.length'),0,'Interrupción o muerte retiran toda la cadena');
 console.log('✓ Parry en ambos golpes y cooperativo; bloqueo, dash, color del aviso y cancelación limpia');
 const M=c.CAOZ_ARPG_MODELOS.fabrica(c.CAOZ_THREE.THREE),m=M.crear('can');

@@ -95,9 +95,9 @@ console.log('✓ Piedras: parry, devolución, apertura de armadura y bloqueo tar
 run("limpiar();jefe=crearEnemigo('troll',0,-3);lanzarPiedras(jefe,jefe.pos);avanzar(.5);");
 assert.equal(run('peligrosTroll[0].marca.m.material.uniforms.uC.value.getHex()'),0xff6030);
 run('avanzar(.5);');
-assert.equal(run('peligrosTroll[0].marca.m.material.uniforms.uC.value.getHex()'),0xffd050);
+assert.equal(run('peligrosTroll[0].marca.m.material.uniforms.uC.value.getHex()'),0xff8438,'No anticipa el dorado fuera de la ventana de parry');
 run('avanzar(.21);');
-assert.equal(run('peligrosTroll[0].marca.m.material.uniforms.uC.value.getHex()'),0xbfffff);
+assert.equal(run('peligrosTroll[0].marca.m.material.uniforms.uC.value.getHex()'),0xffd050,'Dorado durante la ventana de parry');
 run('Object.assign(heroe.cd,{salto:4,provocar:8,esquiva:1.05,parry:.4});parryPerfecto(null,new V3());');
 assert.ok(run('Object.values(heroe.cd).every(t=>t===0)'), 'Parry perfecto refresca todos los cooldowns');
-console.log('✓ Círculos naranja, dorado y blanco azulado; refresco de habilidades');
+console.log('✓ Círculos naranja y dorado sólo durante el parry; refresco de habilidades');
