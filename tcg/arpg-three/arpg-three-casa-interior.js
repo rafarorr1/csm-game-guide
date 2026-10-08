@@ -1,18 +1,29 @@
 /* Interior de Scenario: decorado estático, retratos mates y materiales compartidos.
-   Las texturas sólo se solicitan cuando se abre la casa. Sin otro renderer ni CDN. */
+   La precarga comparte texturas con la casa real. Sin otro renderer ni CDN. */
 'use strict';
 (function(){
   const ruta=typeof document!=='undefined'&&document.currentScript?.src?new URL('./casa-goblin-scenario/',document.currentScript.src).href:null;
-  function crear(THREE,{reducido=false}={}){
-    const datos=window.CAOZ_CASA_GOBLIN_DATOS,raiz=new THREE.Group(),pendientes=[],mapas=new Map(),materiales=new Map();
-    raiz.name='Interior · Scenario';let listo=!ruta;
-    const leer=(s,T)=>new T(Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer);
-    function textura(nombre,color=false,flip=false){
+  const reservas=new WeakMap();
+  function recursos(THREE){
+    if(reservas.has(THREE))return reservas.get(THREE);
+    const mapas=new Map(),pendientes=[],r={mapas,pendientes,listo:!ruta,promesa:null};
+    r.textura=function(nombre,color=false,flip=false){
       if(!ruta)return null;if(mapas.has(nombre))return mapas.get(nombre);
       let resolver;pendientes.push(new Promise(r=>{resolver=r;}));
       const t=new THREE.TextureLoader().load(ruta+nombre,()=>resolver(),undefined,()=>{console.warn('No se pudo cargar el interior: '+nombre);resolver();});
       t.flipY=flip;t.colorSpace=color?THREE.SRGBColorSpace:THREE.NoColorSpace;t.anisotropy=4;mapas.set(nombre,t);return t;
-    }
+    };reservas.set(THREE,r);return r;
+  }
+  function precargar(THREE){
+    const r=recursos(THREE);if(r.promesa)return r.promesa;
+    for(const i of new Set(window.CAOZ_CASA_GOBLIN_DATOS.mallas.map(d=>d.material))){r.textura('color-'+i+'.webp',true);r.textura('normal-'+i+'.webp');r.textura('superficie-'+i+'.webp');}
+    for(const nombre of ['foto-familia.webp','foto-comida.webp'])r.textura(nombre,true,true);
+    r.promesa=Promise.all(r.pendientes).then(()=>{r.listo=true;});return r.promesa;
+  }
+  function crear(THREE,{reducido=false}={}){
+    const datos=window.CAOZ_CASA_GOBLIN_DATOS,raiz=new THREE.Group(),materiales=new Map(),r=recursos(THREE),textura=r.textura,texturasListas=precargar(THREE);
+    raiz.name='Interior · Scenario';
+    const leer=(s,T)=>new T(Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer);
     for(const d of datos.mallas){
       const g=new THREE.BufferGeometry();
       for(const [nombre,ancho] of [['position',3],['normal',3],['uv',2]])g.setAttribute(nombre,new THREE.BufferAttribute(leer(d[nombre],Float32Array),ancho));
@@ -70,10 +81,9 @@
     function reiniciar(){reloj=relampagos=destello=0;siguiente=6;inicio=-100;semilla=73;rayo.visible=false;rayo.material.opacity=0;luzVentana.intensity=0;cielo.material.color.copy(noche);}
     // Decorado inmutable: el motor no recalcula cientos de transformaciones de utilería por cuadro.
     raiz.traverse(o=>{o.updateMatrix();o.matrixAutoUpdate=false;});raiz.matrixAutoUpdate=true;
-    Promise.all(pendientes).then(()=>{listo=true;});
     const estadisticas={triangulos:0,mallas:0,retratos:2};raiz.traverse(o=>{if(o.isMesh){estadisticas.mallas++;estadisticas.triangulos+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
-    return {raiz,get listo(){return listo;},estadisticas,paso,reiniciar,estado:()=>({tiempo:reloj,relampagos,destello}),
+    return {raiz,texturasListas,get listo(){return r.listo;},estadisticas,paso,reiniciar,estado:()=>({tiempo:reloj,relampagos,destello}),
       entrada:new THREE.Vector3(-.6,0,3.25)};
   }
-  window.CAOZ_ARPG_CASA_INTERIOR=Object.freeze({crear});
+  window.CAOZ_ARPG_CASA_INTERIOR=Object.freeze({crear,precargar});
 })();

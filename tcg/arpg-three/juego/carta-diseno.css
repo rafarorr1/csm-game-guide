@@ -1,12 +1,12 @@
 /* Carta de la Colección pintada en canvas (carta-diseno.js + carta-pintor.js).
    La ilustración del proveedor queda debajo, invisible: sólo la lee el pintor.
    Las tipografías se usan dentro del canvas y viajan con el juego (OFL). */
-@font-face{font-family:'Cinzel Domo';src:url('fuentes/cinzel.woff2') format('woff2');font-weight:400 900;font-style:normal;font-display:swap}
-@font-face{font-family:'Cormorant Domo';src:url('fuentes/cormorant-garamond.woff2') format('woff2');font-weight:300 700;font-style:normal;font-display:swap}
-@font-face{font-family:'Cormorant Domo';src:url('fuentes/cormorant-garamond-italica.woff2') format('woff2');font-weight:500;font-style:italic;font-display:swap}
+@font-face{font-family:'Cinzel Domo';src:url('fuentes/cinzel.woff2?v=09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370') format('woff2');font-weight:400 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Cormorant Domo';src:url('fuentes/cormorant-garamond.woff2?v=d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235') format('woff2');font-weight:300 700;font-style:normal;font-display:swap}
+@font-face{font-family:'Cormorant Domo';src:url('fuentes/cormorant-garamond-italica.woff2?v=4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f') format('woff2');font-weight:500;font-style:italic;font-display:swap}
 /* Cormorant sólo trae cifras antiguas y el canvas no puede pedir las alineadas:
    las cifras del texto de reglas salen de Cinzel. */
-@font-face{font-family:'Cormorant Domo';src:url('fuentes/cinzel.woff2') format('woff2');font-weight:300 700;font-style:normal;font-display:swap;unicode-range:U+0030-0039}
+@font-face{font-family:'Cormorant Domo';src:url('fuentes/cinzel.woff2?v=09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370') format('woff2');font-weight:300 700;font-style:normal;font-display:swap;unicode-range:U+0030-0039}
 
 .cdCarta{position:relative;container-type:inline-size;aspect-ratio:5/7;overflow:hidden;border-radius:4.8%/3.43%;user-select:none;-webkit-user-select:none;
   background:linear-gradient(135deg,#4f3108,#e7bb55 30%,#6e4a10 60%,#d6a878);box-shadow:0 2px 8px #000a}

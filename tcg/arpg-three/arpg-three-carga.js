@@ -40,9 +40,14 @@
     const lista=[...document.querySelectorAll('script[data-caoz-carga]')];
     // La página y su pantalla de carga se pintan antes de analizar los archivos grandes.
     await cuadro();
+    const copia=await window.CAOZ_ARPG_CACHE?.preparar(e=>{
+      avance(e.totalBytes?30*e.bytes/e.totalBytes:0,e.modo==='comprobando'?'Comprobando la copia local…':e.modo==='esperando'?'Coordinando la descarga con las otras pestañas…':'Descargando y guardando el juego…');
+      $('cargaDetalle').textContent=e.totalBytes?`${(e.bytes/1048576).toFixed(1)} / ${(e.totalBytes/1048576).toFixed(1)} MB · ${e.reutilizados} archivos reutilizados`:'La primera visita descarga los recursos; después sólo actualizamos lo que cambió.';
+    });
+    const desde=copia?.modo==='lista'?30:0;
     for(const original of lista){const enlace=document.createElement('link');enlace.rel='preload';enlace.as='script';enlace.href=original.src;document.head.appendChild(enlace);}
     for(let i=0;i<lista.length;i++){
-      if(fallida)return;avance(i/lista.length*45,'Reuniendo los recursos de Tomsage…');
+      if(fallida)return;avance(desde+i/lista.length*(45-desde),'Preparando los recursos de Tomsage…');
       $('cargaDetalle').textContent=`Recursos preparados · ${i} / ${lista.length}`;
       await new Promise((resolve,reject)=>{
         const script=document.createElement('script'),limite=setTimeout(()=>reject(Error('La descarga tarda demasiado. Revisa tu conexión y vuelve a intentarlo.')),90000);

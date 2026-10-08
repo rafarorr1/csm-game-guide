@@ -3,57 +3,59 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="application-version" content="Alpha .01">
+<meta name="arpg-recursos" content="c3b7f7eb91ce6f3fc725214695cceb2e3ddcda15adbf777701d7d0c02824055c">
 <title>Caoz ARPG · Alpha .01</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="./juego/carta-diseno.css">
-<link rel="stylesheet" href="./arpg-three-mesa.css">
-<script type="application/caoz" src="./generado/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./juego/carta-pintor.js" data-caoz-carga></script>
-<script type="application/caoz" src="./visor-three-vendor.js" data-caoz-carga></script>
-<script type="application/caoz" src="./three-carta.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arquitectura-scenario/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./carreta-scenario/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./farol-scenario/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-arquitectura.js" data-caoz-carga></script>
-<script type="application/caoz" src="./casas-three.js" data-caoz-carga></script>
-<script type="application/caoz" src="./adreida-scenario/combate.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-adreida-animacion.js" data-caoz-carga></script>
-<script type="application/caoz" src="./goblin-scenario/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-goblin.js" data-caoz-carga></script>
-<script type="application/caoz" src="./kobold-scenario/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./kobold-scenario/muertes.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-kobold.js" data-caoz-carga></script>
-<script type="application/caoz" src="./adreida-scenario/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./adreida-piernas-scenario/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-adreida.js" data-caoz-carga></script>
-<script type="application/caoz" src="./hacha-adreida-scenario/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-hacha-adreida.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-modelos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-tiempo.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-impactos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-piso.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-clima.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-bosque.js" data-caoz-carga></script>
-<script type="application/caoz" src="./quick-liquid-vendor.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-orbes.js" data-caoz-carga></script>
-<script type="application/caoz" src="./yuka-goals-vendor.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-ia.js" data-caoz-carga></script>
-<script type="application/caoz" src="./llave-scenario/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-entrada-troll.js" data-caoz-carga></script>
-<script type="application/caoz" src="./adreida-scenario/cinematica.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-adreida-cine.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-mago-particulas.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-mago-hechizo.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-final-mago.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-cine-camara.js" data-caoz-carga></script>
-<script type="application/caoz" src="./casa-goblin-scenario/datos.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-casa-interior.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-casa-goblin.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-estilo.js" data-caoz-carga></script>
-<script type="application/caoz" src="./arpg-three-mesa.js" data-caoz-carga></script>
-<script src="./arpg-three-carga.js" defer></script>
+<link rel="stylesheet" href="./juego/carta-diseno.css?v=6c9c4e1715d2f91770575db4840517990e47648f8f97cc1d046a3cb5f9793684">
+<link rel="stylesheet" href="./arpg-three-mesa.css?v=b702da67ac063016ff5492fc49421eee3c06323e6024766937032663c49ef887">
+<script type="application/caoz" src="./generado/datos.js?v=79b119c2cf06a1cf51b7a2fb9ca4ebb65ab93b0ad779fcbe20276b0cf81276d3" data-caoz-carga></script>
+<script type="application/caoz" src="./juego/carta-pintor.js?v=1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918" data-caoz-carga></script>
+<script type="application/caoz" src="./visor-three-vendor.js?v=d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259" data-caoz-carga></script>
+<script type="application/caoz" src="./three-carta.js?v=a4422e790fffd4e9c1e856ca96d1133380872fcd17b9403e9d05b44bd3e38328" data-caoz-carga></script>
+<script type="application/caoz" src="./arquitectura-scenario/datos.js?v=d8e61357b529a3d0bb927e9a9c6d5e3073e933cb47962459cd849cbe337449f0" data-caoz-carga></script>
+<script type="application/caoz" src="./carreta-scenario/datos.js?v=6bbf1ba1d1b80cb31fe582cada0a8cddc92af884e27ef6f4923e672e88430aac" data-caoz-carga></script>
+<script type="application/caoz" src="./farol-scenario/datos.js?v=d5b7196cf9bd8bb5a574200b4d0807a332037e43216aa77a0d59e7803a3c6be4" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-arquitectura.js?v=85214f097665bcbebdfc2138f2a19a608080d94b2ffe302c19bbce2480aaac6c" data-caoz-carga></script>
+<script type="application/caoz" src="./casas-three.js?v=6ae58105e60526392761a7ed9963092d0b4de850404aefd20ec9e62a81807689" data-caoz-carga></script>
+<script type="application/caoz" src="./adreida-scenario/combate.js?v=db0663deb7925ed9941a70e0472b492a5eb1460cb0324afdc0ff762b60fd1e2e" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-adreida-animacion.js?v=f3716857937bdded40dda572c8e8a2719ee9deeacdeed9b38bc5247b3f54f67e" data-caoz-carga></script>
+<script type="application/caoz" src="./goblin-scenario/datos.js?v=502c1af8b076ccc22c596fa4a635cbd91fe6c15d73bd5350925c8d390c8eba85" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-goblin.js?v=422ba8686f69718a64b9c2d44a1b349e9012db79cc787900c234b8999cf6c754" data-caoz-carga></script>
+<script type="application/caoz" src="./kobold-scenario/datos.js?v=177e2c31b915fa7059ecca14a306043240926d0805e63dd88e4d497b1719bb4b" data-caoz-carga></script>
+<script type="application/caoz" src="./kobold-scenario/muertes.js?v=c676d6d8d929ad5c8cb55206ed01b6787b5a775070401a6b6e388591f817bd73" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-kobold.js?v=ad16a45af096f56a085b0d1f2b32648c66fbdf23865aea5a24b0ca0c6be4ea8c" data-caoz-carga></script>
+<script type="application/caoz" src="./adreida-scenario/datos.js?v=cccaffbb365a2490a852d93a5dc57057b2e7f6a1962f7f74db15c50f6b003f8d" data-caoz-carga></script>
+<script type="application/caoz" src="./adreida-piernas-scenario/datos.js?v=5852f0d6c7f1456b1875a132ee966b3bf2df91e0a566bc8fc94086651270457c" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-adreida.js?v=ab3e95f25bfc2c025b160dc563b3f51e951ea0f80abf4c2e5cd4e27d54f9dacd" data-caoz-carga></script>
+<script type="application/caoz" src="./hacha-adreida-scenario/datos.js?v=53cbc8040c720605f0075c7826871ddf24717d2186a580708a2766acc7218682" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-hacha-adreida.js?v=78e3767d841b5103d404d9f9b67b60633c185986fd104d5b001f8d683353c8e1" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-modelos.js?v=79e0f75261a9676726385e5b2d12dfd1162a810002f3452c3b65114861f64d71" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-tiempo.js?v=06617957fe6a18af18682acb2a533f90f2c33af9d92e59fc3df1c3ec137eb334" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-impactos.js?v=9cc0b7d3325294c7f971dbf5e496a71e6a5fc8e56f7b3fd57d629d6763fff3c0" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-piso.js?v=666eb9d9a0670e8d5308bc4423c971c1736f4093bf90676afc83a467b86fd15c" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-clima.js?v=820a3e9006f809e73ef0f5891edd79444395115aa56fc3f8f87a3187d419727d" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-bosque.js?v=d1583a8300f8cfa93e123e338203f24360641c6aecfc749843e946f915248e3b" data-caoz-carga></script>
+<script type="application/caoz" src="./quick-liquid-vendor.js?v=8db3e97713461523a74145eb8bf1d37010e6875262568fd6de1cc1018b900d04" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-orbes.js?v=0aa633b1cc0742aa4e2b638bee7e077ff80cf24bd1faa143eaa41dec149c9e59" data-caoz-carga></script>
+<script type="application/caoz" src="./yuka-goals-vendor.js?v=cea6505b58e5a2b1e270c088eef7550fdd26f981e15b860329796a00e0846837" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-ia.js?v=f4ba4c135e21d45f061fc49ef900ecb1b9476e0bbeb058791ac1a9d6b5ba2435" data-caoz-carga></script>
+<script type="application/caoz" src="./llave-scenario/datos.js?v=0ba2b534c0c97c4d127a9796e8aefa7a11f75eb128f94d64dca11c6433a5aeae" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-entrada-troll.js?v=9bf63f396cf22bc2147926c6aea6fa12bd351e6b831cf31f9887918faf42f104" data-caoz-carga></script>
+<script type="application/caoz" src="./adreida-scenario/cinematica.js?v=690f1a19636fbea5267e4cb590ce5588e955a6a07ab7fadc419d003a72d12fc6" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-adreida-cine.js?v=47b6b84d9f96293d5f15f55e46eba26cad3510d72193a2794071eaa08ed681a9" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-mago-particulas.js?v=ca4735c1828ccd4e8c8b8f7da6ab5e7ef8d27ac9637c69fa83dccf854bf4633b" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-mago-hechizo.js?v=ab53a5547dfacebe4cc57ba379ddf27218bbe5e9fd9129e368b433b3279558fa" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-final-mago.js?v=2f23bd2cd622428677d3740bc6f837e704c21e9a45443293fd9e07acb660e202" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-cine-camara.js?v=c2b8f29890989afd948172f6185a0f55322b18a5144ce7f2013e5a5afdf704ab" data-caoz-carga></script>
+<script type="application/caoz" src="./casa-goblin-scenario/datos.js?v=c25d9be8a38ce5d9fdc44ca4dfbfe4a985734b8c81de6987cc9d5f104d15f9b7" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-casa-interior.js?v=4f7cf75749329857e870ec7cb29a6b8746a6c4537cda1a74677f7dd2624dc97a" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-casa-goblin.js?v=398c7293045fbfbd87061d8175f312467acab1d19fd75c82a63502ecf0c6878d" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-estilo.js?v=023931112cef4f44c4d8c3575ed78ea7f6e3a62540134fc6d582fde55df553a5" data-caoz-carga></script>
+<script type="application/caoz" src="./arpg-three-mesa.js?v=e0e279882024e0dc1f5ec2700b6665007689cdbd52eade7ba66186abdc809881" data-caoz-carga></script>
+<script src="./arpg-three-cache.js?v=481b13c482a83fa1f2a1f4794b589052f0a4bce7297d6db95527ab616563f637" defer></script>
+<script src="./arpg-three-carga.js?v=98e9a705fe0373a6da371f1c294517a44dd6636dba4bab3d27f6a9b517f1db32" defer></script>
 </head>
 <body>
 <section id="cargaInicial" class="apCargaInicial" aria-labelledby="cargaTitulo" aria-busy="true">
@@ -108,7 +110,7 @@
       <div class="apRecurso apAlma" id="orbeAlma" aria-label="Alma"><small>Alma</small><div class="apMedidor" aria-hidden="true"><i></i></div><b id="almaTxt"></b></div>
       <div class="apCentroHud">
         <section class="apPersonaje" aria-label="Estado del personaje">
-          <div class="apMarcoRetrato"><img class="apRetrato" src="./art/lider_adreida.webp" alt="Adreida"></div>
+          <div class="apMarcoRetrato"><img class="apRetrato" src="./art/lider_adreida.webp?v=9d7a2303f2dc3dd20863eaa651ca8bc394f76b70c247226149e8e9a388274ecf" alt="Adreida"></div>
           <div class="apVitales">
             <div class="apNombreHeroe"><b id="hudNombre">Adreida</b><small id="hudClase">Guerrera semiorca</small></div>
             <small class="apMunicion" id="hudMunicion" hidden></small>

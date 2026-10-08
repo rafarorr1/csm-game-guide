@@ -2,7 +2,7 @@
   "seccion": "arpg-three",
   "version": "Alpha .01",
   "partida": false,
-  "almacenamiento": "preferencias locales; sin cuentas ni guardado de la partida",
+  "almacenamiento": "recursos verificados por versión y preferencias locales; sin cuentas ni guardado de la partida",
   "proposito": "Caoz ARPG: dos etapas, Adreida y Mohamed, cooperativo local, cartas de riesgo, cinemáticas y prototipo de mundo abierto. Modelos y recursos incluidos para jugar en el navegador.",
   "three": "0.186.1",
   "cartas": [
@@ -34,7 +34,7 @@
   ],
   "componentes": {
     "carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
-    "carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
+    "carta-diseno.css": "6c9c4e1715d2f91770575db4840517990e47648f8f97cc1d046a3cb5f9793684",
     "fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f"
@@ -70,7 +70,9 @@
     "llavemago-dorado-v1.webp": "5544e73160ca8661b726769ff18006734af1f586dc0af17d70bd354f940502b2"
   },
   "entorno": {
-    "arpg-three-carga.js": "44d8ca870f42b2deacc94c91ebc31615b9196d91265f9ec0ba3d45d2482e8776",
+    "arpg-three-cache.js": "481b13c482a83fa1f2a1f4794b589052f0a4bce7297d6db95527ab616563f637",
+    "arpg-three-cache-sw.js": "c6b9e4bdc2a6257539eec30d2afd16685fcf06de39a8efe3e9fa1cf156084b8a",
+    "arpg-three-carga.js": "98e9a705fe0373a6da371f1c294517a44dd6636dba4bab3d27f6a9b517f1db32",
     "arpg-three-estilo.js": "023931112cef4f44c4d8c3575ed78ea7f6e3a62540134fc6d582fde55df553a5",
     "arpg-three-tiempo.js": "06617957fe6a18af18682acb2a533f90f2c33af9d92e59fc3df1c3ec137eb334",
     "arpg-three-impactos.js": "9cc0b7d3325294c7f971dbf5e496a71e6a5fc8e56f7b3fd57d629d6763fff3c0",
@@ -82,10 +84,10 @@
     "yuka-goals-vendor.js": "cea6505b58e5a2b1e270c088eef7550fdd26f981e15b860329796a00e0846837",
     "yuka-LICENSE.txt": "a10f703d839d14166f1cb60e501933a2d00827ee0982e5f1a0e434ac0f4a3c38",
     "arpg-three-ia.js": "f4ba4c135e21d45f061fc49ef900ecb1b9476e0bbeb058791ac1a9d6b5ba2435",
-    "arpg-three-mesa.js": "7eafa44087961cd153b180df7964ea637b0093a9e4f2ac371d220b6c0cd441dc",
+    "arpg-three-mesa.js": "e0e279882024e0dc1f5ec2700b6665007689cdbd52eade7ba66186abdc809881",
     "arpg-three-mesa.css": "b702da67ac063016ff5492fc49421eee3c06323e6024766937032663c49ef887",
     "arpg-three-adreida-animacion.js": "f3716857937bdded40dda572c8e8a2719ee9deeacdeed9b38bc5247b3f54f67e",
-    "arpg-three-modelos.js": "5457981b7446a1e280be4d8d529fd682e2f1c477d19a254f54e3d0dbae573c50",
+    "arpg-three-modelos.js": "79e0f75261a9676726385e5b2d12dfd1162a810002f3452c3b65114861f64d71",
     "casas-three.js": "6ae58105e60526392761a7ed9963092d0b4de850404aefd20ec9e62a81807689",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259",
     "three-carta.js": "a4422e790fffd4e9c1e856ca96d1133380872fcd17b9403e9d05b44bd3e38328",
@@ -142,9 +144,9 @@
     "arpg-three-adreida-cine.js": "47b6b84d9f96293d5f15f55e46eba26cad3510d72193a2794071eaa08ed681a9",
     "arpg-three-mago-particulas.js": "ca4735c1828ccd4e8c8b8f7da6ab5e7ef8d27ac9637c69fa83dccf854bf4633b",
     "arpg-three-mago-hechizo.js": "ab53a5547dfacebe4cc57ba379ddf27218bbe5e9fd9129e368b433b3279558fa",
-    "arpg-three-final-mago.js": "d8aef0239bfaf58539b21ada7f9b6b43351b2e3233e0ce74f2f5c8643132cbb8",
-    "arpg-three-casa-goblin.js": "f90d3b342330ce509e3416062b246b45cf91389233a11eed7db3822c34981ec9",
-    "arpg-three-casa-interior.js": "b7dd10df40a8444adfd068e566eb73849f2a108b4cc44bdcd429b0c3b4787521",
+    "arpg-three-final-mago.js": "2f23bd2cd622428677d3740bc6f837e704c21e9a45443293fd9e07acb660e202",
+    "arpg-three-casa-goblin.js": "398c7293045fbfbd87061d8175f312467acab1d19fd75c82a63502ecf0c6878d",
+    "arpg-three-casa-interior.js": "4f7cf75749329857e870ec7cb29a6b8746a6c4537cda1a74677f7dd2624dc97a",
     "casa-goblin-scenario/datos.js": "c25d9be8a38ce5d9fdc44ca4dfbfe4a985734b8c81de6987cc9d5f104d15f9b7",
     "casa-goblin-scenario/color-0.webp": "8c9ab7c9e74e70615d925914e64c63c664c0411a7c2ebc55f3fb2f52bc517c60",
     "casa-goblin-scenario/normal-0.webp": "29a22cf79baf8a236e295a77e18482e6e45690133b89b3243f10781fa2f40b3b",
@@ -189,7 +191,8 @@
     "arquitectura-scenario/pozo-superficie-0.webp": "2e2803edef92c3d454eba47c2200982dcb02752460edfc2b5c8aa004af36f7fc"
   },
   "derivados": {
-    "index.html": "73bf540dee7ac29337c78bbe0e496e787986d0801bfa95899f9bc1e8115d36ed",
+    "arpg-recursos.json": "b14f0394d8fef693dba5a40425c98c64e424c5b68424508276392942fc0d61e3",
+    "index.html": "b885b86e30f8735c3fa98d75fa4ebbd30d7bde4c4306e58f2301cb94275a0936",
     "generado/datos.js": "79b119c2cf06a1cf51b7a2fb9ca4ebb65ab93b0ad779fcbe20276b0cf81276d3"
   }
 }

@@ -1,5 +1,5 @@
 /* Epílogo de la casa: mago, persecución en primera persona y meteorito.
-   Los recursos se reservan sólo al reproducirlo; no agrega trabajo a las oleadas. */
+   La precarga reserva sus recursos ocultos una sola vez, sin reproducir la actuación. */
 'use strict';
 (function(){
   // El corte conserva el vuelo del salto. El aterrizaje recupera la guardia;
@@ -12,6 +12,7 @@
     const centro=new V(0,0,0),destino=new V(0,0,3.5),techo=new V(),cielo=new V(),desdeCamara=new V(),giroPaneo=new T.Quaternion(),finPaneo=new T.Quaternion(),objeto=new T.Object3D(),raizSalida=new V(),ejeSalida=new V(0,1,0);
     const camBase={fov:camara.fov,near:camara.near},derrumbe={value:-1},centroOnda={value:new V()},tiempoPiso={value:-1};let s=null,recursos=null,visitadas=[],sombras=[],mallasRuina=[],terminado=false,nodosCine=null;
     const descarteAnterior=new Map();
+    const preparaciones=new WeakMap(),texturasPendientes=[];
     // Los shaders desplazan las ruinas fuera de sus límites estáticos. Sólo la
     // sesión de cine desactiva el descarte; al volver a jugar se recupera tal cual.
     function extenderEncuadre(){for(const m of mallasRuina){if(!descarteAnterior.has(m))descarteAnterior.set(m,m.frustumCulled);m.frustumCulled=false;}}
@@ -115,7 +116,10 @@
       const grupo=new T.Group();grupo.name='Epílogo · El mago';escena.add(grupo);grupo.visible=false;
       const mago=new T.Group();mago.name='Mago encapuchado';grupo.add(mago);
       const tela=material(0x5b506c),borde=material(0x91805d,{metalness:.4}),negro=material(0x08080f),piel=material(0x89908b),magia=new T.MeshBasicMaterial({color:0x63df96,toneMapped:false});
-      if(typeof document!=='undefined'){const l=new T.TextureLoader();tela.map=l.load('./texturas-goblin/ropa-color.webp');tela.map.colorSpace=T.SRGBColorSpace;tela.normalMap=l.load('./texturas-goblin/ropa-normal.webp');tela.normalScale.set(.3,.3);}
+      if(typeof document!=='undefined'){
+        const l=new T.TextureLoader(),textura=nombre=>{let resolver;texturasPendientes.push(new Promise(r=>{resolver=r;}));return l.load('./texturas-goblin/'+nombre,resolver,undefined,()=>{console.warn('No se pudo cargar la túnica: '+nombre);resolver();});};
+        tela.map=textura('ropa-color.webp');tela.map.colorSpace=T.SRGBColorSpace;tela.normalMap=textura('ropa-normal.webp');tela.normalScale.set(.3,.3);
+      }
       const luzMago=new T.PointLight(0x53e68a,5,5,2);luzMago.position.set(0,1.7,.8);mago.add(luzMago);
       const pieza=(g,mat,p,padre=mago)=>{const m=new T.Mesh(g,mat);m.position.set(...p);padre.add(m);m.castShadow=true;return m;};
       // Pliegues de la túnica en la silueta, ribetes y capucha con rostro en sombra.
@@ -202,6 +206,25 @@
         };mat.customProgramCacheKey=()=>clave+'-epilogo-onda-radial-v2';mat.needsUpdate=true;
       });
       recursos={grupo,brazosFPS,mago,brazos,baston,sello,orbita,aura,motas,luzMago,particulasMago,hechizoMago,meteorito,roca,luz,fragmentos,humo,onda,frenteOnda,losasPiso};
+    }
+    function precargar(renderer,{ceder=()=>Promise.resolve()}={}){
+      const clave=renderer||T;if(preparaciones.has(clave))return preparaciones.get(clave);
+      const promesa=(async()=>{
+        await ceder();preparar();await Promise.all(texturasPendientes);
+        await window.CAOZ_ARPG_CARGA?.texturas?.();if(!renderer)return;
+        const mapas=new Set();for(const raiz of [recursos.grupo,recursos.brazosFPS.raiz])raiz.traverse(n=>{for(const mat of [].concat(n.material||[]))for(const valor of Object.values(mat))if(valor?.isTexture)mapas.add(valor);});
+        for(const mapa of mapas)renderer.initTexture(mapa);
+        // compile recorre también las mallas ocultas. Sólo la recogida de luces
+        // requiere visibilidad: se restaura en la misma llamada, antes de ceder
+        // el control al navegador, incluso si el compilador falla.
+        for(const visible of [false,true]){
+          await ceder();const grupoVisible=recursos.grupo.visible,magoVisible=recursos.mago.visible;let compilacion;
+          try{recursos.grupo.visible=true;recursos.mago.visible=visible;escena.updateMatrixWorld(true);
+            compilacion=renderer.compileAsync?renderer.compileAsync(escena,camara):renderer.compile(escena,camara);
+          }finally{recursos.grupo.visible=grupoVisible;recursos.mago.visible=magoVisible;}
+          await compilacion;
+        }
+      })();preparaciones.set(clave,promesa);promesa.catch(()=>preparaciones.delete(clave));return promesa;
     }
     function prepararTecho(salida,avance){
       // Reaparece encima de la casa de salida, detrás de la dirección del ataque.
@@ -552,7 +575,7 @@
       for(const raiz of [s.actor.m.raiz,recursos.grupo,recursos.brazosFPS.raiz])raiz.updateMatrixWorld(true);
       interfaz({fase:terminado?'fin':s.fase,negro:terminado?1:s.fase==='negro'?suave(s.t/.6):0});
     }
-    return {iniciar,paso,cancelar,finalizar,estado,vistaEditor,respirarCamara,capturarCuadro,mostrarCuadro,muestraLosa,get activa(){return !!s;},get recursos(){return recursos;}};
+    return {precargar,iniciar,paso,cancelar,finalizar,estado,vistaEditor,respirarCamara,capturarCuadro,mostrarCuadro,muestraLosa,get activa(){return !!s;},get recursos(){return recursos;}};
   }
   window.CAOZ_ARPG_FINAL_MAGO=Object.freeze({fabrica,DURACIONES});
 })();
