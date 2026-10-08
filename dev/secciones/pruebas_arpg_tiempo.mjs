@@ -1,7 +1,7 @@
 /* Reloj real, transformaciones de three.js y reglas de ambos héroes, sin GPU. */
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
-const c=vm.createContext({console});c.window=c;
+const c=vm.createContext({console,tutorial:null,enTutorial:()=>false});c.window=c;
 for(const f of ['visor-three-vendor.js','arpg-three-tiempo.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const T=c.CAOZ_ARPG_TIEMPO,THREE=c.CAOZ_THREE.THREE;
 // Cada imagen recibe su tiempo real, incluso si llega antes de 1/60 s.

@@ -2,7 +2,7 @@
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import {webcrypto} from 'node:crypto';import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8');
 const get=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
-const c=vm.createContext({console,crypto:webcrypto});c.window=c;c.cinematicaTroll=null;c.finalMago=null;c.casaGoblin=null;
+const c=vm.createContext({console,crypto:webcrypto,enTutorial:()=>false});c.window=c;c.cinematicaTroll=null;c.finalMago=null;c.casaGoblin=null;
 vm.runInContext(fs.readFileSync(new URL('visor-three-vendor.js',import.meta.url),'utf8'),c);
 vm.runInContext(get('DESTINO','const')+'\n'+get('rog','const'),c);const run=s=>vm.runInContext(s,c);
 for(let i=0;i<200;i++){const deck=run('DESTINO.repartir()');assert.equal(deck.length,3);assert.equal(new Set(deck.map(c=>c.id)).size,3);assert.deepEqual(deck.map(c=>c.min).sort((a,b)=>a-b).join(','),'2,17,19');}

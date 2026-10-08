@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
 const s=fs.readFileSync(new URL('./arpg-three-mesa.js',import.meta.url),'utf8');
-const c=vm.createContext({console});c.window=c;c.cinematicaTroll=null;c.finalMago=null;c.casaGoblin=null;c.EDITOR_CINE=false;c.alphaTerminada=false;c.impactoFX={agujero(){}};c.clima={pausar(){},desbloquearAudio(){}};c.partidaActiva=true;c.medidorGPU=null;
+const c=vm.createContext({console,tutorial:null,enTutorial:()=>false,orientarEntradaTutorial:v=>v});c.window=c;c.cinematicaTroll=null;c.finalMago=null;c.casaGoblin=null;c.EDITOR_CINE=false;c.alphaTerminada=false;c.impactoFX={agujero(){}};c.clima={pausar(){},desbloquearAudio(){}};c.partidaActiva=true;c.medidorGPU=null;
 vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.url),'utf8'),c);
 vm.runInContext(fs.readFileSync(new URL('./arpg-three-adreida-animacion.js',import.meta.url),'utf8'),c);
 c.MOD={animacion:c.CAOZ_ARPG_ADREIDA_ANIMACION.fabrica(c.CAOZ_THREE.THREE)};

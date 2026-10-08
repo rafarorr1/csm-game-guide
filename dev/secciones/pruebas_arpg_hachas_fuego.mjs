@@ -2,7 +2,7 @@
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8'),get=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
-const c=vm.createContext({console});c.window=c;for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+const c=vm.createContext({console,tutorial:null,enTutorial:()=>false});c.window=c;for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const run=s=>vm.runInContext(s,c);
 run(`const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE),TAU=Math.PI*2,FACTOR_COOP=1,R=26,DUR_ESQ=.2;
 const escena=new THREE.Scene(),reloj={t:0},tiempo={value:0},enemigos=[],jugadores=[],lanzas=[],obstaculos=[],presion={primeraLinea:new Set([1]),siguiente:0},pausa={activa:false},rog={abierto:false};

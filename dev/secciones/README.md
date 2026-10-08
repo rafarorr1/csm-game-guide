@@ -379,6 +379,16 @@ Las cajas y barriles se construyen en `casas-three.js` mediante `utileria('caja'
 
 ## Caoz ARPG (ARPG en three.js, proyecto paralelo)
 
+### Tutorial · Camino a Tomsage
+
+Las partidas individuales de Adreida en la etapa 1 empiezan en un bosque, con un sendero de 85 metros que avanza hacia la derecha de la pantalla y desemboca en la puerta suroeste. Nueve pruebas enseñan movimiento, básico, carga completa, dash, parry perfecto, salto, torbellino, hacha búmeran y Adreidos. Los impactos y el parry se verifican con el combate real; pulsar una habilidad sin acertar no completa su prueba. Los blancos esperan o se acercan sin rodear al jugador; el del parry avisa su golpe antes de atacar.
+
+Durante el entrenamiento la vida no baja de 1, la Furia se regenera y cada nueva prueba restaura recursos. Al terminar, el portón se abre, Adreida entra, la reja se cierra y comienza el asedio. Se limpian enemigos de práctica, puntos, partículas, invocación y recursos prestados. **Saltar tutorial**, abajo a la derecha, permite entrar directamente en la arena; con mando también funciona Panel táctil / Select. Escape / Options conserva el menú de pausa.
+
+El entrenamiento aparece en cada visita nueva; reiniciar después de completarlo o saltarlo conserva la entrada directa a la arena. `?tutorial=0` lo omite. `?tutorial=1&captura=1` permite revisarlo sin animación automática. Las entradas cinematográficas, etapa 2, Mohamed, cooperativo, mundo abierto e inspector conservan sus rutas directas.
+
+`arpg-three-tutorial.js` contiene las lecciones y su interfaz; `arpg-three-tutorial-mundo.js`, el sendero, bosque y portón; `arpg-three-mesa.js` conecta controles, combate y entrada. Los árboles se agrupan en instancias por tramo y el paisaje se oculta al entrar a la ciudad. Las texturas del sendero se crean localmente, sin descargas externas. Servidor, exportador y catálogo de precarga incluyen los tres recursos del tutorial. `pruebas_arpg_tutorial_estado.mjs` comprueba progresión y callbacks; `pruebas_arpg_tutorial.mjs` recorre las acciones reales, revisa el salto desde cada fase y las rutas excluidas.
+
 ### Alpha .01 · 4 de octubre de 2026
 
 Versión pública: <https://aislados.caoz-tcg.pages.dev/arpg-three/>. Incluye las dos etapas, Adreida y Mohamed, cooperativo local, cartas de riesgo, entrada del Troll, casa goblin, final del mago y prototipo de mundo abierto. Los modelos de Scenario, brazos, hacha, arquitectura, texturas y fuentes viajan con el paquete; no requieren Scenario ni una cuenta para jugar. **Alpha .01** aparece en el título, HUD, pausa y `procedencia.json`.

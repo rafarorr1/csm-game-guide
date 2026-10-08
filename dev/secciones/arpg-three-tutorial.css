@@ -1,0 +1,41 @@
+/* Camino a Tomsage: indicaciones de latón sobre el bosque, sin cubrir la acción. */
+.apTutorial{position:absolute;inset:0;z-index:12;pointer-events:none;color:#eee5d3}
+.apTutorial[hidden]{display:none!important}
+.apTutorialPanel{position:absolute;left:24px;top:91px;width:min(344px,calc(100% - 48px));padding:16px 18px 15px;border:1px solid #c6ac7050;border-left:2px solid #c6ad78;border-radius:3px 12px 12px 3px;background:linear-gradient(110deg,#0c171cef,#101c21dc 72%,#101c2199);box-shadow:0 9px 34px #0003;backdrop-filter:blur(8px);text-shadow:0 1px 3px #0008;transition:opacity .18s ease}
+.apTutorialCabecera{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.apTutorialLugar{margin:0;color:#c8b58c;font:700 9px/1.4 system-ui,sans-serif;letter-spacing:1.4px;text-transform:uppercase}
+.apTutorialPaso{flex-shrink:0;color:#a9b8b5;font:500 9px/1.4 system-ui,sans-serif;white-space:nowrap;font-variant-numeric:tabular-nums}
+.apTutorialProgreso{display:flex;gap:5px;list-style:none;margin:11px 0 16px;padding:0}
+.apTutorialMuesca{flex:1;height:3px;border-radius:1px;background:#d3d9ca22;transition:background-color .2s ease,box-shadow .2s ease}
+.apTutorialMuesca.completada{background:#99c5b3}
+.apTutorialMuesca.actual{background:#e8c990;box-shadow:0 0 9px #ebc98b44}
+.apTutorialTitulo{margin:0 0 7px;color:#f5e7c9;font:500 24px/1.12 'Cinzel Domo',Georgia,serif;letter-spacing:-.3px}
+.apTutorialObjetivo{margin:0;color:#e5e9df;font:400 12px/1.55 system-ui,sans-serif}
+.apTutorialControl{margin:13px 0 0}
+.apTutorialTecla{display:inline-block;max-width:100%;padding:6px 9px;border:1px solid #c6ac7055;border-bottom-color:#c6ac7088;border-radius:5px;background:#0a1117a6;color:#f2d9a8;font:600 11px/1.45 system-ui,sans-serif;white-space:normal;text-shadow:none}
+.apTutorialAyuda{margin:9px 0 0;color:#acbbb7;font:400 10px/1.55 system-ui,sans-serif}
+.apTutorialSalida{position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(15px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.apTutorialSaltar{pointer-events:auto;min-height:36px;padding:8px 12px;border:1px solid #d3bf9155;border-radius:6px;background:#101a20de;color:#e3d4b6;font:500 11px/1.4 system-ui,sans-serif;letter-spacing:.15px;cursor:pointer;box-shadow:0 2px 12px #0003;transition:background-color .15s ease,border-color .15s ease}
+.apTutorialSaltar:hover{background:#263332;border-color:#d9c99eaa}
+.apTutorialSaltar:focus-visible{outline:2px solid #f4d99f;outline-offset:3px}
+.apTutorialSaltar:active{background:#374238}
+.apTutorialAtajo{color:#bac4bb;font:400 9px/1.4 system-ui,sans-serif;text-shadow:0 1px 4px #000}
+.apTutorial[data-pausado="true"] .apTutorialPanel{opacity:.45}
+.apTutorial[data-fase="entrada"] .apTutorialPanel{border-left-color:#99c5b3}
+.enTutorial :is(.apMision,.apEstilo,.apMapa,.apBotin){visibility:hidden;pointer-events:none}
+@media(max-width:760px){
+  .apTutorialPanel{left:14px;top:78px;width:min(306px,calc(100% - 28px));padding:12px 14px}
+  .apTutorialTitulo{font-size:21px}
+  .apTutorialObjetivo{font-size:11px}
+  .apTutorialProgreso{margin:9px 0 12px}
+  .apTutorialSalida{right:max(12px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom))}
+}
+@media(max-height:580px){
+  .apTutorialPanel{top:74px;width:min(310px,calc(100% - 28px));padding:10px 13px}
+  .apTutorialTitulo{font-size:20px}
+  .apTutorialProgreso{margin:7px 0 9px}
+  .apTutorialControl{margin-top:8px}
+  .apTutorialAyuda{margin-top:7px;font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){.apTutorialPanel,.apTutorialMuesca,.apTutorialSaltar{transition:none}}
+@media(prefers-reduced-transparency:reduce){.apTutorialPanel,.apTutorialSaltar{background:#102027;backdrop-filter:none}}

@@ -50,7 +50,7 @@ assert.equal(m.mallas.length,4);assert(m.mallas.every((mesh,i)=>mesh.geometry===
 const mesa=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8');
 const herir=mesa.slice(mesa.indexOf('  function herir('),mesa.indexOf('  // Quemadura personal'));
 let elecciones=0,semilla=.2;
-const entorno={Math,numero(){},temblar(){},reloj:{t:0},rnd:()=>semilla,MOD:{animacion:{elegirMuerte(azar){elecciones++;return F.animacion.elegirMuerte(azar);}}},cambiar(h,s){h.estado=s;h.t=0;}};
+const entorno={Math,enTutorial:()=>false,numero(){},temblar(){},reloj:{t:0},rnd:()=>semilla,MOD:{animacion:{elegirMuerte(azar){elecciones++;return F.animacion.elegirMuerte(azar);}}},cambiar(h,s){h.estado=s;h.t=0;}};
 vm.createContext(entorno);vm.runInContext(herir+';this.danar=herir;',entorno);
 for(const variante of [0,1]){
   semilla=variante*.5;entorno.heroe={tipo:'adreida',vivo:true,alma:10,furia:0,pos:new T.Vector3(),alto:1,muerteT:9};

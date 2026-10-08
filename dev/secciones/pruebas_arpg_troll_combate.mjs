@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8');
-const c=vm.createContext({console});c.window=c;
+const c=vm.createContext({console,enTutorial:()=>false});c.window=c;
 for(const f of ['arpg-three-estilo.js','visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const extraer=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
 c.estilo=c.CAOZ_ARPG_ESTILO.crear();
