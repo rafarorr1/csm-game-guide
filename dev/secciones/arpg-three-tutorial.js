@@ -7,11 +7,11 @@
     {id:'basico',s:14,evento:'impacto-basico',titulo:'Tu primer golpe',texto:'Alcanza al enemigo con un ataque básico.',teclado:'Clic izquierdo · pulsar y soltar',mando:'R2 / □ · pulsar y soltar',ayuda:'Pulsa varias veces para encadenar tres golpes. Cada impacto genera Furia.'},
     {id:'cargado',s:24,evento:'impacto-cargado',titulo:'Toda tu fuerza',texto:'Carga el golpe por completo y acierta.',teclado:'Mantén clic izquierdo y suelta',mando:'Mantén R2 / □ y suelta',ayuda:'Espera a completar la carga antes de soltar.'},
     {id:'dash',s:34,evento:'dash',titulo:'Un paso por delante',texto:'Haz un dash hacia donde quieras avanzar.',teclado:'Shift',mando:'×',ayuda:'Combina la dirección de movimiento con el dash.'},
-    {id:'parry',s:44,evento:'parry',titulo:'El instante preciso',texto:'Devuelve un ataque con un parry perfecto.',teclado:'Espacio',mando:'L1 / L2',ayuda:'Pulsa al ver la señal dorada, justo antes del impacto. Un parry perfecto recarga tus habilidades.'},
+    {id:'parry',s:44,evento:'parry',titulo:'El instante preciso',texto:'Devuelve un ataque con un parry perfecto.',teclado:'Espacio',mando:'L1 / L2',ayuda:'Pulsa al ver la señal dorada, justo antes del impacto. Un parry perfecto aturde al enemigo y te da Furia.'},
     {id:'salto',s:54,evento:'impacto-salto',titulo:'Caída demoledora',texto:'Aterriza sobre el enemigo · 25 Furia.',teclado:'Clic derecho',mando:'○',ayuda:'Apunta al suelo con el ratón y haz clic derecho. Con mando, saltas 5 m hacia el stick izquierdo.'},
     {id:'torbellino',s:64,evento:'impacto-torbellino',titulo:'Haz sitio',texto:'Alcanza al enemigo con un torbellino · 30 Furia.',teclado:'Q',mando:'R1',ayuda:'Acércate y gira con el hacha. Puedes hacer un dash sin interrumpir el giro.'},
     {id:'boomerang',s:72,evento:'impacto-boomerang',titulo:'Un hacha que vuelve',texto:'Lanza el hacha búmeran y alcanza al enemigo.',teclado:'E',mando:'△',ayuda:'Alcanza 4 m. Gira mientras regresa para curvar su trayectoria.'},
-    {id:'ulti',s:78,evento:'ulti',titulo:'Nunca luchas sola',texto:'Invoca a un Adreidos con tu ulti.',teclado:'R',mando:'L3 · pulsar stick izquierdo',ayuda:'Lucha a tu lado durante 15 s; recarga en 100 s. Cada parry perfecto resta 1 s a la recarga.'},
+    {id:'ulti',s:78,evento:'ulti',titulo:'Nunca luchas sola',texto:'Invoca a un Adreidos con tu ulti.',teclado:'R',mando:'L3 · pulsar stick izquierdo',ayuda:'Lucha a tu lado durante 15 s. Sin cooldown: vuelve a pulsar para renovar su duración.'},
     {id:'puerta',s:85,evento:null,titulo:'Tomsage te espera',texto:'Cruza la puerta de la muralla.',teclado:'W A S D / Flechas',mando:'Stick izquierdo',ayuda:'Ya conoces tus armas. Es hora de entrar.'}
   ].map((leccion,indice)=>Object.freeze({...leccion,indice})));
   const TOTAL=9;

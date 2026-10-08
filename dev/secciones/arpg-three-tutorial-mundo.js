@@ -14,7 +14,8 @@
     const azar=()=>{semilla=semilla*16807%2147483647;return (semilla-1)/2147483646;};
     const entre=(a,b)=>a+(b-a)*azar(),lim=(v,a,b)=>Math.max(a,Math.min(b,v));
     const bordeCamino=s=>BORDE-lim((s-80)/5,0,1);
-    const geometria=new Set(),materiales=new Set(),texturas=new Set(),tramos=[],hojas=[];
+    const geometria=new Set(),materiales=new Set(),texturas=new Set(),tramos=[],hojas=[],arboles=[];
+    let arbolActual=null;
     const geo=g=>(geometria.add(g),g);
     const mat=(color,extra={})=>{const m=new THREE.MeshStandardMaterial({color,roughness:1,metalness:0,envMapIntensity:.12,...extra});materiales.add(m);return m;};
     const M={tierra:mat(0x28392d,{vertexColors:true}),camino:mat(0x75624b,{vertexColors:true}),
@@ -24,7 +25,7 @@
     const G={tronco:geo(new THREE.CylinderGeometry(.7,1,1,7)),copa:geo(new THREE.IcosahedronGeometry(1,1)),
       pino:geo(new THREE.ConeGeometry(1,1,9)),roca:geo(new THREE.IcosahedronGeometry(1,0)),
       caja:geo(new THREE.BoxGeometry(1,1,1))};
-    const objeto=new THREE.Object3D(),tinte=new THREE.Color(),ejeY=new THREE.Vector3(0,1,0);
+    const objeto=new THREE.Object3D(),tinte=new THREE.Color(),ejeY=new THREE.Vector3(0,1,0),cajaPieza=new THREE.Box3();
 
     // Color pintado localmente: grano de tierra, huellas húmedas y hojarasca sin archivos externos.
     // La semilla de las texturas es independiente: retocar el color no redistribuye los árboles.
@@ -66,11 +67,11 @@
 
     function punto(s,z=0){return new THREE.Vector3(origen.x+C*s+S*z,0,origen.z-S*s+C*z);}
     function coordenadas(p){const x=p.x-origen.x,z=p.z-origen.z;return {s:C*x-S*z,z:S*x+C*z};}
-    function instancia(lista,x,y,z,sx,sy,sz,ry=0,tono=1){lista.push({x,y,z,sx,sy,sz,ry,tono});}
+    function instancia(lista,x,y,z,sx,sy,sz,ry=0,tono=1){lista.push({x,y,z,sx,sy,sz,ry,tono,arbol:arbolActual});}
     function rama(lista,a,b,radio,tono=1){
       const direccion=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]),l=direccion.length();
       lista.push({x:(a[0]+b[0])/2,y:(a[1]+b[1])/2,z:(a[2]+b[2])/2,sx:radio,sy:l,sz:radio,
-        q:new THREE.Quaternion().setFromUnitVectors(ejeY,direccion.normalize()),tono});
+        q:new THREE.Quaternion().setFromUnitVectors(ejeY,direccion.normalize()),tono,arbol:arbolActual});
     }
     function lote(padre,nombre,g,m,lista){
       if(!lista.length)return null;
@@ -80,6 +81,12 @@
         if(a.q)objeto.quaternion.copy(a.q);else objeto.rotation.set(0,a.ry||0,0);
         objeto.updateMatrix();inst.setMatrixAt(i,objeto.matrix);
         tinte.setRGB(a.tono,a.tono,a.tono);inst.setColorAt(i,tinte);
+        if(a.arbol){
+          if(!g.boundingBox)g.computeBoundingBox();
+          cajaPieza.copy(g.boundingBox).applyMatrix4(objeto.matrix).translate(padre.position);
+          a.arbol.occlusion.caja.union(cajaPieza);
+          a.arbol.occlusion.slots.push({malla:inst,indice:i,matriz:inst.instanceMatrix.array.slice(i*16,i*16+16)});
+        }
       });
       inst.instanceMatrix.needsUpdate=true;inst.instanceColor.needsUpdate=true;
       inst.castShadow=false;inst.receiveShadow=true;
@@ -149,6 +156,8 @@
         const s=entre(inicio,Math.min(fin,79));if(s>75&&azar()<.7)continue;
         const lado=n%2?1:-1,z=lado*entre(s>72?12:7.1,35),x=s-centro;
         const alto=entre(6.8,12.6),ancho=entre(1.45,2.75),radio=entre(.22,.43),giro=entre(0,Math.PI*2),tono=entre(.76,1.17);
+        arbolActual={x:s,z,alto,ancho};
+        Object.defineProperty(arbolActual,'occlusion',{value:{caja:new THREE.Box3(),slots:[],oculto:false}});arboles.push(arbolActual);
         instancia(madera,x,alto*.34,z,radio,alto*.68,radio,giro,tono);
         if(azar()<.68){
           for(let j=0;j<3;j++)instancia(pinos,x,alto*(.47+j*.175),z,ancho*(1-j*.22),alto*(.57-j*.08),ancho*(1-j*.22),giro+j*.36,tono);
@@ -163,7 +172,7 @@
           const a=giro+r*2.1,longitud=entre(.85,1.8);
           rama(madera,[x,.3,z],[x+Math.cos(a)*longitud,.05,z+Math.sin(a)*longitud],radio*.44,tono);
         }
-        numeroArboles++;
+        numeroArboles++;arbolActual=null;
       }
       for(let s=Math.max(.65,inicio+.3);s<Math.min(fin,92);s+=1.1){
         for(const lado of [-1,1]){
@@ -263,10 +272,53 @@
       for(const t of tramos)t.grupo.visible=t.fin>avance-44&&t.inicio<avance+72;
       M.luz.emissiveIntensity=.62+Math.sin((Number.isFinite(tiempo)?tiempo:0)*4.1)*.04;
     }
+    const inversaOclusion=new THREE.Matrix4(),camaraLocal=new THREE.Vector3(),objetivosLocales=[];
+    const oclusion={arboles:arboles.length,ocultos:0,cambios:0};
+    // Segmento contra caja, con escalares: no se recorren triángulos ni se crean objetos por árbol.
+    function obstruye(caja,p,margen){
+      let desde=0,hasta=1,d=p.x-camaraLocal.x,a,b;
+      if(Math.abs(d)<1e-8){if(camaraLocal.x<caja.min.x-margen||camaraLocal.x>caja.max.x+margen)return false;}
+      else{a=(caja.min.x-margen-camaraLocal.x)/d;b=(caja.max.x+margen-camaraLocal.x)/d;desde=Math.max(desde,Math.min(a,b));hasta=Math.min(hasta,Math.max(a,b));if(desde>hasta)return false;}
+      d=p.y-camaraLocal.y;
+      if(Math.abs(d)<1e-8){if(camaraLocal.y<caja.min.y-margen||camaraLocal.y>caja.max.y+margen)return false;}
+      else{a=(caja.min.y-margen-camaraLocal.y)/d;b=(caja.max.y+margen-camaraLocal.y)/d;desde=Math.max(desde,Math.min(a,b));hasta=Math.min(hasta,Math.max(a,b));if(desde>hasta)return false;}
+      d=p.z-camaraLocal.z;
+      if(Math.abs(d)<1e-8)return camaraLocal.z>=caja.min.z-margen&&camaraLocal.z<=caja.max.z+margen;
+      a=(caja.min.z-margen-camaraLocal.z)/d;b=(caja.max.z+margen-camaraLocal.z)/d;
+      return Math.max(desde,Math.min(a,b))<=Math.min(hasta,Math.max(a,b));
+    }
+    function actualizarOclusion(camara,posicionesObjetivo){
+      if(eliminado)return 0;
+      let cantidad=0;
+      if(camara&&activo&&posicionesObjetivo?.length){
+        grupo.updateWorldMatrix(true,false);inversaOclusion.copy(grupo.matrixWorld).invert();
+        camara.getWorldPosition(camaraLocal).applyMatrix4(inversaOclusion);
+        for(const p of posicionesObjetivo){
+          if(!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)||!Number.isFinite(p.z))continue;
+          const local=objetivosLocales[cantidad]||(objetivosLocales[cantidad]=new THREE.Vector3());
+          local.copy(p);local.y+=.9;local.applyMatrix4(inversaOclusion);cantidad++;
+        }
+      }
+      let ocultos=0,cambios=0;
+      for(const a of arboles){
+        const o=a.occlusion,margen=o.oculto?1.15:.7;let ocultar=false;
+        for(let i=0;i<cantidad&&!ocultar;i++)ocultar=obstruye(o.caja,objetivosLocales[i],margen);
+        if(ocultar)ocultos++;
+        if(ocultar===o.oculto)continue;
+        o.oculto=ocultar;cambios++;
+        for(const slot of o.slots){
+          const buffer=slot.malla.instanceMatrix,inicio=slot.indice*16;
+          if(ocultar)buffer.array.fill(0,inicio,inicio+12);else buffer.array.set(slot.matriz,inicio);
+          buffer.needsUpdate=true;
+        }
+      }
+      oclusion.ocultos=ocultos;oclusion.cambios=cambios;return ocultos;
+    }
     function activar(v,{conservarPuerta=false}={}){
       if(eliminado)return;
       activo=!!v;grupo.visible=activo||!!conservarPuerta;
       grupoPaisaje.visible=activo;porton.visible=activo||!!conservarPuerta;
+      if(!activo)actualizarOclusion(null,null);
     }
     function dispose(){
       if(eliminado)return;eliminado=true;
@@ -274,7 +326,7 @@
       for(const g of geometria)g.dispose();for(const m of materiales)m.dispose();for(const t of texturas)t.dispose();grupo.clear();
     }
     puerta(0);grupo.updateMatrixWorld(true);
-    return {grupo,grupoPaisaje,porton,punto,coordenadas,limitar,actualizar,puerta,activar,dispose,
+    return {grupo,grupoPaisaje,porton,punto,coordenadas,limitar,actualizar,actualizarOclusion,oclusion,arboles,puerta,activar,dispose,
       estaciones:Object.freeze(Array.from({length:8},(_,i)=>({s:(i+1)*10,punto:punto((i+1)*10)}))),
       estadisticas:Object.freeze({arboles:numeroArboles,tramos:tramos.length,anchoCamino:9,borde:BORDE,puertaS:85,semianchoPuerta:HOJA})};
   }
