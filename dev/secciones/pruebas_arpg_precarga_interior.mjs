@@ -1,0 +1,21 @@
+/* Las texturas pendientes se comparten entre precarga y escena, sin red ni GPU. */
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const leer=f=>fs.readFileSync(new URL(f,import.meta.url),'utf8'),c=vm.createContext({console,atob});c.window=c;
+vm.runInContext(leer('visor-three-vendor.js'),c);const T=c.CAOZ_THREE.THREE;
+const pendientes=[],solicitudes=[],avisos=[];
+const THREE={...T,TextureLoader:class{load(url,listo,progreso,error){const mapa=new T.Texture();solicitudes.push(url);pendientes.push({mapa,listo,error});return mapa;}}};
+const codificar=(Tipo,valores)=>Buffer.from(new Tipo(valores).buffer).toString('base64');
+const datos={mallas:[{material:0,position:codificar(Float32Array,[0,0,0,1,0,0,0,1,0]),normal:codificar(Float32Array,[0,0,1,0,0,1,0,0,1]),uv:codificar(Float32Array,[0,0,1,0,0,1]),index:codificar(Uint16Array,[0,1,2])}]};
+const contexto=vm.createContext({console:{warn:m=>avisos.push(m)},URL,atob,document:{currentScript:{src:'https://ejemplo.invalid/dev/arpg-three-casa-interior.js'}},CAOZ_CASA_GOBLIN_DATOS:datos});contexto.window=contexto;
+vm.runInContext(leer('arpg-three-casa-interior.js'),contexto);const API=contexto.CAOZ_ARPG_CASA_INTERIOR;
+const promesa=API.precargar(THREE);assert.equal(promesa,API.precargar(THREE));assert.equal(solicitudes.length,5,'Tres mapas del atlas y dos retratos, una petición por imagen');
+const a=API.crear(THREE),b=API.crear(THREE);assert.equal(solicitudes.length,5,'Construir las escenas no vuelve a cargar texturas');assert.equal(a.texturasListas,promesa);assert.equal(a.listo,false);assert.equal(b.listo,false);
+const ma=a.raiz.getObjectByName('Decorado de la casa').material,mb=b.raiz.getObjectByName('Decorado de la casa').material;
+assert.equal(ma.map,mb.map);assert.equal(ma.roughnessMap,ma.metalnessMap);assert.equal(ma.map.colorSpace,T.SRGBColorSpace);assert.equal(ma.normalMap.colorSpace,T.NoColorSpace);
+assert.equal(a.raiz.getObjectByName('foto-familia.webp').material.map.flipY,true);
+let terminada=false;promesa.then(()=>{terminada=true;});pendientes[0].listo();await Promise.resolve();assert(!terminada,'La primera imagen no adelanta la disponibilidad de las demás');
+for(const p of pendientes.slice(1,-1))p.listo();pendientes.at(-1).error();await promesa;assert(a.listo&&b.listo);assert.equal(avisos.length,1,'Una imagen ausente conserva el fallback y no bloquea el interior');
+assert.equal(a.estado().tiempo,0);assert.equal(b.estado().relampagos,0);assert.equal(API.precargar(THREE),promesa);
+console.log('Precarga del interior: promesa, texturas compartidas, espera real, fallo de imagen y relojes intactos OK');

@@ -12,6 +12,71 @@ from urllib.parse import unquote, urlsplit
 import publicar as p
 
 
+class CabecerasArpg(unittest.TestCase):
+    """Unión pura de políticas; no exporta ni publica repositorios."""
+    exportadas = (b"/*\n  Cache-Control: no-cache\n  X-Content-Type-Options: nosniff\n"
+                  b"  Content-Security-Policy: default-src 'none'; worker-src 'self'\n")
+    raiz = (b"# Sitio compartido\r\n/*\r\n  Cache-Control: no-store\r\n"
+            b"  X-Content-Type-Options: nosniff\r\n"
+            b"  Content-Security-Policy: default-src 'none'; worker-src 'none'\r\n")
+    ajenas = (b"\r\n/balance\r\n  ! Content-Security-Policy\r\n"
+              b"  Content-Security-Policy: default-src 'self'\r\n"
+              b"/balance/*\r\n  Cache-Control: private\r\n"
+              b"/arpg-three-extra/*\r\n  X-Frame-Options: DENY\r\n")
+
+    def test_preserva_bytes_ajenos_y_limita_las_excepciones_al_arpg(self):
+        remotas = self.raiz + self.ajenas
+        resultado = p.unir_cabeceras_arpg(remotas, self.exportadas)
+        self.assertEqual(resultado[:len(remotas)], remotas)
+        esperado = (b"  ! Cache-Control\n  ! Content-Security-Policy\n"
+                    b"  Cache-Control: no-cache\n"
+                    b"  Content-Security-Policy: default-src 'none'; worker-src 'self'\n")
+        self.assertEqual(resultado[len(remotas):],
+                         b'/arpg-three\n' + esperado + b'/arpg-three/*\n' + esperado)
+        self.assertEqual(resultado.count(b'X-Content-Type-Options: nosniff'), 1,
+                         'No duplica una cabecera heredada que Cloudflare uniría con comas')
+
+    def test_sustituye_solo_bloques_propios_intercalados(self):
+        anteriores = (b"/arpg-three\r\n  Cache-Control: viejo\r\n\r\n"
+                      b"  Content-Security-Policy: antiguo\r\n"
+                      b"# Comentario que se conserva\r\n")
+        especificas = b"/arpg-three/texturas/*\n  Cache-Control: max-age=7\n"
+        resultado = p.unir_cabeceras_arpg(
+            self.raiz + anteriores + self.ajenas + especificas, self.exportadas)
+        conservadas = self.raiz + b'\r\n# Comentario que se conserva\r\n' + self.ajenas
+        self.assertEqual(resultado[:len(conservadas)], conservadas)
+        self.assertNotIn(b'antiguo', resultado)
+        self.assertNotIn(b'viejo', resultado)
+        self.assertNotIn(b'/arpg-three/texturas/*', resultado)
+        self.assertIn(b'/arpg-three-extra/*', resultado)
+
+    def test_republicar_no_duplica_reglas_ni_separadores(self):
+        una = p.unir_cabeceras_arpg(self.raiz + self.ajenas, self.exportadas)
+        self.assertEqual(p.unir_cabeceras_arpg(una, self.exportadas), una)
+        nueva = self.exportadas.replace(b'no-cache', b'private, max-age=0')
+        revisada = p.unir_cabeceras_arpg(una, nueva)
+        self.assertEqual(revisada.count(b'Cache-Control: private, max-age=0'), 2)
+        self.assertNotIn(b'Cache-Control: no-cache', revisada)
+        self.assertTrue(revisada.startswith(self.raiz + self.ajenas))
+
+    def test_admite_raiz_vacia_o_sin_salto_final(self):
+        self.assertTrue(p.unir_cabeceras_arpg(b'', self.exportadas).startswith(b'/arpg-three\n'))
+        remotas = self.raiz.rstrip(b'\r\n')
+        una = p.unir_cabeceras_arpg(remotas, self.exportadas)
+        self.assertTrue(una.startswith(remotas + b'\n/arpg-three\n'))
+        self.assertEqual(p.unir_cabeceras_arpg(una, self.exportadas), una)
+
+    def test_rechaza_politicas_incompletas_ambiguas_o_de_otras_rutas(self):
+        invalidas = [b'', b"/*\n  Cache-Control: no-cache\n",
+                     self.exportadas + b'/otra-app/*\n  Cache-Control: public\n',
+                     self.exportadas + b'  CACHE-CONTROL: public\n',
+                     self.exportadas + b'  ! Content-Security-Policy\n',
+                     b"  Cache-Control: no-cache\n" + self.exportadas]
+        for exportadas in invalidas:
+            with self.subTest(exportadas=exportadas), self.assertRaises(ValueError):
+                p.unir_cabeceras_arpg(self.raiz, exportadas)
+
+
 class PublicacionAislada(unittest.TestCase):
     def git(self, *args, **opciones):
         return p.git(self.repo, *args, **opciones)

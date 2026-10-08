@@ -22,6 +22,7 @@
   const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1';
   const carga=window.CAOZ_ARPG_CARGA;carga?.avance(45,'Preparando la plaza…');
   const EDITOR_CINE=location.pathname.endsWith('/arpg-cine.html');let editorCine=null,tomaCine=null;
+  let cinePreparado=false,promesaCine=null,preparandoTransicion=false;
   if(EDITOR_CINE){q.set('etapa','2');q.set('heroe','adreida');q.set('coop','0');q.set('entrada','mago');q.delete('plano');q.delete('momento');}
   const camarasCine=window.CAOZ_ARPG_CINE_CAMARA.crear(window.CAOZ_THREE.THREE);
   if(!EDITOR_CINE&&q.get('toma')==='local'){try{tomaCine=window.CAOZ_ARPG_CINE_CAMARA.validar(JSON.parse(localStorage.getItem(window.CAOZ_ARPG_CINE_CAMARA.CLAVE)));}catch(e){console.warn('No se pudo cargar la toma local:',e.message);}}
@@ -545,11 +546,21 @@
       const antes=rog.efectos.filter(e=>e.positivo).length,r=DESTINO.resolver(rog.efectos,c,dado);rog.efectos=r.efectos;aplicarDestino();
       $('destinoResultado').textContent='d20: '+dado+' · '+(r.tipo==='critico'?'¡CRÍTICO! Pierdes '+antes+' buffs positivos. Conservas tus penalizaciones.':(r.tipo==='beneficio'?'¡BENEFICIO! ':'RIESGO: ')+DESTINO.texto(c,r.tipo==='beneficio'));
       pintarDestino();$('destinoSeguir').focus();});}
-  function seguirDestino(){if(!rog.abierto||!rog.resuelto)return;rog.terminado=ol.i;rog.abierto=false;$('destino').close();
+  function seguirDestino(){if(!rog.abierto||!rog.resuelto||rog.preparando)return;
+    if(!ABIERTO&&ol.i===3&&!cinePreparado){prepararSiguienteEscena();return;}
+    rog.terminado=ol.i;rog.abierto=false;$('destino').close();
     ent.atacando=ent.pendiente=false;teclas.clear();for(const h of jugadores){h.mando.listo=h.mando.activo=false;h.entrada.atacando=h.entrada.pendiente=false;h.invul=.5;if(!h.vivo){h.vivo=true;h.alma=h.almaMax*.5;cambiar(h,'quieto');h.muerteT=0;h.muerte=null;h.pos.copy(heroe.pos).add(new V3(2,0,0));}}
     for(const b of [...botines])quitarBotin(b);ol.descanso=.8;
     if(ABIERTO){if(exploracion.activa)exploracion.activa.limpio=true;exploracion.activa=null;return;}
     if(ol.i===OLEADAS.length-1){rog.vuelta++;ol.i=-1;ol.fin=false;rog.terminado=-2;}}
+  async function prepararSiguienteEscena(){
+    const tirada=rog.tirada,boton=$('destinoSeguir');rog.preparando=preparandoTransicion=true;
+    boton.disabled=true;boton.textContent='Preparando la siguiente escena…';
+    try{await prepararCine();await prepararVariantesEscena();rog.preparando=false;
+      if(rog.abierto&&rog.tirada===tirada&&ol.i===3)seguirDestino();
+    }catch(error){cinePreparado=false;promesaCine=null;console.warn('No se pudo preparar la siguiente escena:',error);$('destinoResultado').textContent='No se pudo preparar la siguiente escena. Puedes volver a intentarlo.';
+    }finally{rog.preparando=preparandoTransicion=false;boton.disabled=false;boton.textContent='Entrar al siguiente nivel';sincronizarTiempo();antes=performance.now();}
+  }
   function mandoDestino(){if(document.hidden||!mando.foco){rog.botones=[];return;}const g=Array.from(navigator.getGamepads?.()||[]).find(g=>g?.connected&&g.mapping==='standard');if(!g)return;
     const b=g.buttons.map(b=>b.pressed||b.value>.5),direccion=g.axes[0]>.55||b[15]?1:g.axes[0]<-.55||b[14]?-1:0;
     if(!rog.botones.length){rog.botones=b;rog.direccion=direccion;return;}
@@ -2081,7 +2092,7 @@
   let antes=performance.now(),siguienteDibujo=0,fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
   function cuadro(ahora){
     clima.pausar(alphaTerminada||EDITOR_CINE||document.hidden||!partidaActiva||pausa.activa||rog.abierto||!!laboratorio?.detenido||!!casaGoblin?.interior);
-    if(document.hidden||!partidaActiva){sincronizarTiempo();antes=ahora;siguienteDibujo=0;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
+    if(document.hidden||!partidaActiva||preparandoTransicion){sincronizarTiempo();antes=ahora;siguienteDibujo=0;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
     // El epílogo ha terminado: el cartel HTML permanece sin mantener activa la escena 3D.
     // El editor sí puede seguir buscando cuadros anteriores y reanudar la secuencia.
     if(alphaTerminada&&!EDITOR_CINE){sincronizarTiempo();antes=ahora;requestAnimationFrame(cuadro);return;}
@@ -2106,6 +2117,26 @@
     requestAnimationFrame(cuadro);
   }
 
+  function prepararCine(){
+    if(cinePreparado)return Promise.resolve();if(promesaCine)return promesaCine;
+    // Las dos escenas reutilizan sus recursos ocultos: no se inicia la actuación
+    // ni se duplica la plaza. En la ruta normal se preparan entre ambos niveles.
+    const ceder=()=>carga?.cuadro()||Promise.resolve();
+    promesaCine=(async()=>{await casaGoblin.precargar(renderer,{ceder,aspecto:camara.aspect});await finalMago.precargar(renderer,{ceder});cinePreparado=true;})();
+    promesaCine.catch(()=>{promesaCine=null;});return promesaCine;
+  }
+  async function prepararEnemigosEscena(){
+    const tipos=EDITOR_CINE||q.get('entrada')==='mago'?[]:['goblin','kobold','saqueador','can','cobrador','troll'];
+    return MOD.preparar(tipos,{ceder:()=>carga?.cuadro()||Promise.resolve(),usar:async modelos=>{
+      // Se dibujan muestras temporales bajo la carga; después sólo permanecen
+      // los buffers, mapas y programas compartidos. Cada enemigo crea sus huesos.
+      const muestras=new THREE.Group();muestras.name='Preparación de enemigos';
+      for(const [i,m] of modelos.entries()){m.raiz.position.copy(heroe.pos).add(new V3((i%5-2)*1.2,0,(Math.floor(i/5)-1)*1.2));muestras.add(m.raiz);}
+      escena.add(muestras);
+      try{await carga?.texturas();escena.updateMatrixWorld(true);await prepararVariantesEscena();}
+      finally{muestras.removeFromParent();muestras.clear();}
+    }});
+  }
   async function prepararVariantesEscena(){
     const destino=renderer.getRenderTarget(),vista=renderer.getViewport(new THREE.Vector4()),cuadro=new THREE.WebGLRenderTarget(32,32);
     const sombra=renderer.shadowMap.enabled,auto=renderer.shadowMap.autoUpdate,proyecta=luna.castShadow;
@@ -2131,9 +2162,13 @@
     await CAOZ_CARTA_PINTOR.fuentes();const logo=await imagen('./art/logo.webp');dorso.mat=materialDorsoBotin(logo);
     prepararVistaEntrada();if(EDITOR_CINE){clima.pausar(true);editorCine=window.CAOZ_ARPG_CINE_EDITOR.crear(THREE,camara,lienzo,puenteCine());}
     await prepararCartasBotin(({fase,hechas,total})=>carga?.avance((fase==='texturas'?60:73)+(hechas/total)*12,fase==='texturas'?'Cargando el botín…':'Preparando el botín para que aparezca sin pausas…'));
-    carga?.avance(86,'Terminando las texturas de los personajes…');await carga?.texturas();
-    carga?.avance(91,'Preparando luces y sombras…');await carga?.cuadro();
+    carga?.avance(86,'Preparando a los enemigos y sus texturas…');await carga?.texturas();
     simularPaso(1/60);escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);
+    await prepararEnemigosEscena();
+    if(!ABIERTO&&(EDITOR_CINE||q.get('etapa')==='2'||['casa','mago','troll'].includes(q.get('entrada')))){
+      carga?.avance(90,'Preparando las siguientes escenas…');await prepararCine();
+    }
+    carga?.avance(94,'Preparando luces y sombras…');await carga?.cuadro();
     // La compilación y la primera subida a la GPU ocurren con la carga visible.
     await prepararVariantesEscena();await carga?.cuadro();
     carga?.avance(98,'Abriendo las puertas de Tomsage…');await carga?.cuadro();dibujarCuadro();
@@ -2155,6 +2190,7 @@
   const aPantalla=p=>{camara.updateMatrixWorld(true);const v=p.clone().project(camara),b=esc.getBoundingClientRect();return {x:b.left+(v.x*.5+.5)*b.width,y:b.top+(.5-v.y*.5)*b.height,dentro:Math.abs(v.x)<1&&Math.abs(v.y)<1};};
   const resumen=e=>({ia:e.ia?{accion:e.ia.accion,decisiones:e.ia.decisiones}:null,borde:+e.m.M.u.uBorde.value.toFixed(2),ataque:e.ataque?{forma:e.ataque.forma,k:+Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur).toFixed(2),fijado:e.ataque.fijado}:null,id:e.id,tipo:e.tipo,x:+e.pos.x.toFixed(2),z:+e.pos.z.toFixed(2),vida:e.vida,vidaMax:e.vidaMax,estado:e.estado,muerte:e.muerte?{causa:e.muerte.tipo,variante:e.muerte.variante,duracion:e.muerte.duracion}:null,fase2:!!e.fase2,blindado:!!blindadoTroll(e),parryHasta:e.parryHasta||0,disuelve:+e.m.M.u.uDisuelve.value.toFixed(2),expuesto:e.expuestoHasta>reloj.t});
   window.CAOZ_ARPG_THREE_REVISION=Object.freeze({
+    preparacion:()=>({...MOD.estadoPreparacion(),cine:cinePreparado,transicion:preparandoTransicion}),
     rendimiento:()=>({calidad:calidad.estado(),fps:fps.v,cpu:fps.cpu,envio:fps.render,gpu:medidorGPU?.leer()??null,llamadas:renderer.info.render.calls,triangulos:renderer.info.render.triangles,texturas:renderer.info.memory.textures,geometrias:renderer.info.memory.geometries,ancho:gl.drawingBufferWidth,alto:gl.drawingBufferHeight}),
     calidad(v){if(v!==undefined){calidad.elegir(v);aplicarCalidad();}return calidad.estado();},
     ia(modo){if(modo!==undefined)configurarIA(modo);return {modo:window.CAOZ_ARPG_IA.modo(),goblins:enemigos.filter(e=>e.ia&&e.estado!=='muere').map(e=>({id:e.id,variante:e.m.varianteGoblin,accion:e.ia.accion,decisiones:e.ia.decisiones}))};},

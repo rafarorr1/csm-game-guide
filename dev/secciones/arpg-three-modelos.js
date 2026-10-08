@@ -564,6 +564,47 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         pon('manoD','metal',G.cil(.024,.028,.3,8),0x5a5e66,[0,-.2,0],[0,0,0],1,.06);pon('manoD','metal',G.toro(.03,.008,8),0xc8a050,[0,-.34,0],[Math.PI/2,0,0]);
         pon('manoD','piel',G.caja(.045,.07,.14),0x5a3422,[0,-.02,-.06],[-.35,0,0]);pon('manoD','metal',G.caja(.02,.05,.03),0xc8a050,[0,-.08,.035]);}});}
     const constructores={adreida,goblin,cobrador:()=>goblin(true),troll,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
+    // Una plantilla contiene datos de reposo y buffers, nunca huesos, mallas ni actores.
+    // Cada aparición conserva su propio esqueleto y uniformes de daño/disolución.
+    const plantillasEnemigos=new Map(),enemigosPreparados=new Set(),materialesPreparados=new Set();let turnoPreparacion=Promise.resolve();
+    function guardarPlantilla(clave,H,p,mallas,M){
+      const nombres=new Map(Object.entries(H).map(([n,h])=>[h,n]));
+      const nodos=Object.entries(H).map(([nombre,h])=>({nombre,padre:nombres.get(h.parent),hueso:!!h.isBone,pos:h.position.toArray(),rot:h.quaternion.toArray(),esc:h.scale.toArray()}));
+      const piezas=mallas.map(m=>{m.geometry.userData.compartida=true;return {geometria:m.geometry,material:Object.keys(M).find(k=>M[k]===m.material),sombra:m.castShadow};});
+      plantillasEnemigos.set(clave,{nodos,p:{...p},piezas});
+    }
+    function usarPlantilla(base,M){
+      const H={};for(const n of base.nodos){const h=n.hueso?new THREE.Bone():new THREE.Group();h.position.fromArray(n.pos);h.quaternion.fromArray(n.rot);h.scale.fromArray(n.esc);H[n.nombre]=h;}
+      for(const n of base.nodos)if(n.padre)H[n.padre].add(H[n.nombre]);
+      H.raiz.updateMatrixWorld(true);const huesos=[];H.cuerpo.traverse(h=>{if(h.isBone)huesos.push(h);});const esqueleto=new THREE.Skeleton(huesos);
+      const mallas=base.piezas.map(p=>{const m=new THREE.SkinnedMesh(p.geometria,M[p.material]);m.castShadow=p.sombra;m.receiveShadow=true;m.frustumCulled=false;H.raiz.add(m);m.bind(esqueleto,m.matrixWorld);return m;});
+      return {H,p:{...base.p},mallas};
+    }
+    function planPreparacion(tipos){const plan=[];
+      for(const tipo of new Set(tipos)){
+        if(!TIPOS[tipo])throw Error('Modelo desconocido para preparar: '+tipo);
+        const variantes=tipo==='goblin'||tipo==='cobrador'?Object.keys(VARIANTES_GOBLIN):tipo==='kobold'?Object.keys(window.CAOZ_ARPG_KOBOLD?.VARIANTES||{rojizo:1}):['base'];
+        for(const variante of variantes)plan.push({clave:tipo+'/'+variante,tipo,opciones:tipo==='kobold'?{varianteKobold:variante}:{varianteGoblin:variante}});
+      }return plan;
+    }
+    function liberarMuestra(m,conservar){const geometrías=new Set(),materiales=new Set(),esqueletos=new Set();m.raiz.removeFromParent();
+      m.raiz.traverse(o=>{if(o.geometry)geometrías.add(o.geometry);if(o.skeleton)esqueletos.add(o.skeleton);for(const a of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materiales.add(a);});
+      for(const g of geometrías)if(!g.userData.compartida)g.dispose();for(const e of esqueletos)e.dispose();
+      for(const mat of materiales)if(conservar)materialesPreparados.add(mat);else mat.dispose();
+      for(const mat of Object.values(m.M))if(mat?.isMaterial&&!materiales.has(mat))mat.dispose();m.raiz.clear();
+    }
+    function preparar(tipos,{usar=async()=>{},ceder=async()=>{}}={}){
+      const ejecutar=async()=>{const plan=planPreparacion(tipos).filter(p=>!enemigosPreparados.has(p.clave)),modelos=[];let completa=false;
+        try{for(const p of plan){const m=crear(p.tipo,p.opciones);modelos.push(m);posar(m,{anim:'quieto',t:0,dt:0,mezclar:false});await ceder();}
+          if(modelos.length)await usar(modelos);completa=true;for(const p of plan)enemigosPreparados.add(p.clave);
+          return {nuevos:modelos.length,total:enemigosPreparados.size};
+        }finally{for(const m of modelos)liberarMuestra(m,completa);}
+      };
+      // Las escenas pueden pedir tipos superpuestos; una misma variante se prepara una sola vez.
+      const tarea=turnoPreparacion.then(ejecutar,ejecutar);turnoPreparacion=tarea.catch(()=>{});return tarea;
+    }
+    function estadoPreparacion(){const geometrías=new Set();for(const p of plantillasEnemigos.values())for(const m of p.piezas)geometrías.add(m.geometria);
+      return {variantes:[...enemigosPreparados],plantillas:plantillasEnemigos.size,geometrias:geometrías.size,materiales:materialesPreparados.size};}
     function crear(tipo,{varianteGoblin='clasico',modeloGoblin='scenario',modeloAdreida='scenario',varianteKobold='rojizo',modeloKobold='scenario'}={}){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const esGoblin=tipo==='goblin'||tipo==='cobrador';
@@ -573,7 +614,12 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       const nuevaAdreida=tipo==='adreida'&&!!adreidaScenario&&modeloAdreida!=='clasico';
       const nuevoKobold=tipo==='kobold'&&!!koboldScenario&&modeloKobold!=='clasico';
       if(!window.CAOZ_ARPG_KOBOLD?.VARIANTES[varianteKobold])varianteKobold='rojizo';
-      const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=esGoblin?goblin(tipo==='cobrador',varianteGoblin,scenario):tipo==='adreida'?adreida(nuevaAdreida):tipo==='kobold'?kobold(nuevoKobold,varianteKobold):constructores[tipo](),mallas=montar(M,escala,nuevaAdreida||nuevoKobold);
+      const M=materiales(TIPOS[tipo].lisos),compartir=esGoblin&&scenario||nuevoKobold||['saqueador','can','troll'].includes(tipo),clave=tipo+'/'+(esGoblin?varianteGoblin:tipo==='kobold'?varianteKobold:'base');
+      let H,p,mallas;const base=compartir&&plantillasEnemigos.get(clave);
+      if(base)({H,p,mallas}=usarPlantilla(base,M));
+      else{const construido=esGoblin?goblin(tipo==='cobrador',varianteGoblin,scenario):tipo==='adreida'?adreida(nuevaAdreida):tipo==='kobold'?kobold(nuevoKobold,varianteKobold):constructores[tipo]();
+        H=construido.H;p=construido.p;mallas=construido.montar(M,escala,nuevaAdreida||nuevoKobold);if(compartir)guardarPlantilla(clave,H,p,mallas,M);}
+
       if(scenario)goblinScenario.montar(H,M,mallas,varianteGoblin,escala,aspecto.orejas);
       if(nuevaAdreida)adreidaScenario.montar(H,M,mallas);
       const hachaScenario=nuevaAdreida&&hachaAdreidaScenario?hachaAdreidaScenario.montar(H,M,mallas):null;
@@ -937,7 +983,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         recogerPose(m,a);
       }
     }
-    return {crear,crearHachaArrojadiza,crearHachaAdreida,mostrarHacha,posar,TIPOS,VARIANTES_GOBLIN,elegirVarianteGoblin,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte,
+    return {crear,preparar,estadoPreparacion,crearHachaArrojadiza,crearHachaAdreida,mostrarHacha,posar,TIPOS,VARIANTES_GOBLIN,elegirVarianteGoblin,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte,
       VARIANTES_KOBOLD:window.CAOZ_ARPG_KOBOLD?.VARIANTES||{},rostro:rostroAdreida,
       muertesGoblinImportadas:goblinScenario?.muertes||[],desplazamientoMuerteGoblin:(m,...args)=>m.modeloKobold==='scenario'?koboldScenario.desplazamientoMuerte(m,...args):goblinScenario?.desplazamientoMuerte(m,...args)};
   }

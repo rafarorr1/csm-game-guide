@@ -1,10 +1,11 @@
 /* Epílogo del Recaudador. Una casa, dos habitantes y una elección sin recompensas.
-   El interior sólo se construye al entrar; reutiliza los modelos y materiales del juego. */
+   La precarga prepara el mismo interior que se visita; no ejecuta la escena. */
 'use strict';
 (function(){
   function fabrica(THREE,MOD,{plaza,casa,materiales,caminar,consumirLlave,limpiar,volver,interfaz}){
     const V=THREE.Vector3,suave=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
     let fase='cerrada',t=0,total=0,actor=null,interior=null,protagonista=null,habitantes=[],golpeDado=false,botones=[],soltado=false,peticion=false;let decorado=null;
+    const preparaciones=new WeakMap();
     const datos=casa.userData.puerta,marco=new THREE.Group(),hoja=new THREE.Group(),normal=new V(0,0,1).applyQuaternion(casa.quaternion);
     casa.updateMatrixWorld(true);marco.position.copy(casa.localToWorld(new V(datos.x,0,datos.z)));marco.quaternion.copy(casa.quaternion);marco.scale.set(datos.ancho||1,(datos.alto||2)/2,1);plaza.add(marco);
     const aproximacion=marco.position.clone().addScaledVector(normal,2.25),umbral=marco.position.clone().addScaledVector(normal,.45);
@@ -44,6 +45,21 @@
         return {...d,m,vivo:true,muerte:null,caida:0};
       });
     }
+    function precargar(renderer,{ceder=()=>Promise.resolve(),aspecto=1}={}){
+      const clave=renderer||THREE;if(preparaciones.has(clave))return preparaciones.get(clave);
+      const promesa=(async()=>{
+        await ceder();construirInterior();await decorado.texturasListas;
+        // Los actores del interior también pueden solicitar sus mapas por primera vez.
+        await window.CAOZ_ARPG_CARGA?.texturas?.();
+        if(!renderer)return;
+        const mapas=new Set();interior.traverse(n=>{for(const mat of [].concat(n.material||[]))for(const valor of Object.values(mat))if(valor?.isTexture)mapas.add(valor);});
+        for(const mapa of mapas)renderer.initTexture(mapa);
+        await ceder();interior.updateMatrixWorld(true);
+        // La cámara de preparación es pequeña y temporal; la toma jugable no cambia.
+        const vista=camara.clone();vista.aspect=aspecto;vista.fov=aspecto<1?48:36;vista.updateProjectionMatrix();vista.updateMatrixWorld(true);
+        if(renderer.compileAsync)await renderer.compileAsync(interior,vista);else renderer.compile(interior,vista);
+      })();preparaciones.set(clave,promesa);promesa.catch(()=>preparaciones.delete(clave));return promesa;
+    }
     function posarHabitantes(dt){for(const [i,n] of habitantes.entries()){
       if(!n.vivo){n.caida+=dt;MOD.posar(n.m,{anim:'muerte',k:Math.min(1,n.caida/n.muerte.duracion),t:total,dt,muerte:n.muerte});continue;}
       MOD.posar(n.m,{anim:'quieto',t:total,dt});const H=n.m.H,temblor=Math.sin(total*17+i*2)*.017;
@@ -81,7 +97,7 @@
     function cancelar(){fase='cerrada';t=total=0;actor=null;peticion=false;golpeDado=false;halo.visible=false;hoja.rotation.y=0;soltado=false;botones=[];
       decorado?.reiniciar();if(protagonista)protagonista.raiz.position.copy(decorado.entrada);if(protagonista)protagonista.raiz.rotation.y=Math.PI;for(const n of habitantes){n.vivo=true;n.muerte=null;n.caida=0;}interfaz(estado());}
     function estado(){return {fase,interior:enInterior(),golpeDado,vivos:habitantes.filter(n=>n.vivo).length,puerta:aproximacion.toArray(),umbral:umbral.toArray(),normal:normal.toArray(),accion:peticion,decorado:decorado?.estadisticas||null,ambiente:decorado?.estado()||null};}
-    return {habilitar,solicitar,cerca,paso,golpear,salir,mando,cancelar,estado,contiene:ray=>ray.intersectObject(entrada,false).length>0,
+    return {precargar,habilitar,solicitar,cerca,paso,golpear,salir,mando,cancelar,estado,contiene:ray=>ray.intersectObject(entrada,false).length>0,
       get activa(){return fase!=='cerrada';},get bloquea(){return !['cerrada','plaza'].includes(fase);},get interior(){return enInterior();},
       abrirSalida(){hoja.rotation.y=1.5;},get hojaSalida(){return hoja;},get escena(){return interior;},camara(aspecto){camara.aspect=aspecto;camara.fov=aspecto<1?48:36;camara.updateProjectionMatrix();return camara;}};
   }

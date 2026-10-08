@@ -15,6 +15,10 @@ const epilogo=c.CAOZ_ARPG_CASA_GOBLIN.fabrica(T,MOD,{plaza,casa,materiales,
 const h={vivo:true,pos:new T.Vector3(),dir:0,fase:0,m:MOD.crear('adreida')};
 const avanzar=(seg,hz=60)=>{for(let i=0;i<Math.ceil(seg*hz);i++)epilogo.paso(1/hz);};
 const pad=(...pulsados)=>({buttons:Array.from({length:17},(_,i)=>({pressed:pulsados.includes(i),value:pulsados.includes(i)?1:0}))});
+let compilaciones=0;const precarga={initTexture(){},async compileAsync(escena,vista){compilaciones++;assert.equal(escena,epilogo.escena);assert.equal(vista.aspect,16/9);assert.equal(epilogo.estado().fase,'cerrada');}};
+const reserva=epilogo.precargar(precarga,{aspecto:16/9});assert.equal(epilogo.precargar(precarga),reserva,'La preparación concurrente comparte promesa');await reserva;
+const interiorPreparado=epilogo.escena;assert(interiorPreparado);assert(!epilogo.activa);assert(!epilogo.interior);assert.equal(compilaciones,1);assert.equal(consumos+limpiezas+regresos,0,'Preparar no abre la puerta ni consume la llave');
+assert.equal(epilogo.estado().ambiente.tiempo,0,'La precarga no avanza los relámpagos');await epilogo.precargar(precarga);assert.equal(compilaciones,1);
 assert(!epilogo.solicitar(h),'No permite entrar antes de vencer al jefe');
 assert(epilogo.habilitar());assert(!epilogo.habilitar(),'Habilitar es idempotente');
 h.pos.fromArray(epilogo.estado().puerta);assert.equal(epilogo.cerca([h]),h);
@@ -23,6 +27,7 @@ for(const hz of [30,60,120])for(const atacar of [false,true]){
   epilogo.cancelar();assert(!epilogo.activa);llaves=1;const antes=regresos,consumosAntes=consumos;epilogo.habilitar();h.pos.fromArray(epilogo.estado().puerta).add(new T.Vector3(0,0,1));
   assert(epilogo.solicitar(h));const congelado=JSON.stringify(epilogo.estado());epilogo.paso(0);assert.equal(JSON.stringify(epilogo.estado()),congelado);
   avanzar(5,hz);assert.equal(epilogo.estado().fase,'decision');assert.equal(epilogo.estado().vivos,2);assert.equal(consumos,consumosAntes+1);assert.equal(llaves,0);
+  assert.equal(epilogo.escena,interiorPreparado,'Entrar y reentrar reutilizan el interior preparado');
   assert(!epilogo.solicitar(h));assert.equal(epilogo.escena.children.filter(o=>/goblin/.test(o.name)).length,2);
   epilogo.mando(pad(2));assert.equal(epilogo.estado().fase,'decision','Una pulsación arrastrada de fuera no golpea');epilogo.mando(pad());
   if(atacar){

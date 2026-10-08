@@ -373,6 +373,52 @@ def bloques_ajenos(remotas, propias, secciones, seccion):
     return True
 
 
+def unir_cabeceras_arpg(remotas, exportadas):
+    """Aplica la caché/CSP del ARPG sin reescribir la política de otras rutas."""
+    valores = {}
+    bloque = None
+    for linea in exportadas.decode('utf-8').splitlines():
+        texto = linea.strip()
+        if not texto or texto.startswith('#'):
+            continue
+        if linea[0] not in ' \t':
+            if texto != '/*' or bloque is not None:
+                raise ValueError('Las cabeceras exportadas del ARPG deben tener un solo bloque /*.')
+            bloque = texto
+            continue
+        if bloque is None or ':' not in texto or texto.startswith('!'):
+            raise ValueError('Cabecera exportada del ARPG inválida.')
+        nombre, valor = texto.split(':', 1)
+        nombre, valor = nombre.strip().lower(), valor.strip()
+        if not nombre or not valor or nombre in valores:
+            raise ValueError('Cabecera exportada del ARPG vacía o repetida.')
+        valores[nombre] = valor
+    necesarias = ('cache-control', 'content-security-policy')
+    if any(nombre not in valores for nombre in necesarias):
+        raise ValueError('El ARPG debe exportar Cache-Control y Content-Security-Policy.')
+
+    # Conservar incluso comentarios, espacios y CRLF de los demás bloques. Las
+    # reglas nuevas no añaden separadores vacíos: republicar resulta idempotente.
+    conservadas = []
+    omitir = False
+    for linea in remotas.splitlines(keepends=True):
+        texto = linea.strip()
+        if texto and not texto.startswith(b'#') and linea[:1] not in (b' ', b'\t'):
+            omitir = texto == b'/arpg-three' or texto.startswith(b'/arpg-three/')
+            if omitir:
+                continue
+        if omitir and texto and not texto.startswith(b'#') and linea[:1] in (b' ', b'\t'):
+            continue
+        conservadas.append(linea)
+    prefijo = b''.join(conservadas)
+    if prefijo and not prefijo.endswith(b'\n'):
+        prefijo += b'\n'
+    cuerpo = ('  ! Cache-Control\n  ! Content-Security-Policy\n'
+              '  Cache-Control: ' + valores['cache-control'] + '\n'
+              '  Content-Security-Policy: ' + valores['content-security-policy'] + '\n')
+    return prefijo + ''.join(ruta + '\n' + cuerpo for ruta in ('/arpg-three', '/arpg-three/*')).encode('utf-8')
+
+
 def publicar(repo, salida, seccion=None):
     repo, salida = Path(repo).resolve(), Path(salida)
     registro, manifiesto, contenido = validar_paquete(salida, seccion)
@@ -384,7 +430,9 @@ def publicar(repo, salida, seccion=None):
         # Las cabeceras raíz afectan a todas las secciones. Una nueva revisión
         # no puede cambiar la CSP/caché de las hermanas ya publicadas.
         remotas = git(repo, 'show', f'{anterior}:tcg/_headers', binario=True)
-        if set(previo['secciones']) - {seccion} and remotas != contenido['tcg/_headers']:
+        if seccion == 'arpg-three':
+            contenido['tcg/_headers'] = unir_cabeceras_arpg(remotas, contenido['tcg/_headers'])
+        elif set(previo['secciones']) - {seccion} and remotas != contenido['tcg/_headers']:
             # Otra sección pudo publicar reglas sólo para sus rutas (/balance, /balance/*) tras la política
             # general. Si la política general es idéntica, se conservan tal cual; cualquier otro cambio se rechaza.
             if not bloques_ajenos(remotas, contenido['tcg/_headers'], previo['secciones'], seccion):
