@@ -942,6 +942,16 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         case 'acrobacia':{const g=tramo(k,.15,.85)*Math.PI*2,rec=Math.sin(Math.PI*Math.min(1,k)),hc=(m.p.muslo+m.p.pierna)*.9;
           H.cuerpo.rotation.x=g;H.cuerpo.position.set(0,hc-hc*Math.cos(g),-hc*Math.sin(g));H.piernaI.rotation.x=H.piernaD.rotation.x=-1.6*rec;H.rodillaI.rotation.x=H.rodillaD.rotation.x=2*rec;
           H.torso.rotation.x=.6*rec;H.brazoI.rotation.x=H.brazoD.rotation.x=-.8*rec;H.anteI.rotation.x=H.anteD.rotation.x=-1.2*rec;break;}
+        case 'qteTrollCaido':case 'qteTrollGolpe':case 'qteTrollParry':case 'qteTrollRemate':{const paso=a.qtePaso??0,activo=a.anim!=='qteTrollCaido',base=activo?0:.72,incorpora=activo&&paso===0?tramo(k,0,.55)*(1-tramo(k,.62,1)):0,
+            sacudida=activo&&paso===1?tramo(k,.06,.26)*(1-tramo(k,.55,.92)):0,caida=activo&&paso===2?tramo(k,.12,.86):0;
+          H.rodillaI.rotation.x=.92+incorpora*.42;H.rodillaD.rotation.x=.72+incorpora*.28;
+          H.piernaI.rotation.x=-.5-.35*base-.25*caida;H.piernaD.rotation.x=-.28-.25*base+.18*caida;
+          H.brazoI.rotation.x=-.35-1.05*base-.8*incorpora-1.1*sacudida;H.brazoD.rotation.x=-.45-.5*base-1.05*sacudida-1.25*caida;
+          H.brazoI.rotation.z=.42+.35*base;H.brazoD.rotation.z=-.28-.4*base-.75*caida;
+          H.anteI.rotation.x=-.45-.4*base-.8*sacudida;H.anteD.rotation.x=-.55-.45*base-.65*caida;
+          H.torso.rotation.x=-.12-.38*base-.2*incorpora+.95*caida;H.torso.rotation.z=.12*sacudida+.9*caida;
+          H.cabeza.rotation.x=-.12-.22*base-.48*sacudida-.25*caida;H.cabeza.rotation.z=-.25*caida;
+          H.cuerpo.position.y=(-.08-.22*base-.12*incorpora-.48*caida)*esc;H.cuerpo.position.z=-.22*caida;break;}
         case 'aturdido':andar(t*3,.08);H.cabeza.rotation.z=Math.sin(t*5)*.3;H.torso.rotation.z=Math.sin(t*5+1)*.12;H.brazoI.rotation.z=.4;H.brazoD.rotation.z=-.4;H.anteD.rotation.x=-.2;break;
         case 'dolor':H.torso.rotation.x=-.3*(1-k);H.cabeza.rotation.x=-.3*(1-k);H.brazoI.rotation.z=.4*(1-k)+.18;break;
         // Muerte: se le doblan las rodillas y cae de espaldas.
