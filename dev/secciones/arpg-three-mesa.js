@@ -2113,7 +2113,7 @@
     return true;
   }
   // Enlace de revisión: reproduce esta transición sin tener que superar las dos cuadrillas.
-  function prepararVistaEntrada(){if(!ABIERTO&&q.get('entrada')==='mago'){iniciarFinalMago();const plano=q.get('plano');if(plano&&Object.hasOwn(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES,plano)){const avanzar=()=>{presion.rutas=0;finalMago.paso(1/60);pasoParticulas(1/60);pasoEscombros(1/60);impactoFX.paso(1/60);};for(let i=0;i<2400&&finalMago.estado().fase!==plano;i++)avanzar();const momento=Math.max(0,Math.min(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES[plano]-.05,Number(q.get('momento'))||.6));for(let i=0;i<Math.ceil(momento*60);i++)avanzar();}return;}if(!ABIERTO&&q.get('entrada')==='casa'){ol.i=6;ol.cola=[];ol.auto=true;llaveDelRecaudador=true;heroe.llaves++;heroe.pos.fromArray(casaGoblin.estado().puerta).add(new V3(0,0,1));const jefe=crearEnemigo('troll',0,0,{quieto:true});jefe.sinBotin=true;morir(jefe);return;}if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
+  function prepararVistaEntrada(){if(!ABIERTO&&q.get('entrada')==='qte-troll'){ol.i=6;ol.cola=[];ol.auto=false;ol.descanso=null;for(const e of [...enemigos]){cancelarAtaque(e);liberarModeloTroll(e.m);}enemigos.length=0;heroe.pos.set(0,0,3.3);heroe.alto=0;const jefe=crearEnemigo('troll',0,0,{quieto:true});iniciarQteTroll(jefe);return;}if(!ABIERTO&&q.get('entrada')==='mago'){iniciarFinalMago();const plano=q.get('plano');if(plano&&Object.hasOwn(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES,plano)){const avanzar=()=>{presion.rutas=0;finalMago.paso(1/60);pasoParticulas(1/60);pasoEscombros(1/60);impactoFX.paso(1/60);};for(let i=0;i<2400&&finalMago.estado().fase!==plano;i++)avanzar();const momento=Math.max(0,Math.min(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES[plano]-.05,Number(q.get('momento'))||.6));for(let i=0;i<Math.ceil(momento*60);i++)avanzar();}return;}if(!ABIERTO&&q.get('entrada')==='casa'){ol.i=6;ol.cola=[];ol.auto=true;llaveDelRecaudador=true;heroe.llaves++;heroe.pos.fromArray(casaGoblin.estado().puerta).add(new V3(0,0,1));const jefe=crearEnemigo('troll',0,0,{quieto:true});jefe.sinBotin=true;morir(jefe);return;}if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
 
   /* ---- Actualización por cuadro ----------------------------------------------------------- */
   let listo=false,simple=false;const poses={};
@@ -2393,7 +2393,7 @@
     carga?.avance(86,'Preparando a los enemigos y sus texturas…');await carga?.texturas();
     simularPaso(1/60);escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);
     await prepararEnemigosEscena();
-    if(!ABIERTO&&(EDITOR_CINE||q.get('etapa')==='2'||['casa','mago','troll'].includes(q.get('entrada')))){
+    if(!ABIERTO&&(EDITOR_CINE||q.get('etapa')==='2'||['casa','mago','troll','qte-troll'].includes(q.get('entrada')))){
       carga?.avance(90,'Preparando las siguientes escenas…');await prepararCine();
     }
     carga?.avance(94,'Preparando luces y sombras…');await carga?.cuadro();
