@@ -1,16 +1,19 @@
-/* Poderes sin recarga: ejecuta sus estados, costes e invocaciones reales sin GPU. */
+/* Las recargas se suspenden sólo durante el tutorial. Comprueba reglas de arena,
+   entrenamiento, costes e invocaciones ejecutando las funciones reales sin GPU. */
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8');
 const get=(n,t='function')=>extraerDeclaracion(n==='libre'?fuente.slice(fuente.indexOf('const libre=()=>')):fuente,n,t).texto;
-const c=vm.createContext({console,tutorial:null,casaGoblin:null,cinematicaTroll:null,finalMago:null,enTutorial:()=>false,impactoFX:{agujero(){}}});c.window=c;
+const c=vm.createContext({console,tutorial:{objetivo:{id:'mover'},bloquea:false},tutorialActivo:false,casaGoblin:null,cinematicaTroll:null,finalMago:null,impactoFX:{agujero(){}}});c.window=c;c.enTutorial=()=>!!c.tutorialActivo;
 for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const run=s=>vm.runInContext(s,c);
 run(`
 const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,escena=new THREE.Scene(),enemigos=[],botines=[],jugadores=[],reloj={t:0},pausa={activa:false},rog={abierto:false};
 let heroe,ent={},ctl={},mando={},disparosPendientes=[],paron=0,creados=0;
+const aventuraTutorial={tipo:'mover',congelado:false},eventosTutorial=[];
+const mundoTutorial={coordenadas:p=>({s:p.x,z:p.z})};
 const MOD={animacion:CAOZ_ARPG_ADREIDA_ANIMACION.fabrica(THREE),posar(){},crear(){creados++;return {radio:.42,raiz:new THREE.Group(),caja:new THREE.Group(),H:{manoI:new THREE.Group()},M:{u:{uBorde:{value:0},uColorB:{value:new THREE.Color()}}}};}};
 const cuerpoDe=()=>MOD.crear(),aDistancia=()=>heroe.tipo==='mohamed';
 const plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),frente=a=>new V3(Math.sin(a),0,Math.cos(a)),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z),difAng=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
@@ -20,15 +23,17 @@ const respetarMuralla=()=>{},dentroPlaza=()=>{},rechazo=()=>{},marca=()=>{},polv
 const etiqueta=(tipo,pos)=>({pos,el:{textContent:''}}),quitarEtiqueta=()=>{},liberarModeloTroll=m=>m.raiz.removeFromParent(),pasoLibreEnemigo=()=>true;
 const lanzarBumeran=h=>{h.bumeran={};},document={hidden:false};
 ${['VEL','COMBO','HAB','PARRY','HEROES','TORBELLINO','libre','aliados','DESTINO'].map(n=>get(n,'const')).join('\n')}
-${['crearHeroe','conHeroe','cambiar','usar','ajustarSalto','orientarAdreida','pasoHeroe','pasoTorbellino','lanzarUlti','pasoAliados','limpiarAliados','disparar'].map(n=>get(n)).join('\n')}
-function preparar(tipo='adreida'){
+${['crearHeroe','conHeroe','cambiar','recargaHabilidad','usar','ajustarSalto','orientarAdreida','pasoHeroe','pasoTorbellino','lanzarUlti','pasoAliados','limpiarAliados','disparar','parryPerfecto','aturdirPorParry'].map(n=>get(n)).join('\n')}
+function preparar(tipo='adreida',modoTutorial=true){
+ globalThis.tutorialActivo=modoTutorial;
  limpiarAliados();jugadores.length=0;reloj.t=0;paron=0;creados=0;
  heroe=crearHeroe(tipo);Object.assign(heroe,{estado:'quieto',t:0,furia:100});ent=heroe.entrada;ctl=heroe.control;mando=heroe.mando;disparosPendientes=heroe.disparosPendientes;mando.foco=true;
  return heroe;
 }
 function avanzar(s){for(let t=0;t<s-1e-10;){const dt=Math.min(.01,s-t);reloj.t+=dt;pasoHeroe(dt);t+=dt;}}
 `);
-assert.ok(run('Object.values(HAB).every(h=>h.cd===0)&&PARRY.cd===0&&Object.values(HEROES).every(h=>h.cdUlti===0)'),'Todos los poderes tienen recarga cero');
+assert.deepEqual(JSON.parse(run('JSON.stringify(Object.fromEntries(Object.entries(HAB).map(([k,v])=>[k,v.cd])))')),{ulti:90,torbellino:0,salto:5,provocar:10,bumeran:10,esquiva:1.05,parry:.5},'Conserva las recargas originales de la arena');
+assert.equal(run('PARRY.cd'),.5);assert.equal(run('HEROES.adreida.cdUlti'),100);assert.equal(run('HEROES.mohamed.cdUlti'),90);
 assert.equal(run('HAB.salto.coste'),25);assert.equal(run('HAB.torbellino.coste'),30);
 for(const tipo of ['adreida','mohamed'])for(const [habilidad,duracion] of [['parry',.35],['esquiva',.2],['salto',.72],['torbellino',tipo==='adreida'?1.35:.3],...(tipo==='mohamed'?[['provocar',.7]]:[])]){
  run(`preparar('${tipo}');`);
@@ -53,7 +58,31 @@ for(const factor of [.4,1,1.15]){
  run(`preparar();heroe.dash=${factor};usar('esquiva');avanzar(.21);`);
  assert.equal(run('heroe.cd.esquiva'),0,'Los antiguos modificadores de dash no reintroducen recarga');assert.equal(run("usar('esquiva')"),true);
 }
-console.log('✓ Poderes repetibles tras su animación, sin reinicios; Furia, regreso del hacha y parry al aire conservados');
+console.log('✓ Tutorial: poderes repetibles tras su animación, sin reinicios; Furia y regreso del hacha conservados');
+
+for(const tipo of ['adreida','mohamed'])for(const [habilidad,duracion] of [['parry',.35],['esquiva',.2],['salto',.72],...(tipo==='mohamed'?[['provocar',.7]]:[])]){
+ run(`preparar('${tipo}',false);`);
+ assert.equal(run(`recargaHabilidad('${habilidad}')`),run(`HAB.${habilidad}.cd`),`${tipo}/${habilidad}: usa el plazo de arena`);
+ assert.equal(run(`usar('${habilidad}')`),true);run(`avanzar(${duracion}+.01);`);
+ assert.equal(run('heroe.estado'),'quieto');assert(run(`heroe.cd.${habilidad}>0`),'La recarga sigue después de terminar la animación');
+ assert.equal(run(`usar('${habilidad}')`),false,'No permite repetir durante la recarga');
+ run(`avanzar(heroe.cd.${habilidad}+.02);`);assert.equal(run(`usar('${habilidad}')`),true,'Se puede volver a usar al vencer la recarga');
+}
+run("preparar('adreida',false);usar('bumeran');avanzar(.47);heroe.bumeran=null;");
+assert.equal(run("usar('bumeran')"),false,'En arena recuperar el hacha no elimina sus 10 segundos de recarga');
+for(const factor of [.4,1,1.15]){
+ run(`preparar('adreida',false);heroe.dash=${factor};`);
+ assert(Math.abs(run("recargaHabilidad('esquiva')")-1.05*factor)<1e-8,'La reducción del dash modifica la recarga de arena');
+}
+for(const tipo of ['adreida','mohamed']){
+ run(`preparar('${tipo}',false);usar('ulti');`);
+ assert.equal(run('heroe.cd.ulti'),tipo==='adreida'?100:90);assert.equal(run("usar('ulti')"),false,'No puede renovar la ulti durante la recarga de arena');
+ run('Object.assign(heroe.cd,{salto:4,bumeran:8,provocar:8,esquiva:.8,parry:.4});var ultiAntes=heroe.cd.ulti;parryPerfecto(null,new V3());');
+ assert(run("Object.entries(heroe.cd).filter(([k])=>k!=='ulti').every(([,v])=>v===0)"),'Un parry perfecto refresca las habilidades normales');
+ assert.equal(run('heroe.cd.ulti'),run('ultiAntes-1'),'El parry sólo descuenta un segundo de la ulti');
+}
+run("preparar();globalThis.tutorialActivo=false;");assert.equal(run("recargaHabilidad('salto')"),5,'Al salir del tutorial vuelve la regla de arena');
+console.log('✓ Arena: recargas originales, modificador de dash y refresh correcto con parry');
 
 run("var dueno=preparar();usar('ulti');var aliado=aliados[0],posicion=aliado.pos.clone(),modelo=aliado.m;aliado.vida=2;aliado.atacando=true;aliado.t=.25;aliado.cd=.6;heroe.pos.set(8,0,8);");
 for(let i=0;i<100;i++)assert.equal(run("usar('ulti')"),true);
@@ -72,7 +101,7 @@ for(let i=0;i<100;i++)assert.equal(run("usar('ulti')"),true);
 assert.equal(run('heroe.sigilo'),10);assert.equal(run('heroe.ultiT'),10);assert.equal(run('heroe.cd.ulti'),0);
 assert.equal(run('heroe.daga===daga&&heroe.m.H.manoI.children.length===1'),true,'Renovar Velo azul no duplica la daga');
 run('avanzar(10.01);');assert.equal(run('heroe.sigilo'),0);assert.equal(run('heroe.ultiT'),0);
-console.log('✓ Cien recasts de ulti por héroe: Adreidos único con ataque intacto y Velo azul renovado a 10 s');
+console.log('✓ Tutorial: cien recasts mantienen Adreidos único y Velo azul renovado sin duplicar recursos');
 
 run("preparar('mohamed');ctl.atacar=true;avanzar(.01);");assert.equal(run('heroe.balas'),5);run('avanzar(.1);');assert.equal(run('heroe.balas'),5,'Conserva la cadencia de disparo');
 run('avanzar(1.3);');assert.equal(run('heroe.balas'),0);assert.equal(run('heroe.disparos'),6);assert.ok(run('heroe.recargaT>0'),'La munición conserva su recarga');
@@ -81,4 +110,4 @@ run('var semilla=1,ofertas=[];for(let i=0;i<100;i++)ofertas.push(...DESTINO.repa
 assert.ok(run("ofertas.some(c=>c.id==='sombrero')&&ofertas.every(c=>c.stat!=='dash')"),'Las cartas nuevas no ofrecen una reducción de recarga sin efecto');
 assert.ok(run("ofertas.filter(c=>c.id==='sombrero').every(c=>c.stat==='rapidez'&&c.bueno>0)"),'Sombrero mejora velocidad de ataque');
 assert.equal(run("DESTINO.factores([{stat:'dash',valor:-60}]).dash"),.4,'Conserva compatibilidad con efectos de dash existentes');
-console.log('✓ Munición y cadencia de Mohamed intactas; Sombrero útil sin recargas y efectos antiguos compatibles');
+console.log('✓ Munición y cadencia de Mohamed intactas; Sombrero y efectos antiguos compatibles');

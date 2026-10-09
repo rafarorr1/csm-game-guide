@@ -1,7 +1,7 @@
 /* Reloj real, transformaciones de three.js y reglas de ambos héroes, sin GPU. */
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
-const c=vm.createContext({console,tutorial:null,enTutorial:()=>false});c.window=c;
+const c=vm.createContext({console,tutorial:null,enTutorial:()=>false,cinematicaTroll:null,finalMago:null,casaGoblin:null,impactoFX:{agujero(){}}});c.window=c;
 for(const f of ['visor-three-vendor.js','arpg-three-tiempo.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const T=c.CAOZ_ARPG_TIEMPO,THREE=c.CAOZ_THREE.THREE;
 // Cada imagen recibe su tiempo real, incluso si llega antes de 1/60 s.
@@ -16,12 +16,13 @@ for(const valor of [0,-1,NaN,Infinity])r.avanzar(valor,()=>assert.fail('No ejecu
 const irregular=T.crearReloj();let transcurrido=0,n=0;
 while(transcurrido<10-1e-9){const d=Math.min([.008,.022,.011,.025,.017][n++%5],10-transcurrido);transcurrido+=d;irregular.avanzar(d,dt=>assert.equal(dt,d));}assert.equal(irregular.estado().pasos,n);assert.ok(Math.abs(irregular.estado().transcurrido-10)<1e-9);
 console.log('✓ Una actualización por imagen a 30/60/120/144 FPS y con fluctuaciones; pausa y delta acotado');
-const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8'),extraer=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
+const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8'),extraer=(n,t='function')=>extraerDeclaracion(n==='libre'?fuente.slice(fuente.indexOf('const libre=()=>')):fuente,n,t).texto;
 // El dibujo real consume la pose actual completa sin sustituir raíces, huesos ni matrices.
 c.assert=assert;
 vm.runInContext(`{
  const THREE=CAOZ_THREE.THREE,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE);
  const escena=new THREE.Scene(),camara=new THREE.PerspectiveCamera(),etiquetas=[],colocar=()=>{};
+ const aplicarTamano=()=>{},iluminarFaroles=()=>{},editorCine=null,tomaCine=null,finalMago=null,casaGoblin={interior:true};
  let dibujo=()=>{};const dibujar=()=>dibujo();
  ${extraer('dibujarCuadro')}
  const modelos=Object.keys(MOD.TIPOS).map(tipo=>MOD.crear(tipo));
@@ -38,14 +39,14 @@ vm.runInContext(`{
 }`,c);
 console.log('✓ Los ocho personajes se dibujan con sus poses actuales, sin transformaciones temporales');
 vm.runInContext(`
-const V3=CAOZ_THREE.THREE.Vector3,TAU=Math.PI*2,reloj={t:0},enemigos=[],botines=[],jugadores=[],rog={abierto:false},pausa={activa:false},document={hidden:false};
+const V3=CAOZ_THREE.THREE.Vector3,MOD=CAOZ_ARPG_MODELOS.fabrica(CAOZ_THREE.THREE),TAU=Math.PI*2,reloj={t:0},enemigos=[],botines=[],jugadores=[],rog={abierto:false},pausa={activa:false},document={hidden:false};
 let heroe,ent,ctl,mando,disparosPendientes,paron=0,registro=[],tick=0,tickAnterior=-1,tiempoReal=0;
 const aDistancia=()=>heroe.tipo==='mohamed',plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z),frente=a=>new V3(Math.sin(a),0,Math.cos(a)),difAng=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
 const suave=k=>k<=0?0:k>=1?1:k*k*(3-2*k),tramo=(k,a,b)=>suave((k-a)/(b-a));
 const puntoApuntado=()=>ctl.apunta.clone(),amenaza=()=>null,numero=()=>{},aturdirPorParry=()=>{},respetarMuralla=()=>{},dentroPlaza=()=>{},rechazo=()=>{},marca=()=>{},polvo=()=>{},romperPiso=()=>{},chispas=()=>{},temblar=()=>{},particula=()=>{},rnd=()=>.4;
 const golpearEn=(r,a,d,o)=>{registro.push({tick,t:reloj.t,id:heroe.id,d});return 1;};
 ${['VEL','COMBO','HAB','PARRY','HEROES','libre'].map(n=>extraer(n,'const')).join('\n')}
-${['conHeroe','cambiar','usar','iniciarGolpe','iniciarCarga','ajustarSalto','pasoHeroe','disparar','parar','parryPerfecto'].map(n=>extraer(n)).join('\n')}
+${['conHeroe','cambiar','recargaHabilidad','usar','iniciarGolpe','iniciarCarga','ajustarSalto','orientarAdreida','pasoHeroe','disparar','parar','parryPerfecto'].map(n=>extraer(n)).join('\n')}
 function iniciar(coop){jugadores.length=0;registro=[];tick=0;tickAnterior=-1;tiempoReal=0;paron=0;reloj.t=0;
 for(const [id,tipo] of (coop?['adreida','mohamed']:['adreida']).entries()){
  const h={id,tipo,pos:new V3(id*10,0,0),radio:.4,vivo:true,estado:'quieto',t:0,atq:HEROES[tipo].atq,basicos:1,especial:1,furia:100,dir:0,cd:{ulti:90,parry:0,salto:0,esquiva:0},sigilo:0,ultiT:0,brilloParry:0,escudo:0,invul:0,destello:0,dolor:1,vatq:1,finGolpe:-9,combo:0,carga:0,bloqueoBasico:false,fase:0,paso:0,golpeo:false,dirEsq:new V3(),balas:6,recargaT:0,cadT:0,disparoT:0,disparos:0,parrys:0};

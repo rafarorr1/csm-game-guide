@@ -2,7 +2,7 @@
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8'),get=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
-const c=vm.createContext({console,tutorial:null,enTutorial:()=>false});c.window=c;for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+const c=vm.createContext({console,tutorial:null,enTutorial:()=>false,casaGoblin:null,cinematicaTroll:null,finalMago:null});c.window=c;for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const run=s=>vm.runInContext(s,c);
 run(`const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE),TAU=Math.PI*2,FACTOR_COOP=1,R=26,DUR_ESQ=.2;
 const escena=new THREE.Scene(),reloj={t:0},tiempo={value:0},enemigos=[],jugadores=[],lanzas=[],obstaculos=[],presion={primeraLinea:new Set([1]),siguiente:0},pausa={activa:false},rog={abierto:false};
@@ -13,8 +13,8 @@ const numero=()=>{},temblar=()=>{},chispas=()=>{},particula=()=>{},marca=()=>{},
 function parryPerfecto(){paradas++;cambiar(heroe,'quieto');}
 function empezarAtaque(e,forma,a){e.ataque={...a,forma,dir:e.dir,t0:reloj.t};e.alerta={el:{textContent:''}};}
 const geoHalo=new THREE.SphereGeometry(1,8,6),materialesHaloFlecha=[0xffa530,0xfff3c0,0xffd060].map(color=>new THREE.MeshBasicMaterial({color}));
-${['geoLanza','matPuntaLanza','geoPluma','geoEstelaFlecha','matEstelaFlecha','materialesHaloHacha','matEstelaHacha','HAB','PARRY','RITMO'].map(n=>get(n,'const')).join('\n')}
-${['cambiar','conHeroe','herir','prenderFuego','apagarFuego','pasoFuego','usar','parar','bloqueado','pasoLibreEnemigo','intentarHachaGoblin','pasoEnemigo','resolverAtaque','enZona','lanzar','lanzarHacha','alturaHacha','pasoLanzas'].map(n=>get(n)).join('\n')}
+${['geoLanza','matPuntaLanza','geoPluma','geoEstelaFlecha','matEstelaFlecha','materialesHaloHacha','matEstelaHacha','HAB','PARRY','HEROES','RITMO'].map(n=>get(n,'const')).join('\n')}
+${['cambiar','conHeroe','herir','prenderFuego','apagarFuego','pasoFuego','recargaHabilidad','usar','parar','bloqueado','pasoLibreEnemigo','intentarHachaGoblin','pasoEnemigo','resolverAtaque','enZona','lanzar','lanzarHacha','alturaHacha','pasoLanzas'].map(n=>get(n)).join('\n')}
 function preparar(variante='clasico'){
  reloj.t=0;presion.siguiente=0;presion.primeraLinea=new Set([1]);enemigos.length=jugadores.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;obstaculos.length=0;paradas=dañoDevuelto=muestras=0;azar=.1;
  heroe={id:0,tipo:'adreida',pos:new V3(0,0,5),dir:Math.PI,radio:.42,alma:120,vivo:true,escudo:0,invul:0,furia:0,estado:'quieto',t:0,cd:{esquiva:0},dirEsq:new V3(),entrada:{},control:{mov:new V3()},mando:{},disparosPendientes:[]};jugadores.push(heroe);ent=heroe.entrada;ctl=heroe.control;mando=heroe.mando;

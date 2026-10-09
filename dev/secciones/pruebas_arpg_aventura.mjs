@@ -12,8 +12,8 @@ const libre=()=>heroe.vivo&&heroe.estado==='quieto',etiqueta=()=>({el:{},pos:new
 const clima={desbloquearAudio(){}},document={hidden:false},avisos=[],usar=(accion,p)=>{avisos.push({id:heroe.id,accion,p});return true;},aDistancia=()=>heroe.tipo==='mohamed';
 const $=()=>({textContent:''});let pads=[];const navigator={getGamepads:()=>pads};
 const danar=(e,d)=>e.vida-=d;
-${['R','PANELES','presion','HEROES','DESTINO','BOTONES_MANDO','exploracion'].map(n=>get(n,'const')).join('\n')}
-${['pasoLibreEnemigo','buscarRutaEnemigo','destinoEnemigo','conHeroe','cambiar','dentroPlaza','respetarMuralla','lanzarUlti','apunalar','pasoAliados','limpiarAliados','liberarModeloTroll','parryPerfecto','aplicarDestino','descubrirMapa','objetivoEnemigo','ejeMando','leerMando','estadoMando'].map(n=>get(n)).join('\n')}
+${['R','PANELES','presion','HAB','PARRY','HEROES','DESTINO','BOTONES_MANDO','exploracion'].map(n=>get(n,'const')).join('\n')}
+${['pasoLibreEnemigo','buscarRutaEnemigo','destinoEnemigo','conHeroe','cambiar','dentroPlaza','respetarMuralla','recargaHabilidad','lanzarUlti','apunalar','pasoAliados','limpiarAliados','liberarModeloTroll','parryPerfecto','aplicarDestino','descubrirMapa','objetivoEnemigo','ejeMando','leerMando','estadoMando'].map(n=>get(n)).join('\n')}
 function crear(tipo,id){const m=MOD.crear(tipo);escena.add(m.raiz);const h={id,tipo,m,radio:m.radio,pos:new V3(id*2,0,0),dir:0,vivo:true,estado:'quieto',alma:HEROES[tipo].alma/2,almaMax:HEROES[tipo].alma,atq:HEROES[tipo].atq,basicos:1,sigilo:0,cd:{ulti:0,salto:4,parry:.4},furia:0,parrys:0,entrada:{},control:{mov:new V3()},mando:{indice:null,botones:[],dir:new V3(0,0,-1),activo:false,listo:false,foco:true},disparosPendientes:[]};jugadores.push(h);return h;}
 heroe=crear('adreida',0);crear('mohamed',1);ent=heroe.entrada;ctl=heroe.control;mando=heroe.mando;disparosPendientes=heroe.disparosPendientes;
 `);
@@ -22,13 +22,14 @@ assert.deepEqual(Array.from(run('jugadores.map(h=>h.basicos)')),[1.5,1.5]);asser
 run("rog.efectos=DESTINO.resolver(rog.efectos,{},1).efectos;aplicarDestino()");assert.deepEqual(Array.from(run('jugadores.map(h=>h.basicos)')),[1,1]);assert.deepEqual(Array.from(run('jugadores.map(h=>h.almaMax)')),[108,90]);
 assert.throws(()=>run("conHeroe(jugadores[1],()=>{throw Error('prueba')})"));assert.equal(run('heroe.id'),0,'Restaurar contexto incluso con excepción');
 console.log('✓ Una tirada aplica buffs y debuffs a ambos; crítico retira positivos y conserva penalizaciones');
-run('lanzarUlti();conHeroe(jugadores[1],lanzarUlti)');assert.equal(run('aliados.length'),1);assert.equal(run('jugadores[1].sigilo'),10);assert.equal(run('heroe.cd.ulti'),0);assert.equal(run('heroe.ultiT'),15);assert.equal(run('aliados[0].vida'),15);
-run('parryPerfecto(null,new V3())');assert.equal(run('heroe.cd.ulti'),0);assert.equal(run('heroe.cd.salto'),0);assert.equal(run('jugadores[1].cd.ulti'),0);
-assert.equal(run('lanzarUlti()'),true,'La ulti puede renovarse sin recarga');assert.equal(run('aliados.length'),1,'Renovar conserva un único Adreidos');run('pasoAliados(14.9)');assert.equal(run('aliados.length'),1);run('pasoAliados(.11)');assert.equal(run('aliados.length'),0);
+run('lanzarUlti();conHeroe(jugadores[1],lanzarUlti)');assert.equal(run('aliados.length'),1);assert.equal(run('jugadores[1].sigilo'),10);assert.equal(run('heroe.cd.ulti'),100);assert.equal(run('jugadores[1].cd.ulti'),90);assert.equal(run('heroe.ultiT'),15);assert.equal(run('aliados[0].vida'),15);
+run('parryPerfecto(null,new V3())');assert.equal(run('heroe.cd.ulti'),99);assert.equal(run('heroe.cd.salto'),0);assert.equal(run('jugadores[1].cd.ulti'),90,'El parry sólo reduce la ulti de quien lo hace');
+run('conHeroe(jugadores[1],()=>parryPerfecto(null,new V3()))');assert.equal(run('jugadores[1].cd.ulti'),89);
+assert.equal(run('lanzarUlti()'),false,'En arena la ulti no se renueva mientras tiene recarga');assert.equal(run('aliados.length'),1,'Un intento no duplica Adreidos');run('pasoAliados(14.9)');assert.equal(run('aliados.length'),1);run('pasoAliados(.11)');assert.equal(run('aliados.length'),0);
 run("const blanco={pos:new V3(2,0,1),dir:0,radio:.4,estado:'quieto',vida:500,m:{alto:2}};enemigos.push(blanco);jugadores[1].cadT=0;conHeroe(jugadores[1],apunalar)");assert.equal(run('blanco.vida'),455);
 run('blanco.dir=Math.PI;jugadores[1].cadT=0;conHeroe(jugadores[1],apunalar)');assert.equal(run('blanco.vida'),446);
 run("jugadores[0].pos.set(40,0,0);jugadores[1].sigilo=10");assert.equal(run('objetivoEnemigo(blanco).id'),0);run('jugadores[1].sigilo=0;reloj.t+=1.21');assert.equal(run('objetivoEnemigo(blanco).id'),1);
-console.log('✓ Ultis sin recarga, renovación de Adreidos 15 s, daga ×5 detrás/×1 delante, invisibilidad frente a IA');
+console.log('✓ Recargas de ulti 100/90 s, Adreidos 15 s, daga ×5 detrás/×1 delante e invisibilidad frente a IA');
 run("pads=[0,1].map(index=>({index,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))}));for(const h of jugadores)conHeroe(h,leerMando);pads[0].axes[0]=1;pads[1].axes[0]=-1;pads[1].buttons[10].pressed=true");
 assert.equal(run('conHeroe(jugadores[0],leerMando).mov.x'),1);assert.equal(run('conHeroe(jugadores[1],leerMando).mov.x'),-1);assert.equal(run('avisos[0].id'),1);assert.equal(run('avisos[0].accion'),'ulti');
 run('pads.splice(1,1)');assert.equal(run('conHeroe(jugadores[1],leerMando)'),null);assert.equal(run('jugadores[1].mando.activo'),false);
@@ -49,7 +50,7 @@ console.log('✓ Los segmentos de salto y dash respetan la muralla, conservando 
 run("DOS_MANDOS=true;const mandoSegundo={index:1,connected:true,mapping:'standard',axes:[1,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};pads=[mandoSegundo];jugadores[0].mando.indice=0;jugadores[1].mando.indice=1;jugadores[1].mando.listo=true");
 assert.equal(run('conHeroe(jugadores[0],leerMando)'),null);assert.equal(run('conHeroe(jugadores[1],leerMando).mov.x'),1);
 console.log('✓ Al desconectar J1, el mando de J2 conserva a Mohamed');
-run(`${get('PARRY','const')}
+run(`
 ${['enZona','parar','resolverAtaque'].map(n=>get(n)).join('\n')}
 const cancelarAtaque=e=>e.ataque=null,herir=d=>heroe.alma-=d,bloqueado=d=>heroe.alma-=Math.round(d*.3),esquivado=()=>{};
 function atacante(){return {pos:new V3(),radio:.4,tipo:'saqueador',ataques:0,ataque:{forma:'cono',radio:2.5,ang:1,dir:0,dano:14,t0:reloj.t-1,dur:1}};}
@@ -57,7 +58,7 @@ for(const h of jugadores){h.pos.set(h.id? .25:-.25,0,1);h.alma=100;h.invul=0;h.e
 resolverAtaque(atacante());`);
 assert.deepEqual(Array.from(run('jugadores.map(h=>h.alma)')),[86,86]);
 run("jugadores[1].estado='parry';jugadores[1].t=.05;jugadores[1].dir=Math.PI;resolverAtaque(atacante())");assert.deepEqual(Array.from(run('jugadores.map(h=>h.alma)')),[86,86]);
-assert.equal(run('jugadores[1].parrys'),1);assert.equal(run('heroe.id'),0);
+assert.equal(run('jugadores[1].parrys'),2);assert.equal(run('heroe.id'),0);
 console.log('✓ Un área golpea a ambos; el parry de Mohamed detiene el golpe y protege al equipo');
 
 // Adreidos usa su movimiento y sus ataques reales, con el pozo y abrevadero de la plaza.

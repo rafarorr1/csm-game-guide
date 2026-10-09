@@ -5,7 +5,9 @@
   function crear(THREE,{escena,farol}={}){
     const C=Math.cos(Math.PI/6),S=.5,LARGO=85,BORDE=4,HOJA=3.05;
     const HUECO=Object.freeze({desde:52,hasta:55.5,semiancho:6.3,profundidad:8});
-    const LIMITES=Object.freeze({basico:19,cargado:29,dash:39,parry:49,salto:61,torbellino:70,boomerang:76,ulti:83});
+    // El dash recorre 2.72 m en .2 s; 2.3 m de brasas y dos márgenes de .12 m caben en uno.
+    const FUEGO=Object.freeze({desde:34.2,hasta:36.5,semiancho:4.5,margen:.12});
+    const LIMITES=Object.freeze({basico:19,cargado:29,dash:39,parry:46,'parry-flecha':49,salto:61,torbellino:70,boomerang:76,ulti:83});
     const origen=new THREE.Vector3(-C*26-C*LARGO,0,13+S*LARGO);
     const grupo=new THREE.Group(),grupoPaisaje=new THREE.Group(),porton=new THREE.Group();
     grupo.name='Tutorial · camino del bosque a Tomsage';
@@ -13,7 +15,7 @@
     grupo.position.copy(origen);grupo.rotation.y=Math.PI/6;
     grupo.add(grupoPaisaje,porton);escena?.add(grupo);
     let semilla=147731,cierre=0,eliminado=false,activo=true,encuentroActual=null,ultimoTiempo=null;
-    let aperturaHoyo=0,objetivoHoyo=0,cargaScenario=null;
+    let aperturaHoyo=0,objetivoHoyo=0,intensidadFuego=0,cargaScenario=null;
     const barreras=[],escondites=[],sueloPartido=[];
     const azar=()=>{semilla=semilla*16807%2147483647;return (semilla-1)/2147483646;};
     const entre=(a,b)=>a+(b-a)*azar(),lim=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -331,6 +333,71 @@
       lote(zarzas,'Búmeran · extremos del tronco',G.roca,M.roca,piedras);
     }
 
+    // El incendio cruza todo el sendero: su borde visible coincide con el obstáculo.
+    // Dos dibujos compartidos, sin luces, texturas externas ni partículas creadas por cuadro.
+    const incendio=new THREE.Group();incendio.name='Dash · sendero incendiado';incendio.visible=false;
+    incendio.position.x=(FUEGO.desde+FUEGO.hasta)/2;grupoPaisaje.add(incendio);
+    const uniformesFuego={uTiempo:{value:0},uIntensidad:{value:0}};
+    {
+      const brasas=new THREE.ShaderMaterial({uniforms:uniformesFuego,transparent:true,depthWrite:false,toneMapped:false,
+        vertexShader:`varying vec2 vUv;
+          void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+        fragmentShader:`uniform float uTiempo;uniform float uIntensidad;varying vec2 vUv;
+          void main(){
+            vec2 p=vUv*vec2(10.0,38.0);
+            float veta=sin(p.x*2.7+sin(p.y*1.8)*1.5)*sin(p.y*2.1+sin(p.x)*1.6);
+            float ascuas=smoothstep(.51,.91,veta)*(.68+.15*sin(uTiempo*3.7+p.y));
+            float irregular=sin(p.y*.87)*.027+sin(p.y*2.3)*.015;
+            float borde=smoothstep(0.0,.18,min(vUv.x,1.0-vUv.x)-irregular)
+              *smoothstep(0.0,.055,min(vUv.y,1.0-vUv.y));
+            float ceniza=.55+.45*sin(p.x*.8+sin(p.y*.6));
+            vec3 color=mix(vec3(.15,.10,.065),vec3(.9,.235,.016),ascuas);
+            gl_FragColor=vec4(color,borde*uIntensidad*(.17*ceniza+ascuas*.47));
+          }`});materiales.add(brasas);
+      const suelo=new THREE.Mesh(geo(new THREE.PlaneGeometry(FUEGO.hasta-FUEGO.desde,FUEGO.semiancho*2)),brasas);
+      suelo.name='Dash · tierra carbonizada y brasas';suelo.rotation.x=-Math.PI/2;suelo.position.y=.065;incendio.add(suelo);
+      const posiciones=[],uv=[],semillas=[],tamanos=[],indices=[];
+      let semillaLlama=46217;
+      const rnd=()=>{semillaLlama=semillaLlama*16807%2147483647;return (semillaLlama-1)/2147483646;};
+      function lengua(x,z,ancho,alto,fase){
+        const n=posiciones.length/3;
+        // Las cuatro esquinas nacen en el suelo; el shader las orienta hacia la cámara.
+        // Así nunca aparece la intersección en cruz de dos planos vistos desde arriba.
+        for(let j=0;j<4;j++){posiciones.push(x,.07,z);semillas.push(fase);tamanos.push(ancho,alto);}
+        uv.push(0,0,1,0,1,1,0,1);indices.push(n,n+1,n+2,n,n+2,n+3);
+      }
+      for(let i=0;i<114;i++){
+        const x=(rnd()-.5)*1.92,z=(rnd()-.5)*8.65;
+        const ancho=.62+rnd()*.55,alto=.46+Math.pow(rnd(),.7)*1.12,fase=rnd()*32;
+        lengua(x,z,ancho,alto,fase);
+      }
+      const g=geo(new THREE.BufferGeometry());g.setAttribute('position',new THREE.Float32BufferAttribute(posiciones,3));
+      g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('semilla',new THREE.Float32BufferAttribute(semillas,1));
+      g.setAttribute('tamano',new THREE.Float32BufferAttribute(tamanos,2));g.setIndex(indices);
+      g.computeBoundingBox();g.boundingBox.expandByScalar(1.8);g.computeBoundingSphere();g.boundingSphere.radius+=1.8;
+      const llama=new THREE.ShaderMaterial({uniforms:uniformesFuego,side:THREE.DoubleSide,transparent:true,depthWrite:false,toneMapped:false,
+        vertexShader:`uniform float uTiempo;attribute float semilla;attribute vec2 tamano;varying vec2 vUv;varying float vSemilla;
+          void main(){
+            vUv=uv;vSemilla=semilla;vec4 p=modelViewMatrix*vec4(position,1.0);float punta=uv.y*uv.y;
+            p.x+=(uv.x-.5)*tamano.x+(sin(uTiempo*3.7+semilla)*.11+.08)*punta;
+            p.y+=uv.y*tamano.y*(.9+.1*sin(uTiempo*4.1+semilla));
+            gl_Position=projectionMatrix*p;
+          }`,
+        fragmentShader:`uniform float uTiempo;uniform float uIntensidad;varying vec2 vUv;varying float vSemilla;
+          void main(){
+            float y=vUv.y,centro=.5+sin(y*7.0-uTiempo*4.8+vSemilla)*y*.11;
+            float x=(vUv.x-centro)*2.0,ancho=.22*pow(max(0.0,1.0-y),1.25)+.006;
+            float silueta=exp(-x*x/ancho);
+            float ondula=.72+.28*sin(y*15.0-uTiempo*7.0+vSemilla+sin(x*5.0+y*3.0));
+            float alfa=silueta*ondula*smoothstep(0.0,.07,y)*(1.0-smoothstep(.57,1.0,y))*uIntensidad*.59;
+            if(alfa<.006)discard;
+            float nucleo=pow(1.0-y,2.5)*silueta;
+            vec3 color=mix(vec3(1.0,.205,.012),vec3(1.0,.81,.24),nucleo);
+            gl_FragColor=vec4(color,alfa);
+          }`});llama.forceSinglePass=true;materiales.add(llama);
+      const llamas=new THREE.Mesh(g,llama);llamas.name='Dash · llamas del sendero';incendio.add(llamas);
+    }
+
     // Dos hojas independientes: abiertas se pliegan hacia la ciudad; cerradas forman una reja sólida.
     {const pilares=[],herrajes=[],lamparas=[];
       for(const lado of [-1,1]){
@@ -373,9 +440,13 @@
     function estado(){
       return {encuentro:encuentroActual,limiteS:LIMITES[encuentroActual]??null,
         hoyo:{...HUECO,apertura:aperturaHoyo,abierto:objetivoHoyo===1},
+        fuego:{...FUEGO,activo:encuentroActual==='dash',intensidad:intensidadFuego},
         obstaculoBumeran:zarzas.visible,escenario:{...cargaMateriales,errores:[...cargaMateriales.errores]}};
     }
     function animarEncuentro(dt,forzar=false){
+      const fuegoActivo=encuentroActual==='dash',objetivoFuego=fuegoActivo?1:0;
+      intensidadFuego+=Math.sign(objetivoFuego-intensidadFuego)*Math.min(Math.abs(objetivoFuego-intensidadFuego),dt/(fuegoActivo?.2:.38));
+      uniformesFuego.uIntensidad.value=intensidadFuego;incendio.visible=fuegoActivo||intensidadFuego>0;
       const anterior=aperturaHoyo;
       aperturaHoyo+=Math.sign(objetivoHoyo-aperturaHoyo)*Math.min(Math.abs(objetivoHoyo-aperturaHoyo),dt/(objetivoHoyo?.6:.65));
       if(anterior!==aperturaHoyo||forzar){
@@ -399,12 +470,21 @@
         }
       }
     }
-    function limitar(p,r=.45,{saltando=false,desde,obstaculos=true}={}){
+    // Solo el estado real de esquiva autoriza atravesar el incendio, incluso en su último paso.
+    // «desde» permite barrer el recorrido completo y evita saltar el obstáculo entre cuadros.
+    function limitar(p,r=.45,{saltando=false,esquivando=false,desde,obstaculos=true}={}){
       if(eliminado||!activo)return p;
       const c=coordenadas(p),radio=lim(Number.isFinite(r)?r:.45,0,2.99),previa=desde?coordenadas(desde):null;
       c.z=lim(c.z,-bordeCamino(c.s)+radio,bordeCamino(c.s)-radio);c.s=Math.max(radio,c.s);
       // La barricada que se ve al fondo delimita el encuentro, también durante un salto.
       const limite=LIMITES[encuentroActual];if(obstaculos&&Number.isFinite(limite))c.s=Math.min(c.s,limite-radio-.22);
+      if(obstaculos&&encuentroActual==='dash'&&!esquivando){
+        const antes=FUEGO.desde-FUEGO.margen,despues=FUEGO.hasta+FUEGO.margen;
+        if(previa?.s<=antes&&c.s>antes)c.s=antes;
+        else if(previa?.s>=despues&&c.s<despues)c.s=despues;
+        else if(previa?.s>antes&&previa.s<despues&&c.s>antes)c.s=antes;
+        else if(c.s>antes&&c.s<despues)c.s=antes;
+      }
       if(obstaculos&&zarzas.visible&&c.s>73.55-radio-.34&&c.s<73.55+radio+.34)c.s=previa?.s>73.55?73.55+radio+.34:73.55-radio-.34;
       if(obstaculos&&!saltando&&objetivoHoyo&&c.s>HUECO.desde-radio&&c.s<HUECO.hasta+radio){
         const lado=previa?previa.s>HUECO.hasta: c.s>(HUECO.desde+HUECO.hasta)/2;
@@ -425,6 +505,7 @@
       if(typeof abierta==='boolean')puerta(abierta?0:1);
       const avance=Number.isFinite(s)?s:0,ahora=Number.isFinite(tiempo)?tiempo:0;
       const dt=ultimoTiempo===null?0:Math.max(0,Math.min(.1,ahora-ultimoTiempo));ultimoTiempo=ahora;
+      uniformesFuego.uTiempo.value=ahora;
       animarEncuentro(dt);
       // Además del frustum de cada lote, se retiran tramos ya lejanos por detrás.
       for(const t of tramos)t.grupo.visible=t.fin>avance-44&&t.inicio<avance+72;

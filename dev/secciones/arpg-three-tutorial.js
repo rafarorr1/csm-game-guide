@@ -3,18 +3,19 @@
 (function(){
   // Controles de ACCION, BOTONES_MANDO y leerMando en arpg-three-mesa.js.
   const LECCIONES=Object.freeze([
-    {id:'mover',s:7,evento:'mover',titulo:'Sigue el sendero',texto:'Avanza por el bosque hacia Tomsage.',teclado:'W A S D / Flechas',mando:'Stick izquierdo',ayuda:'Sólo en este bosque tu vida está protegida y la Furia se regenera. Practica a tu ritmo.'},
+    {id:'mover',s:7,evento:'mover',titulo:'Sigue el sendero',texto:'Avanza por el bosque hacia Tomsage.',teclado:'W A S D / Flechas',mando:'Stick izquierdo',ayuda:'Sólo en este bosque tu vida está protegida, la Furia se regenera y no hay cooldowns. Practica a tu ritmo.'},
     {id:'basico',s:14,evento:'impacto-basico',titulo:'Un intruso en el sendero',texto:'Un goblin sale de la maleza. Derríbalo con el básico.',teclado:'Clic izquierdo · pulsar y soltar',mando:'R2 / □ · pulsar y soltar',ayuda:'Pulsa varias veces para encadenar tres golpes. Cada impacto genera Furia.'},
     {id:'cargado',s:24,evento:'impacto-cargado',titulo:'Rompe su guardia',texto:'El goblin de dos hachas bloquea el camino. Carga por completo y acierta.',teclado:'Mantén clic izquierdo y suelta',mando:'Mantén R2 / □ y suelta',ayuda:'Espera a completar la carga antes de soltar.'},
-    {id:'dash',s:34,evento:'dash',titulo:'Un paso por delante',texto:'¡Te persiguen! Haz un dash hacia delante para dejar atrás a los goblins.',teclado:'Shift',mando:'×',ayuda:'Corre hacia la derecha y usa el dash para abrir distancia. Debes alejarte de tus perseguidores.'},
+    {id:'dash',s:34,evento:'dash',titulo:'Cruza las llamas',texto:'El suelo está incendiado. Cruza el fuego con un dash.',teclado:'Shift',mando:'×',ayuda:'Acércate al borde y haz un dash hacia la derecha. Su invulnerabilidad te permite atravesar las llamas; caminar o saltar no basta.'},
     {id:'parry',s:44,evento:'parry',titulo:'El instante preciso',texto:'Devuelve un ataque con un parry perfecto.',teclado:'Espacio',mando:'L1 / L2',ayuda:'Pulsa al ver la señal dorada, justo antes del impacto. Un parry perfecto aturde al enemigo y te da Furia.'},
+    {id:'parry-flecha',s:47,evento:'parry-flecha',titulo:'Devuelve la flecha',texto:'Un kobold dispara desde el camino. Devuélvele su flecha con un parry.',teclado:'Espacio',mando:'L1 / L2',ayuda:'Espera a que la flecha se ilumine en dorado. El tiempo se detendrá para que practiques el parry a distancia.'},
     {id:'salto',s:49.5,evento:'impacto-salto',titulo:'Caída demoledora',texto:'El camino se hunde. Salta la brecha y cae junto al goblin · 25 Furia.',teclado:'Clic derecho',mando:'○',ayuda:'Acércate al borde. Con ratón, apunta al otro lado y haz clic derecho. Con mando, ○ salta 5 m hacia el stick.'},
     {id:'torbellino',s:64,evento:'impacto-torbellino',titulo:'¡Una emboscada!',texto:'Salen de los escondites. Alcanza a tres goblins con el torbellino · 30 Furia.',teclado:'Q',mando:'R1',ayuda:'Acércate y gira con el hacha. Puedes hacer un dash sin interrumpir el giro.'},
     {id:'boomerang',s:72,evento:'impacto-boomerang',titulo:'Un hacha que vuelve',texto:'El goblin se protege tras el tronco. Alcanza su escondite con el hacha búmeran.',teclado:'E',mando:'△',ayuda:'Alcanza 4 m. Gira mientras regresa para curvar su trayectoria.'},
-    {id:'ulti',s:78,evento:'impacto-aliado',titulo:'Nunca luchas sola',texto:'Llegan refuerzos. Invoca a Adreidos y deja que alcance a un enemigo.',teclado:'R',mando:'L3 · pulsar stick izquierdo',ayuda:'Lucha a tu lado durante 15 s. Sin cooldown: vuelve a pulsar para renovar su duración.'},
+    {id:'ulti',s:78,evento:'impacto-aliado',titulo:'Nunca luchas sola',texto:'Llegan refuerzos. Invoca a Adreidos y deja que alcance a un enemigo.',teclado:'R',mando:'L3 · pulsar stick izquierdo',ayuda:'Lucha a tu lado durante 15 s. Sin cooldown sólo aquí; en la arena se recarga en 100 s y cada parry resta 1 s.'},
     {id:'puerta',s:85,evento:null,titulo:'Tomsage te espera',texto:'Cruza la puerta de la muralla.',teclado:'W A S D / Flechas',mando:'Stick izquierdo',ayuda:'Ya conoces tus armas. Es hora de entrar.'}
   ].map((leccion,indice)=>Object.freeze({...leccion,indice})));
-  const TOTAL=9;
+  const TOTAL=LECCIONES.length-1;
 
   function crear({alLeccion=()=>{},alSalir=()=>{},alEntrar=()=>{},alSaltar=()=>{},alParry=()=>{}}={}){
     let activo=false,pausado=false,fase='inactivo',indice=0,disponible=false;
@@ -117,7 +118,7 @@
       // Los eventos del combate ya acreditan impactos válidos. Si incluyen el grado,
       // nunca confundir una carga parcial o un bloqueo con el reto completo.
       if(l.id==='cargado'&&(datos?.cargaCompleta===false||Number.isFinite(datos?.carga)&&datos.carga<1))return false;
-      if(l.id==='parry'&&datos?.perfecto===false)return false;
+      if(['parry','parry-flecha'].includes(l.id)&&datos?.perfecto===false)return false;
       completar(nombre);return true;
     }
     function paso(dt,{avance:s,vivo:v,mando:m}={}){

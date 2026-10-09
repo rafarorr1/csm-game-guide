@@ -40,9 +40,9 @@ async function cargar(){
  await comprobarMateriales();
 }
 async function soltar(){await r('control',{});}
-async function caminar(destino,distancia=.3){
+async function caminar(destino,distancia=.3,hastaLeccion=false){
  for(let i=0;i<150;i++){
-  const tutorial=await t();if(tutorial.fase==='entrada'||congelado(tutorial)){await soltar();return;}
+  const tutorial=await t();if(tutorial.fase==='entrada'||congelado(tutorial)||hastaLeccion&&tutorial.leccion.disponible){await soltar();return;}
   const h=(await r('estado')).heroe,dx=destino.x-h.x,dz=destino.z-h.z,d=Math.hypot(dx,dz);
   if(d<=distancia){await soltar();return;}
   await r('control',{mov:[dx/d,dz/d],apunta:[destino.x,destino.z]});await avanzar(Math.min(.22,Math.max(.035,(d-distancia)/5.3)));
@@ -53,7 +53,7 @@ async function preparar(){
  for(let i=0;i<12;i++){
   const tutorial=await t();assert(tutorial.activo,'El recorrido permanece activo');
   if(tutorial.leccion.disponible)return tutorial;
-  await caminar(punto(tutorial.leccion.s+.5));await avanzar(.02);
+  await caminar(punto(tutorial.leccion.s+.5),.3,true);await avanzar(.02);
  }
  assert.fail('No aparece el siguiente encuentro: '+JSON.stringify(await t()));
 }
@@ -80,16 +80,26 @@ async function completar(){
  if(id==='puerta')return;
  let blanco=inicio.blancos.find(e=>e.estado!=='muere');
  if(id==='basico'||id==='cargado'){
+  if(id==='basico'){
+   await avanzar(.16);const andando=(await t()).blancos.find(e=>e.id===blanco.id);
+   assert(Math.hypot(andando.x-blanco.x,andando.z-blanco.z)>.05,'El goblin avanza desde su escondite');
+   assert(andando.paso>0&&andando.fase>blanco.fase&&andando.anim==='andar','Al avanzar usa la pose y el ciclo de marcha, no se desliza inmóvil');
+  }
   await acercarse(blanco.id);await soltar();await avanzar(.15);
   blanco=(await t()).blancos.find(e=>e.estado!=='muere');await atacar(blanco,id==='cargado'?1.1:.06);
  }else if(id==='dash'){
-  assert(inicio.blancos.filter(e=>e.estado!=='muere').length>=2,'El dash tiene perseguidores, no un blanco solitario');
-  const posiciones=new Map(inicio.blancos.map(e=>[e.id,{x:e.x,z:e.z}]));await avanzar(.65);
-  assert((await t()).blancos.some(e=>{const p=posiciones.get(e.id);return p&&Math.hypot(e.x-p.x,e.z-p.z)>.2;}),'Los perseguidores avanzan hacia Adreida');
-  await r('control',{mov:[C,-S]});assert(await r('usar','esquiva',C,-S),'Puede escapar con el dash');await avanzar(.45);await soltar();
- }else if(id==='parry'){
-  const detenido=await esperarParry();assert(detenido.blancos.some(e=>e.ataque),'Se conserva el ataque visible en la ventana correcta');
-  await capturar('02-parry-detenido');
+  const fuego=inicio.mundo?.fuego;assert(fuego&&fuego.hasta>fuego.desde,'La prueba tiene una franja de fuego visible');
+  await r('control',{mov:[C,-S]});await avanzar(.65);
+  assert(coord((await r('estado')).heroe).s<fuego.desde,'Caminar se detiene antes del fuego');
+  await capturar('08-fuego-dash');
+  await pagina.keyboard.press('Shift');await avanzar(.45);await soltar();
+  assert(coord((await r('estado')).heroe).s>fuego.hasta,'Shift atraviesa toda la franja con el dash');
+ }else if(id==='parry'||id==='parry-flecha'){
+  const detenido=await esperarParry(),esFlecha=id==='parry-flecha';
+  const proyectil=esFlecha?detenido.flechas.find(l=>!l.devuelta&&!l.clavada):null;
+  if(esFlecha){assert(proyectil,'Se conserva la flecha en vuelo');assert(proyectil.ahora&&proyectil.llega>0&&proyectil.llega<=.2625,'La flecha se detiene dorada dentro de la ventana perfecta');}
+  else assert(detenido.blancos.some(e=>e.ataque),'Se conserva el ataque visible en la ventana correcta');
+  await capturar(esFlecha?'07-parry-flecha-detenida':'02-parry-detenido');
   await pagina.keyboard.press('Escape');assert((await r('estado')).pausa,'Escape sigue disponible durante el instante detenido');
   await avanzar(.5);await pagina.keyboard.press('Escape');assert(!(await r('estado')).pausa);assert(congelado(await t()),'Cerrar la pausa conserva la lección detenida');
   const antes=(await r('estado')).heroe,enemigos=detenido.blancos.map(e=>({id:e.id,x:e.x,z:e.z,ataque:e.ataque,estado:e.estado}));
@@ -98,6 +108,7 @@ async function completar(){
   await avanzar(2,20);const despues=(await r('estado')).heroe;
   assert.deepEqual([despues.x,despues.z,despues.alma],[antes.x,antes.z,antes.alma],'Mientras espera no mueve ni hiere a Adreida');
   assert.deepEqual((await t()).blancos.map(e=>({id:e.id,x:e.x,z:e.z,ataque:e.ataque,estado:e.estado})),enemigos,'Los goblins y el arco se quedan detenidos');
+  if(esFlecha)assert.deepEqual((await t()).flechas,detenido.flechas,'La flecha no avanza mientras se espera la entrada');
   await r('control',null);await pagina.keyboard.press('Space');await avanzar(.5,20);
   assert((await r('estado')).heroe.parrys>antes.parrys,'Espacio produce un parry perfecto aunque el siguiente cuadro tarde 50 ms');
   assert(!congelado(await t()),'La entrada de parry reanuda el juego');
@@ -141,7 +152,7 @@ try{
  await cargar();await llegar('puerta');
  if(capturas){await caminar(punto(84.7),.15);await capturar('06-porton');}
  await caminar(punto(85.5));assert.equal((await t()).fase,'entrada');
- await avanzar(4.1);await comprobarSalida();console.log('✓ Aventura completa: persecución, parry detenido, brecha, emboscada y asistencia.');
+ await avanzar(4.1);await comprobarSalida();console.log('✓ Aventura completa: fuego, dos parrys detenidos, brecha, emboscada y asistencia.');
  if(!process.env.ARPG_TUTORIAL_SOLO_RECORRIDO){
  // Regresa con una visita nueva: el reinicio dentro del bosque mantiene la
  // lección inicial; el realizado después de terminar lleva directo a la arena.
@@ -151,8 +162,9 @@ try{
  await cargar();await llegar('parry');await esperarParry();await r('control',null);
  await pagina.evaluate(()=>{window.__padAventura={index:0,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};});await avanzar(.05);
  const antes=(await r('estado')).heroe.parrys;await pagina.evaluate(()=>{__padAventura.buttons[4]={pressed:true,value:1};});await avanzar(.5,30);
-  assert((await r('estado')).heroe.parrys>antes,'L1 registra el parry mientras el tiempo está detenido');assert(!congelado(await t()));
+ assert((await r('estado')).heroe.parrys>antes,'L1 registra el parry mientras el tiempo está detenido');assert(!congelado(await t()));
  await pagina.evaluate(()=>{__padAventura.buttons[4]={pressed:false,value:0};});console.log('✓ Mando: L1 reanuda y acierta el parry.');
+ await completar();
  await preparar();assert.equal((await t()).leccion.id,'salto');await r('control',null);
  await pagina.evaluate(()=>{__padAventura.axes[0]=1;});await avanzar(.8);
  const orilla=coord((await r('estado')).heroe).s;assert(orilla<52,'El stick se detiene en la orilla visible');

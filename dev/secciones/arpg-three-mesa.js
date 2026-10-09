@@ -462,19 +462,24 @@
     saqueador:{vida:100,dano:24,vel:2.85,alcance:1.5,aviso:.85,golpe:.2,recupera:.8,cd:1.15,forma:'cono',radio:2.5,ang:1,aguante:true,botin:.6,globo:.2},
     can:{vida:800,dano:32,vel:2.5,alcance:2.3,aviso:1,golpe:.22,recupera:1.05,cd:1.35,forma:'cono',radio:3.3,ang:.9,aguante:true,jefe:true,botin:1,globo:1},
   };
-  // Sin espera entre usos: se conservan los costes de Furia y la duración de cada acción.
-  const HAB={ulti:{coste:0,cd:0},torbellino:{coste:30,cd:0},salto:{coste:25,cd:0},provocar:{coste:0,cd:0},bumeran:{coste:0,cd:0},esquiva:{coste:0,cd:0},parry:{coste:0,cd:0}};
+  // Recargas de la arena. Sólo el tutorial permite repetir sin espera adicional.
+  const HAB={ulti:{coste:0,cd:90},torbellino:{coste:30,cd:0},salto:{coste:25,cd:5},provocar:{coste:0,cd:10},bumeran:{coste:0,cd:10},esquiva:{coste:0,cd:1.05},parry:{coste:0,cd:.5}};
   // Parry (Espacio): Adreida alza el hacha 0,35 s. Si el golpe llega en las primeras 0,189 s es perfecto: no hace daño,
   // aturde al atacante (2 s; 1 s el jefe) y lo deja expuesto (tus golpes le hacen el doble). Más tarde, bloquea el 70%.
-  // Se puede repetir al terminar la pose. Por la espalda no se para, ni el golpazo de Can (se esquiva).
+  // Si no acierta, espera 0,5 s después de la pose (salvo en el tutorial). Por la espalda no se para, ni el golpazo de Can (se esquiva).
   // Ventanas perfectas ampliadas un 5 %; los avisos leen estos mismos tiempos.
-  const PARRY={dur:.35,perfecto:.189,perfectoLanza:.2625,cd:0,bloqueo:.3,aturde:2,aturdeJefe:1,expuesto:2};
+  const PARRY={dur:.35,perfecto:.189,perfectoLanza:.2625,cd:.5,bloqueo:.3,aturde:2,aturdeJefe:1,expuesto:2};
   const hitboxMat=new THREE.MeshBasicMaterial({visible:false});hitboxMat.userData.compartida=true;
   let heroe=null,sigId=1;const jugadores=[];const enemigos=[],lanzas=[],globos=[];
   function cuerpoDe(tipo,varianteGoblin,varianteKobold){const m=MOD.crear(tipo,{varianteGoblin:tipo==='goblin'||tipo==='cobrador'?(varianteGoblin||MOD.elegirVarianteGoblin(rnd)):'clasico',varianteKobold:tipo==='kobold'?(varianteKobold||Object.keys(MOD.VARIANTES_KOBOLD)[Math.floor(rnd()*4)]):undefined});const caja=new THREE.Mesh(new THREE.CylinderGeometry(m.radio*1.35,m.radio*1.35,m.alto*1.05,10).translate(0,m.alto*.52,0),hitboxMat);m.raiz.add(caja);m.caja=caja;escena.add(m.raiz);return m;}
   // Se juega con Adreida (cuerpo a cuerpo, el hacha a dos manos) o con Mohamed (a distancia, una pistola de seis balas).
-  const HEROES={adreida:{nombre:'Adreida',alma:120,atq:12,cdUlti:0,duracionUlti:15,retrato:'lider_adreida'},
-    mohamed:{nombre:'Mohamed',alma:100,atq:9,cdUlti:0,duracionUlti:10,retrato:'lider_mohamed',cargador:6,cadencia:.24,recarga:1.1,alcance:15,vel:30}};
+  const HEROES={adreida:{nombre:'Adreida',alma:120,atq:12,cdUlti:100,duracionUlti:15,retrato:'lider_adreida'},
+    mohamed:{nombre:'Mohamed',alma:100,atq:9,cdUlti:90,duracionUlti:10,retrato:'lider_mohamed',cargador:6,cadencia:.24,recarga:1.1,alcance:15,vel:30}};
+  function recargaHabilidad(nombre,h=heroe){
+    if(enTutorial())return 0;
+    if(nombre==='ulti')return HEROES[h.tipo].cdUlti;
+    return (nombre==='parry'?PARRY.cd:HAB[nombre].cd)*(nombre==='esquiva'?(h.dash??1):1);
+  }
   let tipoHeroe=q.get('heroe')==='mohamed'?'mohamed':'adreida';
   const aDistancia=()=>heroe?.tipo==='mohamed';
   function crearHeroe(tipo=tipoHeroe){const T=HEROES[tipo],m=cuerpoDe(tipo);heroe={id:jugadores.length,tipo,m,pos:new V3(0,0,4),dir:Math.PI,giro:0,estado:'quieto',t:0,alma:T.alma,almaMax:T.alma,furia:0,atqBase:T.atq,atq:T.atq,basicos:1,especial:1,dash:1,
@@ -710,11 +715,11 @@
     for(let i=0;i<pasos;i++){
       const anterior=l.g.position.clone();l.g.position.addScaledVector(l.dir,avance);l.recorrido=(l.recorrido||0)+avance;const p=l.g.position;
       if(l.arco){p.y=alturaHacha(l);const a=l.arco,k=l.recorrido/a.distancia,pendiente=(a.final-a.base+4*a.alto*(1-2*k))/a.distancia;l.g.lookAt(p.clone().add(l.dir).add(new V3(0,pendiente,0)));}
-      if(obstaculos.some(o=>Math.hypot(p.x-o.x,p.z-o.z)<o.r)||Math.hypot(p.x,p.z)>R+4||p.y<.1||l.recorrido>=(l.alcance||Infinity)||reloj.t-l.t0>2){l.g.position.copy(anterior);l.clavada=reloj.t||.000001;l.alturaClavada=l.g.position.y;l.estela.visible=l.brillo.visible=false;chispas(p,5,[.8,.7,.6],2,.3);return;}
+      if(!enTutorial()&&(obstaculos.some(o=>Math.hypot(p.x-o.x,p.z-o.z)<o.r)||Math.hypot(p.x,p.z)>R+4)||p.y<.1||l.recorrido>=(l.alcance||Infinity)||reloj.t-l.t0>2){l.g.position.copy(anterior);l.clavada=reloj.t||.000001;l.alturaClavada=l.g.position.y;l.estela.visible=l.brillo.visible=false;chispas(p,5,[.8,.7,.6],2,.3);return;}
       if(l.devuelta){const e=enemigos.find(e=>e.estado!=='muere'&&plano(e.pos,p)<e.radio+.25&&(!l.arco||p.y<e.m.alto+.35));if(e){conHeroe(l.defensor||heroe,()=>danar(e,l.dano*3,{empuje:2.5,crit:true,causa:'parry',direccion:l.dir}));chispas(p,16,[1,.8,.35],5,.45);quitar();return;}}
       else if(heroe.vivo&&!l.pasada&&plano(p,heroe.pos)<heroe.radio*.6+l.radio&&p.y<2.2){const par=parar(anterior,false,PARRY.perfectoLanza,dt*(1-(i+1)/pasos));
         if(heroe.invul>0){esquivado(l.e);l.pasada=true;}
-        else if(par==='perfecto'){parryPerfecto(null,p.clone());l.devuelta=true;l.defensor=heroe;l.dir.negate();l.vel=22;l.t0=reloj.t;l.recorrido=0;if(l.arco)l.arco={base:p.y,final:.75,distancia:Math.max(1,plano(p,l.e.pos)),alto:.7};l.g.lookAt(p.clone().add(l.dir));return;}
+        else if(par==='perfecto'){parryPerfecto(null,p.clone());if(enTutorial()&&l.e?.tutorial==='parry-flecha')eventosTutorial.push('parry-flecha');l.devuelta=true;l.defensor=heroe;l.dir.negate();l.vel=22;l.t0=reloj.t;l.recorrido=0;if(l.arco)l.arco={base:p.y,final:.75,distancia:Math.max(1,plano(p,l.e.pos)),alto:.7};l.g.lookAt(p.clone().add(l.dir));return;}
         else if(par==='bloqueo'){bloqueado(l.dano,l.origen,enemigos.includes(l.e)?l.e:null);quitar();return;}
         else{herir(l.dano,l.origen,enemigos.includes(l.e)?l.e:null);chispas(p,10,[1,.4,.3],4,.4);quitar();return;}}
     }
@@ -857,7 +862,7 @@
     const dx=b.pos.x-a.pos.x,dz=b.pos.z-a.pos.z,d=Math.hypot(dx,dz),m=a.radio+b.radio+(jugadores.includes(a)?0:.55);
     if(d<m){const nx=d>1e-4?dx/d:1,nz=d>1e-4?dz/d:0,k=m-d,wa=jugadores.includes(a)?(['carga','recuperacion'].includes(a.estado)?0:.15):a.ataque?0:.5,wb=jugadores.includes(b)?(['carga','recuperacion'].includes(b.estado)?0:.15):b.ataque?0:.5;
       a.pos.x-=nx*k*wa;a.pos.z-=nz*k*wa;b.pos.x+=nx*k*wb;b.pos.z+=nz*k*wb;}}
-    for(const e of todos)if(jugadores.includes(e)||e.dentro&&!e.huida?.cruzando)dentroPlaza(e.pos,e.radio,{saltando:jugadores.includes(e)&&e.estado==='salto',obstaculos:jugadores.includes(e)});}
+    for(const e of todos)if(jugadores.includes(e)||e.dentro&&!e.huida?.cruzando)dentroPlaza(e.pos,e.radio,{saltando:jugadores.includes(e)&&e.estado==='salto',esquivando:jugadores.includes(e)&&e.cruzandoDash,obstaculos:jugadores.includes(e)});}
 
   /* ---- Adreida: control a lo Hades ------------------------------------------------------
      WASD mueve; clics cortos encadenan el combo y mantener/soltar carga un hachazo;
@@ -889,9 +894,9 @@
     if(h==='esquiva'){if(['salto','grito','esquiva','muerta'].includes(heroe.estado)||heroe.cd.esquiva>0)return false;
       const v=punto?punto.clone().setY(0):ctl.mov.lengthSq()>.01?ctl.mov.clone():frente(heroe.dir);heroe.dirEsq.copy(v.normalize());const dir=rumbo(new V3(),heroe.dirEsq);
       if(heroe.torbellino)heroe.giro+=heroe.dir-dir;heroe.dir=dir;
-      heroe.cd.esquiva=H.cd*(heroe.dash??1);heroe.invul=DUR_ESQ+.1;heroe.esqDesde=heroe.pos.clone();if(heroe.incendio)apagarFuego(heroe,true);cambiar(heroe,'esquiva');if(enTutorial()&&tutorial.objetivo?.id==='dash')aventuraTutorial.dashDesde={pos:heroe.pos.clone(),distancia:Math.min(...enemigos.filter(e=>e.tutorial==='dash'&&e.estado!=='muere').map(e=>plano(e.pos,heroe.pos)))};return true;}
+      heroe.cd.esquiva=recargaHabilidad(h);heroe.invul=DUR_ESQ+.1;heroe.esqDesde=heroe.pos.clone();if(heroe.incendio)apagarFuego(heroe,true);cambiar(heroe,'esquiva');if(enTutorial()&&tutorial.objetivo?.id==='dash')aventuraTutorial.dashDesde={pos:heroe.pos.clone()};return true;}
     if(!libre())return false;if(heroe.furia<H.coste){rechazo(h,'Te falta Furia');return false;}if((heroe.cd[h]||0)>0){rechazo(h,'Aún no está lista');return false;}
-    heroe.furia-=H.coste;if(H.cd)heroe.cd[h]=H.cd;
+    heroe.furia-=H.coste;if(H.cd)heroe.cd[h]=recargaHabilidad(h);
     if(h==='torbellino'&&aDistancia()){const base=rumbo(heroe.pos,puntoApuntado());heroe.dir=base;for(let i=-3;i<=3;i++)disparar({angulo:i*.12,gratis:true,causa:'abanico',dano:Math.round(heroe.atq*1.2*(heroe.especial??1))});cambiar(heroe,'abanico');temblar(.1);}
     else if(h==='torbellino'){cambiar(heroe,'torbellino');heroe.torbellino={t:0,impactos:new Map()};}
     if(h==='salto'){const p=punto?punto.clone():puntoApuntado(),d=plano(p,heroe.pos);if(d>8)p.sub(heroe.pos).multiplyScalar(8/d).add(heroe.pos);
@@ -916,7 +921,7 @@
       const cruza=e.tutorial!=='salto'||mundoTutorial.coordenadas(heroe.pos).s>55.5;
       if(evento===tutorial.objetivo?.evento&&cruza){aventuraTutorial.impactos.add(e.id);e.vida=1;
         const necesarios=e.tutorial==='torbellino'?3:1;if(aventuraTutorial.impactos.size>=necesarios)eventosTutorial.push(evento);
-      }else{protegidoTutorial=true;if((e.pistaTutorial??-1)<reloj.t){e.pistaTutorial=reloj.t+2;numero(e.pos.clone().setY(e.m.alto+.5),'Prueba '+({basico:'el básico',cargado:'la carga completa',dash:'el dash',parry:'el parry',salto:'el salto',torbellino:'el torbellino',boomerang:'el búmeran',ulti:'Adreidos'}[e.tutorial]||'la habilidad'),'bloqueo');}}
+      }else{protegidoTutorial=true;if((e.pistaTutorial??-1)<reloj.t){e.pistaTutorial=reloj.t+2;numero(e.pos.clone().setY(e.m.alto+.5),'Prueba '+({basico:'el básico',cargado:'la carga completa',dash:'el dash',parry:'el parry','parry-flecha':'devolver la flecha',salto:'el salto',torbellino:'el torbellino',boomerang:'el búmeran',ulti:'Adreidos'}[e.tutorial]||'la habilidad'),'bloqueo');}}
     }
 
     if(blindadoTroll(e)){if((e.avisoBlindaje??-9)<reloj.t){numero(e.pos.clone().setY(e.m.alto+.3),'¡Necesitas un parry!','bloqueo');e.avisoBlindaje=reloj.t+.8;}return;}const crit=opc.crit??rnd()<.12;const expuesto=e.expuestoHasta>reloj.t;dano=Math.round(opc.exacto?dano:dano*(crit?1.8:1)*(expuesto?2:1)*(.9+rnd()*.2));if(e.tipo==='troll'&&!e.fase2)dano=Math.min(dano,e.vida-e.vidaMax*.5);if(protegidoTutorial){dano=Math.min(dano,Math.max(0,e.vida-1));if(!dano)return;}e.vida-=dano;e.destello=1;activarFaseTroll(e);
@@ -979,7 +984,7 @@
     if(!h.giro180&&!h.bumeran&&!h.recogeHacha&&Math.abs(delta)>=cfg.umbral){h.giro180={t:0,delta};h.dir+=delta;}
     else if(!h.giro180)h.dir+=delta*Math.min(1,dt*18);
   }
-  function pasoHeroe(dt){const h=heroe;h.t+=dt;h.sigilo=Math.max(0,h.sigilo-dt);h.ultiT=Math.max(0,h.ultiT-dt);h.brilloParry=Math.max(0,h.brilloParry-dt);for(const k in h.cd)h.cd[k]=Math.max(0,h.cd[k]-dt);h.escudo=Math.max(0,h.escudo-dt);h.invul=Math.max(0,h.invul-dt);h.destello=Math.max(0,h.destello-dt*5);h.dolor=Math.min(1,h.dolor+dt*4);
+  function pasoHeroe(dt){const h=heroe;h.cruzandoDash=h.estado==='esquiva';h.t+=dt;h.sigilo=Math.max(0,h.sigilo-dt);h.ultiT=Math.max(0,h.ultiT-dt);h.brilloParry=Math.max(0,h.brilloParry-dt);for(const k in h.cd)h.cd[k]=Math.max(0,h.cd[k]-dt);h.escudo=Math.max(0,h.escudo-dt);h.invul=Math.max(0,h.invul-dt);h.destello=Math.max(0,h.destello-dt*5);h.dolor=Math.min(1,h.dolor+dt*4);
     h.recogeHacha=Math.max(0,(h.recogeHacha||0)-dt);const dirAnterior=h.dir,desdeGiro=h.torbellino?h.pos.clone():null;let movido=0;const mov=ctl.mov;if(h.bloqueoBasico)ent.pendiente=false;if(!ctl.atacar)h.bloqueoBasico=false;
     const andar=(v,vel)=>{if(v.lengthSq()<.01)return 0;const l=Math.min(1,v.length()),paso=vel*l*dt;h.pos.x+=v.x/v.length()*paso;h.pos.z+=v.z/v.length()*paso;return paso;};
     if(h.incendio)pasoFuego(dt);if(h.estado==='muerta'){h.muerteT+=dt;return;}
@@ -1011,7 +1016,7 @@
       else if(h.t>=C.dur){h.finGolpe=reloj.t;if(ctl.atacar&&!h.bloqueoBasico){if(ent.piloto)iniciarGolpe();else iniciarCarga();}else{cambiar(h,'quieto');}}}
     else if(h.estado==='recuperacion'){if(h.t>=.3){h.finGolpe=reloj.t;cambiar(h,'quieto');}}
     else if(h.estado==='parry'){const am=amenaza();if(am&&h.t<PARRY.perfecto)h.dir+=difAng(h.dir,rumbo(h.pos,am.p))*Math.min(1,dt*20);
-      if(h.t>=PARRY.dur){if(!h.parryExito)h.cd.parry=PARRY.cd;cambiar(h,'quieto');}}
+      if(h.t>=PARRY.dur){if(!h.parryExito)h.cd.parry=recargaHabilidad('parry',h);cambiar(h,'quieto');}}
     else if(h.estado==='esquiva'){const inicio=Math.max(0,h.t-dt),fin=Math.min(DUR_ESQ,h.t);
       if(fin>inicio){h.pos.addScaledVector(h.dirEsq,VEL_ESQ*((fin-inicio)-.2*(fin*fin-inicio*inicio)/DUR_ESQ));movido=1;
         if(rnd()<.9)particula(h.pos.x+(rnd()-.5)*.5,.3+rnd()*1.4,h.pos.z+(rnd()-.5)*.5,-h.dirEsq.x*2,.2,-h.dirEsq.z*2,.3,.9,.6,.9,1.3,0);}
@@ -1031,8 +1036,8 @@
       if(h.t>=.7)cambiar(h,'quieto');}
     // El botín se recoge al pasar por encima.
     for(const b of botines)if(b.listo&&!b.volando&&!b.recogida&&plano(b.pos,h.pos)<1.1)recoger(b);
-    h.inclinacion=(h.inclinacion||0)+(Math.max(-.16,Math.min(.16,difAng(dirAnterior,h.dir)/Math.max(.001,dt)*.018))-(h.inclinacion||0))*(1-Math.exp(-dt*8));h.paso+=((movido>0&&h.estado!=='esquiva'?(aDistancia()?1:Math.min(1,mov.length())):0)-h.paso)*(1-Math.exp(-dt*10));h.fase+=movido*TAU/(aDistancia()?1.75:MOD.animacion.longitudZancada(h.paso));dentroPlaza(h.pos,h.radio,{saltando:h.estado==='salto'});
-    if(desdeGiro&&h.torbellino){respetarMuralla(desdeGiro,h.pos,h.radio);pasoTorbellino(dt,desdeGiro);}}
+    h.inclinacion=(h.inclinacion||0)+(Math.max(-.16,Math.min(.16,difAng(dirAnterior,h.dir)/Math.max(.001,dt)*.018))-(h.inclinacion||0))*(1-Math.exp(-dt*8));h.paso+=((movido>0&&h.estado!=='esquiva'?(aDistancia()?1:Math.min(1,mov.length())):0)-h.paso)*(1-Math.exp(-dt*10));h.fase+=movido*TAU/(aDistancia()?1.75:MOD.animacion.longitudZancada(h.paso));dentroPlaza(h.pos,h.radio,{saltando:h.estado==='salto',esquivando:h.cruzandoDash});
+    if(desdeGiro&&h.torbellino){respetarMuralla(desdeGiro,h.pos,h.radio,{esquivando:h.cruzandoDash});pasoTorbellino(dt,desdeGiro);}}
 
   /* ---- Ataques enemigos: la zona exacta en el suelo, que se llena hasta el golpe ---------- */
   // Mientras se llena, el atacante gira hacia ti; en el último tramo se fija (la marca se enciende): es el momento de apartarse o esquivar.
@@ -1386,6 +1391,7 @@
   let aperturaTutorial=0;
   function orientarEntradaTutorial(v){if(enTutorial())v.applyAxisAngle(new V3(0,1,0),Math.PI/6);return v;}
   function limpiarBlancosTutorial(){
+    for(const l of [...lanzas])if(l.e?.tutorial){escena.remove(l.g);lanzas.splice(lanzas.indexOf(l),1);}
     for(const e of [...enemigos])if(e.tutorial){cancelarAtaque(e);if(e.estrellas)e.estrellas.removeFromParent();liberarModeloTroll(e.m);enemigos.splice(enemigos.indexOf(e),1);}
     heroe.ultimo=null;ent.sobre=null;seleccion.m.visible=false;
   }
@@ -1401,10 +1407,10 @@
     for(const k in heroe.cd)heroe.cd[k]=0;
     if(leccion.id==='mover')return;
     const s=Math.max(leccion.s,mundoTutorial.coordenadas(heroe.pos).s);
-    const encuentros={basico:[[s+2.2,4.5]],cargado:[[s+2.1,-4.5]],dash:[[s-3,-1.5],[s-4.2,0],[s-3,1.5]],parry:[[s+2,0]],salto:[[57.2,0]],
+    const encuentros={basico:[[s+2.2,4.5]],cargado:[[s+2.1,-4.5]],dash:[],parry:[[s+2,0]],'parry-flecha':[[53.2,0]],salto:[[57.2,0]],
       torbellino:[[s-1,-4.8],[s+1,-4.8],[s+2.3,4.8],[s,4.8],[s-2.2,4.8]],boomerang:[[75,0]],ulti:[[80,0],[80,-2],[80,2]]};
     for(const [i,[avance,lado]] of (encuentros[leccion.id]||[]).entries()){
-      const p=mundoTutorial.punto(avance,lado),e=crearEnemigo('goblin',p.x,p.z,{quieto:true,varianteGoblin:leccion.id==='cargado'?'dosHachas':i%2?'cuchillo':'clasico'});
+      const p=mundoTutorial.punto(avance,lado),e=crearEnemigo(leccion.id==='parry-flecha'?'kobold':'goblin',p.x,p.z,{quieto:true,varianteGoblin:leccion.id==='cargado'?'dosHachas':i%2?'cuchillo':'clasico'});
       e.tutorial=leccion.id;e.sinBotin=true;e.dentro=true;e.vida=e.vidaMax=34;e.cd=1.1+i*.25;e.d={...e.d,dano:5};e.dir=rumbo(e.pos,heroe.pos);e.demoraTutorial=leccion.id==='torbellino'?i*.12:0;
     }
   }
@@ -1417,10 +1423,10 @@
     },alSalir:()=>terminarTutorial(false),alSaltar:()=>terminarTutorial(true),alParry:()=>usar('parry')});
     eventosTutorial.length=0;aperturaTutorial=0;mundoTutorial.activar(true);mundoTutorial.puerta(1);bosqueExterior.grupo.visible=false;terreno.visible=false;if(dintelEntradaTutorial)dintelEntradaTutorial.visible=false;selloTutorial.opacity=0;
     heroe.pos.copy(mundoTutorial.punto(2));heroe.dir=Math.PI*2/3;heroe.furia=0;vista.foco.copy(heroe.pos);anguloTutorial=Math.PI/6;
-    ent.piloto=false;tutorial.iniciar();lienzo.focus();
+    ent.piloto=false;tutorial.iniciar();rotulos();lienzo.focus();
   }
   function cancelarTutorial(){
-    liberarParryTutorial();mundoTutorial?.encuentro(null);tutorial?.cancelar();entradaTutorial=null;eventosTutorial.length=0;
+    liberarParryTutorial();mundoTutorial?.encuentro(null);tutorial?.cancelar();if(heroe)rotulos();entradaTutorial=null;eventosTutorial.length=0;
     mundoTutorial?.activar(false);bosqueExterior.grupo.visible=true;terreno.visible=true;if(dintelEntradaTutorial)dintelEntradaTutorial.visible=true;selloTutorial.opacity=.24;
   }
   function terminarTutorial(saltado){
@@ -1435,7 +1441,7 @@
     mundoTutorial.puerta(1);mundoTutorial.activar(false,{conservarPuerta:!saltado});bosqueExterior.grupo.visible=true;terreno.visible=true;if(dintelEntradaTutorial)dintelEntradaTutorial.visible=true;selloTutorial.opacity=saltado?.24:0;
     dentroPlaza(heroe.pos,heroe.radio);ent.atacando=ent.pendiente=false;ctl.atacar=false;ctl.mov.set(0,0,0);ent.rev=null;teclas.clear();mando.listo=false;
     Object.assign(ol,{i:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false});
-    vista.foco.copy(heroe.pos);sincronizarTiempo();lienzo.focus();banner('Tomsage','La puerta se ha cerrado. Prepárate para el asedio.');
+    vista.foco.copy(heroe.pos);sincronizarTiempo();rotulos();lienzo.focus();banner('Tomsage','La puerta se ha cerrado. Prepárate para el asedio.');
   }
   function prepararBlancoTutorial(e,dt){
     if(e.estado==='muere')return 0;
@@ -1443,33 +1449,48 @@
     if(e.estado!=='quieto')return 0;
     e.demoraTutorial=Math.max(0,(e.demoraTutorial||0)-dt);if(e.demoraTutorial)return 0;
     const v=heroe.pos.clone().sub(e.pos),d=v.length();e.dir=rumbo(e.pos,heroe.pos);
-    const fijo=['salto','boomerang'].includes(e.tutorial),distancia=e.tutorial==='dash'?.95:e.tutorial==='parry'?1.75:1.2;
-    const velocidad=e.tutorial==='dash'?6.35:e.tutorial==='torbellino'?3.6:2.9;
+    const fijo=['salto','boomerang','parry-flecha'].includes(e.tutorial),distancia=e.tutorial==='parry'?1.75:1.2;
+    const velocidad=e.tutorial==='torbellino'?3.6:2.9;
+    if(e.tutorial==='parry-flecha'&&d<11&&e.cd<=0){cambiar(e,'aviso');empezarAtaque(e,'linea',{dur:1.1,largo:13,ancho:.8,fija:.6,dano:5});}
     const mover=!fijo&&d>distancia?Math.min(d-distancia,dt*velocidad):0;if(mover)e.pos.addScaledVector(v,mover/d);
     // Los avisos se escalonan: la emboscada ocupa espacio sin golpear toda a la vez.
     const ataca=!fijo&&d<2.15&&e.cd<=0&&(e.tutorial==='parry'||reloj.t>=presion.siguiente);
     if(ataca){presion.siguiente=reloj.t+.75;cambiar(e,'aviso');empezarAtaque(e,'cono',{dur:e.tutorial==='parry'?1.25:e.tutorial==='cargado'?1.6:1,radio:e.tutorial==='parry'?3:2,ang:1.05,fija:.6,dano:5});}
     return mover;
   }
+  function llegadaFlechaTutorial(l){
+    if(l.devuelta||l.clavada||l.pasada||l.g.position.y>=2.2)return Infinity;
+    const v=heroe.pos.clone().sub(l.g.position).setY(0),frente=v.dot(l.dir),r=heroe.radio*.6+l.radio,lado=v.lengthSq()-frente*frente;
+    return frente>0&&lado<=r*r?Math.max(0,frente-Math.sqrt(Math.max(0,r*r-lado)))/l.vel:Infinity;
+  }
   function prepararCongelacionParry(dt){
-    if(!enTutorial()||tutorial.objetivo?.id!=='parry'||aventuraTutorial.guiado||aventuraTutorial.congelado)return dt;
+    if(!enTutorial())return dt;
+    // Si el jugador cancela el parry con otra acción, vuelve a ofrecer el instante guiado.
+    if(aventuraTutorial.guiado&&heroe.estado!=='parry'&&!heroe.parryExito)aventuraTutorial.guiado=false;
+    if(aventuraTutorial.guiado||aventuraTutorial.congelado)return dt;
     if(!['quieto','andar','golpe','carga','torbellino','abanico','lanzarHacha'].includes(heroe.estado))return dt;
-    const e=enemigos.find(e=>e.tutorial==='parry'&&e.ataque&&enZona(e.ataque,e,heroe.pos,heroe.radio*.6));if(!e)return dt;
-    const restante=e.ataque.dur-(reloj.t-e.ataque.t0),instante=PARRY.perfecto*.9;
-    if(restante>0&&restante-dt<=instante){aventuraTutorial.congelar=e;return Math.max(0,restante-instante);}
+    let objetivo,restante,instante;
+    if(tutorial.objetivo?.id==='parry-flecha'){
+      const l=lanzas.find(l=>l.e?.tutorial==='parry-flecha'&&Number.isFinite(llegadaFlechaTutorial(l)));if(!l)return dt;
+      objetivo={flecha:l};restante=llegadaFlechaTutorial(l);instante=PARRY.perfectoLanza*.9;
+    }else if(tutorial.objetivo?.id==='parry'){
+      const e=enemigos.find(e=>e.tutorial==='parry'&&e.ataque&&enZona(e.ataque,e,heroe.pos,heroe.radio*.6));if(!e)return dt;
+      objetivo={enemigo:e};restante=e.ataque.dur-(reloj.t-e.ataque.t0);instante=PARRY.perfecto*.9;
+    }else return dt;
+    if(restante>0&&restante-dt<=instante){aventuraTutorial.congelar=objetivo;return Math.max(0,restante-instante);}
     return dt;
   }
   function congelarParryTutorial(){
-    const e=aventuraTutorial.congelar;aventuraTutorial.congelar=null;
-    if(!e?.ataque||!['quieto','andar','golpe','carga','torbellino','abanico','lanzarHacha'].includes(heroe.estado)||!enZona(e.ataque,e,heroe.pos,heroe.radio*.6))return;
+    const o=aventuraTutorial.congelar;aventuraTutorial.congelar=null;
+    if(!o||!['quieto','andar','golpe','carga','torbellino','abanico','lanzarHacha'].includes(heroe.estado))return;
+    const e=o.enemigo;if(o.flecha?!Number.isFinite(llegadaFlechaTutorial(o.flecha)):!e?.ataque||!enZona(e.ataque,e,heroe.pos,heroe.radio*.6))return;
     aventuraTutorial.congelado=true;ent.atacando=ent.pendiente=false;ctl.atacar=false;ctl.mov.set(0,0,0);tutorial.indicarParry(true);clima.pausar(true);
   }
   function pasoTutorial(dt){
     if(!enTutorial()||!listo)return;
     if(aventuraTutorial.dashDesde&&heroe.estado!=='esquiva'){
-      const vivos=enemigos.filter(e=>e.tutorial==='dash'&&e.estado!=='muere');
-      const inicio=aventuraTutorial.dashDesde,distancia=Math.min(...vivos.map(e=>plano(e.pos,heroe.pos)));
-      if(plano(inicio.pos,heroe.pos)>1.7&&distancia>inicio.distancia+.65)eventosTutorial.push('dash');aventuraTutorial.dashDesde=null;
+      const fuego=mundoTutorial.estado().fuego,inicio=mundoTutorial.coordenadas(aventuraTutorial.dashDesde.pos).s,fin=mundoTutorial.coordenadas(heroe.pos).s;
+      if(fuego?.activo&&inicio<=fuego.desde-fuego.margen+.02&&fin>=fuego.hasta+fuego.margen)eventosTutorial.push('dash');aventuraTutorial.dashDesde=null;
     }
     for(const evento of eventosTutorial.splice(0))tutorial.evento(evento);
     tutorial.paso(dt,{avance:mundoTutorial.coordenadas(heroe.pos).s,vivo:heroe.vivo,mando:mando.activo});
@@ -1778,7 +1799,7 @@
   function hud(dt=0){hudEstilo();hudEquipo();const h=heroe;liquidosHud.paso(dt,{alma:h.alma,almaMax:h.almaMax,furia:h.furia,vx:h.velocidad?.x||0,vz:h.velocidad?.z||0});$('orbeAlma').style.setProperty('--lleno',(h.alma/h.almaMax*100).toFixed(1)+'%');textoHud($('almaTxt'),Math.ceil(h.alma)+' / '+h.almaMax);
     const fuego=$('hudFuego');fuego.hidden=!h.incendio;if(h.incendio){const texto='En llamas · '+Math.ceil(h.incendio.restante)+' s · Dash para apagar';if(fuego.textContent!==texto)fuego.textContent=texto;}
     $('orbeFuria').style.setProperty('--lleno',h.furia.toFixed(1)+'%');textoHud($('furiaTxt'),Math.floor(h.furia)+' / 100');
-    for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0,recarga=cd>0?String(Math.ceil(cd)):'';if(b.dataset.recarga!==recarga)b.dataset.recarga=recarga;b.style.setProperty('--cd',(H.cd?cd/(k==='ulti'?HEROES[h.tipo].cdUlti:H.cd*(k==='esquiva'?(h.dash??1):1))*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',k==='torbellino'?girando(h):{salto:'salto',provocar:'grito',bumeran:'lanzarHacha',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
+    for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0,recarga=cd>0?String(Math.ceil(cd)):'';if(b.dataset.recarga!==recarga)b.dataset.recarga=recarga;b.style.setProperty('--cd',(recargaHabilidad(k,h)?cd/recargaHabilidad(k,h)*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',k==='torbellino'?girando(h):{salto:'salto',provocar:'grito',bumeran:'lanzarHacha',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
     const botonAtaque=document.querySelector('[data-hab="tajo"]');if(botonAtaque){botonAtaque.classList.toggle('cargando',h.estado==='carga');botonAtaque.style.setProperty('--carga',`${Math.round(h.carga*100)}%`);const rotulo=botonAtaque.querySelector('small');if(rotulo){const texto=aDistancia()?'Disparar':h.bumeran?'Sin hacha':h.estado==='carga'?`Cargar ${Math.round(h.carga*100)}%`:'Atacar';if(rotulo.textContent!==texto)rotulo.textContent=texto;}}
     const cartas='Cartas del destino · '+rog.mano.length+' / 3';if($('hudCartas').textContent!==cartas)$('hudCartas').textContent=cartas;
     const municion=$('hudMunicion');municion.hidden=!aDistancia();if(aDistancia()){const texto=h.recargaT>0?'Recargando…':'Balas · '+h.balas+' / '+HEROES.mohamed.cargador;if(municion.textContent!==texto)municion.textContent=texto;}
@@ -1812,7 +1833,7 @@
   const luzCompanero=COOP?new THREE.PointLight(0xb3dfff,24,12,1.8):null;if(luzCompanero)escena.add(luzCompanero);
   const aliados=[];
   function limpiarAliados(){for(const a of aliados){liberarModeloTroll(a.m);quitarEtiqueta(a.rotulo);}aliados.length=0;}
-  function lanzarUlti(){const h=heroe;if(!libre()||h.cd.ulti>0)return false;h.cd.ulti=HEROES[h.tipo].cdUlti;
+  function lanzarUlti(){const h=heroe;if(!libre()||h.cd.ulti>0)return false;h.cd.ulti=recargaHabilidad('ulti',h);
     if(h.tipo==='adreida'){
       let aliado=aliados.find(a=>a.dueno===h);
       // Renovar al compañero evita acumular modelos, rutas y atacantes al pulsar repetidamente.
@@ -2063,7 +2084,7 @@
     camara.updateMatrixWorld();ent.sobre=ent.dentro&&!ent.tactil?bajo():null;if(ent.lectura&&reloj.t>ent.lecturaHasta)ent.lectura=null;
     // Las cartas no reaccionan al cursor ni tapan la selección de enemigos; sólo un toque explícito permite leerlas.
     for(const b of botines)b.mirada+=((ent.lectura===b?1:0)-b.mirada)*Math.min(1,dt*20);
-    for(const h of jugadores)conHeroe(h,()=>{leerControles();const antes=h.pos.clone();pasoHeroe(dt);respetarMuralla(antes,h.pos,h.radio,{saltando:h.estado==='salto'});h.velocidad??=new V3();const v=h.pos.clone().sub(antes).multiplyScalar(1/Math.max(dt,.001));if(v.length()>VEL)v.setLength(VEL);h.velocidad.lerp(v,1-Math.exp(-dt*8));});
+    for(const h of jugadores)conHeroe(h,()=>{leerControles();const antes=h.pos.clone();pasoHeroe(dt);respetarMuralla(antes,h.pos,h.radio,{saltando:h.estado==='salto',esquivando:h.cruzandoDash});h.velocidad??=new V3();const v=h.pos.clone().sub(antes).multiplyScalar(1/Math.max(dt,.001));if(v.length()>VEL)v.setLength(VEL);h.velocidad.lerp(v,1-Math.exp(-dt*8));});
     if(luzCompanero){const j=jugadores[1];luzCompanero.position.set(j.pos.x,4,j.pos.z);luzCompanero.intensity=j.vivo?24:0;}
     const h=heroe;presion.rutas=0;pasoAliados(dt);pasoExploracion(dt);pasoRefuerzosCan();coordinarEnemigos();for(const e of [...enemigos])conHeroe(objetivoEnemigo(e),()=>pasoEnemigo(e,dt));separar();pasoOleadas(dt);if(cinematicaTroll.activa)return pasoEntradaTroll(0,dtReal);pasoPeligrosTroll(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dtReal);
     for(const h of jugadores)conHeroe(h,()=>{posarHeroe(dt);impactoFX.hacha(h,dt);});pasoBumeranes(dt);
@@ -2084,12 +2105,12 @@
     for(const e of enemigos){if(soloMuertos&&e.estado!=='muere')continue;const m=e.m;m.raiz.position.set(e.pos.x,0,e.pos.z);m.raiz.rotation.y=e.dir;const d=e.d;
       const aDistanciaEnemigo=d.lanza||e.tiraHacha;
       const ka=e.ataque?Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur):1;
-      const pe={quieto:['quieto'],entra:['andar'],huye:['huir'],persigue:[e.paso>.05?'andar':'quieto'],aviso:[aDistanciaEnemigo?'apunta':'aviso',ka],golpe:[aDistanciaEnemigo?'lanzar':'golpe',aDistanciaEnemigo?e.t/d.golpe*.6:.38+.24*(e.t/d.golpe)],
+      const pe={quieto:[e.tutorial&&e.paso>.05?'andar':'quieto'],entra:['andar'],huye:['huir'],persigue:[e.paso>.05?'andar':'quieto'],aviso:[aDistanciaEnemigo?'apunta':'aviso',ka],golpe:[aDistanciaEnemigo?'lanzar':'golpe',aDistanciaEnemigo?e.t/d.golpe*.6:.38+.24*(e.t/d.golpe)],
         recupera:[aDistanciaEnemigo?'lanzar':'golpe',aDistanciaEnemigo?.6+.4*Math.min(1,e.t/d.recupera):.62+.38*Math.min(1,e.t/d.recupera)],dolor:['dolor',e.t/.28],aturdido:['aturdido'],grito:['grito',e.t/.9],muere:['muerte',Math.min(1,e.t/(e.muerte?.duracion||.6))]}[e.estado];
       if(e.tipo==='troll'&&e.mazazo&&['aviso','golpe','recupera'].includes(e.estado)){pe[0]=e.estado==='aviso'?'cargaMazazo':'mazazo';pe[1]=e.estado==='aviso'?ka:e.estado==='golpe'?.3*e.t/d.golpe:.3+.7*Math.min(1,e.t/d.recupera);}
       if(e.tipo==='troll'&&e.tiraGoblin&&['aviso','golpe','recupera'].includes(e.estado)){pe[0]=e.estado==='aviso'?'preparaGoblin':'arrojaGoblin';pe[1]=e.estado==='aviso'?ka:e.estado==='golpe'?.4*e.t/d.golpe:.4+.6*Math.min(1,e.t/d.recupera);}
       if(e.comboCan&&['aviso','golpe','recupera'].includes(e.estado)){pe[0]=e.comboCan.paso===0?'canCentro':'canLados';pe[1]=e.estado==='aviso'?ka:e.estado==='golpe'?1+.2*Math.min(1,e.t/d.golpe):1.2+.8*Math.min(1,e.t/d.recupera);}
-      MOD.posar(m,{anim:pe[0],k:pe[1],t:reloj.t+e.id,fase:e.fase,paso:e.paso,dt,estado:e.estado,mezclar:true,muerte:e.muerte,escudazo:e.escudazo&&['aviso','golpe','recupera'].includes(e.estado)?(e.estado==='aviso'?.25:1):0});
+      e.anim=pe[0];MOD.posar(m,{anim:pe[0],k:pe[1],t:reloj.t+e.id,fase:e.fase,paso:e.paso,dt,estado:e.estado,mezclar:true,muerte:e.muerte,escudazo:e.escudazo&&['aviso','golpe','recupera'].includes(e.estado)?(e.estado==='aviso'?.25:1):0});
       if(e.golpeVisual&&e.estado!=='muere'){const g=e.golpeVisual;g.t+=dt;const v=Math.sin(Math.min(1,g.t/.22)*Math.PI)*g.potencia;m.H.torso.rotation.x-=v*.24;m.H.cabeza.rotation.x-=v*.12;if(g.t>=.22)e.golpeVisual=null;}
       // Quién va a atacar: se enciende en rojo mientras avisa (más al fijarse); quién te acaba de golpear, un destello rojo.
       m.M.u.uDestello.value=e.destello*.42;m.M.u.uColorD.value.setRGB(1,.92,.8);
@@ -2192,7 +2213,7 @@
   function rotulos(){const d=aDistancia(),pon=(h,icono,txt)=>{const b=document.querySelector(`[data-hab="${h}"]`);if(!b)return;b.querySelector('span').innerHTML=`<svg viewBox="0 0 32 32" aria-hidden="true"><path d="${ICONOS_HUD[icono]}"/></svg>`;b.querySelector('small').textContent=txt;};
     pon('tajo',d?'pistola':'hacha',d?'Disparar':'Atacar');pon('torbellino',d?'abanico':'torbellino',d?'Abanico':'Torbellino');pon('salto',d?'backflip':'salto',d?'Backflip':'Salto');
     pon('parry','parry','Parry');pon('esquiva','esquiva','Dash');pon('ulti','ulti',d?'Sigilo':'Adreidos');const habilidad=document.querySelector('[data-hab="provocar"],[data-hab="bumeran"]');habilidad.dataset.hab=d?'provocar':'bumeran';habilidad.title=d?'Provocar':`Hacha búmeran · ${BUMERAN.alcance} m · Gira para cambiar su regreso`;pon(habilidad.dataset.hab,d?'provocar':'bumeran',d?'Provocar':'Búmeran');
-    const ulti=HEROES[tipoHeroe];document.querySelector('[data-hab="ulti"]').title=`${d?'Velo azul':'Adreidos'} · ${ulti.duracionUlti} s activo · Sin cooldown; vuelve a pulsar para renovar su duración`;
+    const ulti=HEROES[tipoHeroe];document.querySelector('[data-hab="ulti"]').title=`${d?'Velo azul':'Adreidos'} · ${ulti.duracionUlti} s activo · ${enTutorial()?'Sin cooldown durante el tutorial':ulti.cdUlti+' s de recarga; cada parry resta 1 s'}`;
     const r=document.querySelector('.apRetrato');r.src='./art/'+HEROES[tipoHeroe].retrato+'.webp';r.alt=HEROES[tipoHeroe].nombre;
     $('hudNombre').textContent=HEROES[tipoHeroe].nombre;$('hudClase').textContent=d?'Pistolero de las sombras':'Guerrera semiorca';
     for(const b of document.querySelectorAll('[data-heroe]'))b.setAttribute('aria-pressed',String(b.dataset.heroe===tipoHeroe));}
@@ -2342,9 +2363,9 @@
 
   // Revisión: fps define la duración de cada actualización, igual que los cuadros de la partida.
   const aPantalla=p=>{camara.updateMatrixWorld(true);const v=p.clone().project(camara),b=esc.getBoundingClientRect();return {x:b.left+(v.x*.5+.5)*b.width,y:b.top+(.5-v.y*.5)*b.height,dentro:Math.abs(v.x)<1&&Math.abs(v.y)<1};};
-  const resumen=e=>({ia:e.ia?{accion:e.ia.accion,decisiones:e.ia.decisiones}:null,borde:+e.m.M.u.uBorde.value.toFixed(2),ataque:e.ataque?{forma:e.ataque.forma,k:+Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur).toFixed(2),fijado:e.ataque.fijado}:null,id:e.id,tipo:e.tipo,x:+e.pos.x.toFixed(2),z:+e.pos.z.toFixed(2),vida:e.vida,vidaMax:e.vidaMax,estado:e.estado,muerte:e.muerte?{causa:e.muerte.tipo,variante:e.muerte.variante,duracion:e.muerte.duracion}:null,fase2:!!e.fase2,blindado:!!blindadoTroll(e),parryHasta:e.parryHasta||0,disuelve:+e.m.M.u.uDisuelve.value.toFixed(2),expuesto:e.expuestoHasta>reloj.t});
+  const resumen=e=>({paso:e.paso,fase:e.fase,anim:e.anim,ia:e.ia?{accion:e.ia.accion,decisiones:e.ia.decisiones}:null,borde:+e.m.M.u.uBorde.value.toFixed(2),ataque:e.ataque?{forma:e.ataque.forma,k:+Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur).toFixed(2),fijado:e.ataque.fijado}:null,id:e.id,tipo:e.tipo,x:+e.pos.x.toFixed(2),z:+e.pos.z.toFixed(2),vida:e.vida,vidaMax:e.vidaMax,estado:e.estado,muerte:e.muerte?{causa:e.muerte.tipo,variante:e.muerte.variante,duracion:e.muerte.duracion}:null,fase2:!!e.fase2,blindado:!!blindadoTroll(e),parryHasta:e.parryHasta||0,disuelve:+e.m.M.u.uDisuelve.value.toFixed(2),expuesto:e.expuestoHasta>reloj.t});
   window.CAOZ_ARPG_THREE_REVISION=Object.freeze({
-    tutorial:()=>({...(tutorial?.estado()||{activo:false}),congeladoParry:aventuraTutorial.congelado,aventura:{tipo:aventuraTutorial.tipo,impactos:aventuraTutorial.impactos.size,invocado:aventuraTutorial.invocado},mundo:mundoTutorial?.estado(),puerta:mundoTutorial?.porton.userData.cierre??null,posicion:mundoTutorial?mundoTutorial.coordenadas(heroe.pos):null,entrada:entradaTutorial?{t:entradaTutorial.t}:null,blancos:enemigos.filter(e=>e.tutorial).map(resumen)}),
+    tutorial:()=>({...(tutorial?.estado()||{activo:false}),congeladoParry:aventuraTutorial.congelado,aventura:{tipo:aventuraTutorial.tipo,impactos:aventuraTutorial.impactos.size,invocado:aventuraTutorial.invocado},mundo:mundoTutorial?.estado(),puerta:mundoTutorial?.porton.userData.cierre??null,posicion:mundoTutorial?mundoTutorial.coordenadas(heroe.pos):null,entrada:entradaTutorial?{t:entradaTutorial.t}:null,flechas:lanzas.filter(l=>l.e?.tutorial).map(l=>({x:l.g.position.x,z:l.g.position.z,devuelta:!!l.devuelta,clavada:!!l.clavada,llega:llegadaFlechaTutorial(l),ahora:!!l.ahora})),blancos:enemigos.filter(e=>e.tutorial).map(resumen)}),
     preparacion:()=>({...MOD.estadoPreparacion(),cine:cinePreparado,transicion:preparandoTransicion}),
     rendimiento:()=>({calidad:calidad.estado(),fps:fps.v,cpu:fps.cpu,envio:fps.render,gpu:medidorGPU?.leer()??null,llamadas:renderer.info.render.calls,triangulos:renderer.info.render.triangles,texturas:renderer.info.memory.textures,geometrias:renderer.info.memory.geometries,ancho:gl.drawingBufferWidth,alto:gl.drawingBufferHeight}),
     calidad(v){if(v!==undefined){calidad.elegir(v);aplicarCalidad();}return calidad.estado();},

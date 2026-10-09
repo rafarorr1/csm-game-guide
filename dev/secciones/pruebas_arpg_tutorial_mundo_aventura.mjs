@@ -14,11 +14,41 @@ const aproximar=(v,esperado,mensaje)=>assert(Math.abs(v-esperado)<1e-6,`${mensaj
 m.encuentro('mover');paso(.8);assert.equal(m.estado().limiteS,null);
 aproximar(resolver(15),15,'El camino inicial permite caminar');
 assert(altura(53)>-.2,'El suelo existe antes de abrir el barranco');
-for(const [id,s] of Object.entries({basico:19,cargado:29,dash:39,parry:49,salto:61,torbellino:70,boomerang:76,ulti:83})){
+for(const [id,s] of Object.entries({basico:19,cargado:29,dash:39,parry:46,'parry-flecha':49,salto:61,torbellino:70,boomerang:76,ulti:83})){
   m.encuentro(id);paso(.7);assert.equal(m.estado().limiteS,s);
   aproximar(resolver(s+4),s-.67,'El cuerpo choca con la barricada de '+id);
   aproximar(resolver(s+4,{saltando:true}),s-.67,'El salto no permite omitir '+id);
 }
+
+m.encuentro('dash');paso(.3);
+const fuego=m.estado().fuego,orilla=fuego.desde-fuego.margen,finalFuego=fuego.hasta+fuego.margen;
+assert(fuego.activo&&fuego.intensidad===1,'Las llamas son visibles durante el encuentro de dash');
+const incendio=m.grupoPaisaje.getObjectByName('Dash · sendero incendiado');assert(incendio.visible);
+assert.equal(incendio.children.length,2,'El fuego completo necesita solo dos dibujos sin luces adicionales');
+assert(fuego.semiancho>=4,'El incendio cubre todo el ancho transitable');
+for(const z of [-3.55,0,3.55]){
+  const p=m.limitar(m.punto(35,z),.45,{desde:m.punto(34,z)});
+  aproximar(m.coordenadas(p).s,orilla,'No se puede bordear el fuego caminando');
+}
+aproximar(resolver(37,{desde:m.punto(34)}),orilla,'Un paso muy largo tampoco atraviesa el incendio');
+aproximar(resolver(37,{desde:m.punto(34),saltando:true}),orilla,'Saltar no sustituye al dash');
+aproximar(resolver(34,{desde:m.punto(37)}),finalFuego,'El mismo suelo impide el regreso a pie');
+aproximar(resolver(37,{desde:m.punto(35.8)}),orilla,'Una esquiva interrumpida dentro del fuego no permite salir caminando');
+aproximar(resolver(35,{desde:m.punto(34),obstaculos:false}),35,'La colocación guionizada no queda atrapada entre las llamas');
+// La integral real del dash (17 m/s, .2 s, frenado lineal al 60%) es 2.72 m.
+for(const fps of [20,30,60]){
+  let s=34,t=0;
+  while(t<.2-1e-8){
+    const fin=Math.min(.2,t+1/fps),avance=17*((fin-t)-.2*(fin*fin-t*t)/.2);
+    s=resolver(s+avance,{desde:m.punto(s),esquivando:true});t=fin;
+  }
+  aproximar(s,36.72,'Un dash completo cruza a '+fps+' fps');assert(s>finalFuego);
+  aproximar(resolver(s+.05,{desde:m.punto(s)}),s+.05,'Al aterrizar en terreno seguro vuelve a caminar');
+}
+aproximar(resolver(44,{desde:m.punto(34),esquivando:true}),38.33,'La esquiva no elimina la barricada del encuentro');
+m.encuentro('parry');assert(!m.estado().fuego.activo,'La colisión se retira inmediatamente al superar dash');
+paso(.5);assert(!incendio.visible&&m.estado().fuego.intensidad===0,'Las llamas terminan de apagarse');
+aproximar(resolver(35,{desde:m.punto(34)}),35,'El camino vuelve a estar libre después del incendio');
 
 m.encuentro('salto');paso(.8);assert.equal(m.estado().hoyo.apertura,1);
 assert(altura(53)<-7.8,'No queda una cara de suelo flotando sobre el barranco');
@@ -61,4 +91,4 @@ camara.position.copy(m.grupo.localToWorld(new T.Vector3(caja.max.x+10,centro.y,c
 m.actualizarOclusion(camara,[haciaFuera]);assert(!arbol.occlusion.oculto,'La copa regresa cuando deja de invadir el primer plano');
 m.activar(false);assert.equal(m.oclusion.ocultos,0);aproximar(resolver(190),190,'Fuera del tutorial no hay colisión residual');
 m.dispose();assert.equal(escena.children.length,0);assert.doesNotThrow(()=>m.dispose());
-console.log('OK · Aventura del bosque: barranco recortado, caída de losas, salto, barricadas, escondites, búmeran y limpieza.');
+console.log('OK · Aventura del bosque: fuego exclusivo de dash a 20/30/60 fps, parry cuerpo a cuerpo/flecha, barranco, losas, salto, barricadas, escondites, búmeran y limpieza.');

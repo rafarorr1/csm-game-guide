@@ -17,7 +17,7 @@ const aDistancia=()=>heroe.tipo==='mohamed',puntoApuntado=()=>heroe.pos.clone().
 const chispas=()=>{},particula=()=>{},rechazo=()=>{},pasoFuegoRopa=()=>{},apagarFuego=h=>h.incendio=null;
 const danar=(e,d,o)=>{e.vida-=d;impactos.push({id:e.id,dueno:heroe.id,t:reloj.t,d,causa:o.causa});};
 ${['VEL','COMBO','HAB','PARRY','HEROES','TORBELLINO','libre'].map(n=>get(n,'const')).join('\n')}
-${['conHeroe','cambiar','girando','usar','orientarAdreida','pasoHeroe','pasoTorbellino','dentroPlaza','respetarMuralla','posarHeroe'].map(n=>get(n)).join('\n')}
+${['conHeroe','cambiar','girando','recargaHabilidad','usar','orientarAdreida','pasoHeroe','pasoTorbellino','dentroPlaza','respetarMuralla','posarHeroe'].map(n=>get(n)).join('\n')}
 function preparar(tipo='adreida',id=0){enemigos.length=obstaculos.length=impactos.length=0;reloj.t=0;
  const h={id,tipo,m:MOD.crear(tipo),pos:new V3(),radio:.42,vivo:true,estado:'quieto',t:0,atq:12,especial:1,furia:100,dir:0,giro:0,torbellino:null,
  cd:{esquiva:0,parry:0},sigilo:0,ultiT:0,brilloParry:0,escudo:0,invul:0,destello:0,dolor:1,vatq:1,combo:0,carga:0,fase:0,paso:0,dirEsq:new V3(),disparoT:9,
@@ -30,7 +30,7 @@ function avanzar(s,hz=60,dibujar=false){for(let t=0;t<s-1e-9;){const dt=Math.min
 for(const hz of [20,30,60,144]){
  run('preparar();usar("torbellino");enemigo(0,-2.8);enemigo(2.88,.40375);enemigo(0,2.5);enemigo(0,5.4);enemigo(3.2,1);enemigo(0,6);usar("esquiva")');
  assert.equal(run('heroe.estado'),'esquiva');assert.equal(run('heroe.furia'),70,'Un único coste de Furia');
- assert.equal(run('heroe.cd.esquiva'),0);assert.ok(run('heroe.invul>.2'));
+ assert.equal(run('heroe.cd.esquiva'),1.05);assert.ok(run('heroe.invul>.2'));
  assert.equal(run('usar("esquiva")'),false,'La animación en curso impide reiniciar el dash');
  run(`avanzar(.2,${hz})`);
  assert.ok(Math.abs(run('heroe.pos.z')-2.72)<1e-8,`${hz} FPS: recorre todo el dash`);
@@ -47,7 +47,7 @@ for(const hz of [20,30,60,144]){
  run('preparar();usar("torbellino")');run(`avanzar(1.3,${hz});enemigo(0,5.4);usar("esquiva");avanzar(.19,${hz})`);
  assert.equal(run('girando(heroe)'),true);run('avanzar(.01)');assert.equal(run('impactos.length'),1);assert.equal(run('heroe.estado'),'quieto');assert.equal(run('heroe.torbellino'),null);
 }
-console.log('✓ Giro y daño en todo el dash a 20/30/60/144 FPS; coste y cadencia intactos, sin recarga ni reinicio de animación');
+console.log('✓ Giro y daño en todo el dash a 20/30/60/144 FPS; coste, cadencia y recarga intactos, sin reinicio de animación');
 // La dirección de desplazamiento no reinicia la orientación del cuerpo ni la pose.
 run('preparar();usar("torbellino");avanzar(.35,60,true)');
 const m=run('heroe.m'),giro=m.raiz.rotation.y,pose=Object.values(m.H).map(b=>b.quaternion.clone());

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('./arpg-three-mesa.js',import.meta.url),'utf8');
-const extraer=(nombre,tipo='function')=>extraerDeclaracion(fuente,nombre,tipo).texto;
+const extraer=(nombre,tipo='function')=>extraerDeclaracion(nombre==='libre'?fuente.slice(fuente.indexOf('const libre=()=>')):fuente,nombre,tipo).texto;
 const c=vm.createContext({console,tutorial:null,enTutorial:()=>false});c.window=c;
 for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 c.MOD={animacion:c.CAOZ_ARPG_ADREIDA_ANIMACION.fabrica(c.CAOZ_THREE.THREE)};
@@ -20,8 +20,8 @@ const suave=k=>k<=0?0:k>=1?1:k*k*(3-2*k),tramo=(k,a,b)=>suave((k-a)/(b-a)),rnd=(
 const rechazo=()=>{},marca=()=>{},polvo=()=>{},chispas=()=>{},temblar=()=>{},particula=()=>{},numero=()=>{};
 const golpearEn=()=>{impactos++;return 0;},recoger=b=>{b.recogida=true;},conHeroe=(h,f)=>f(),herir=()=>{danos++;};
 const cancelarAtaque=e=>{e.ataque=null;},esquivado=()=>{},parryPerfecto=()=>{},bloqueado=()=>{danos++;};
-${['R','PANELES','VEL','COMBO','HAB','PARRY','BUMERAN','frente','libre'].map(n=>extraer(n,'const')).join('\n')}
-${['cambiar','iniciarGolpe','iniciarCarga','ajustarSalto','orientarAdreida','pasoHeroe','puntoApuntado','amenaza','enZona','parar','resolverAtaque','dentroPlaza','respetarMuralla','separar','pasoLibreEnemigo','escape','caminoPiloto','pasoLibrePiloto','retiradaPiloto','esquivaPiloto','piloto'].map(n=>extraer(n)).join('\n')}
+${['R','PANELES','VEL','COMBO','HAB','PARRY','HEROES','BUMERAN','frente','libre'].map(n=>extraer(n,'const')).join('\n')}
+${['cambiar','recargaHabilidad','iniciarGolpe','iniciarCarga','ajustarSalto','orientarAdreida','pasoHeroe','puntoApuntado','amenaza','enZona','parar','resolverAtaque','dentroPlaza','respetarMuralla','separar','pasoLibreEnemigo','escape','caminoPiloto','pasoLibrePiloto','retiradaPiloto','esquivaPiloto','piloto'].map(n=>extraer(n)).join('\n')}
 ${extraer('usar').replace('function usar(', 'function usarReal(')}
 ${extraer('buscarRutaEnemigo').replace('function buscarRutaEnemigo(', 'function buscarRutaReal(')}
 function buscarRutaEnemigo(e,p){busquedas++;return buscarRutaReal(e,p);}
