@@ -1395,8 +1395,9 @@
   function pasoQteTroll(dt,dtReal){const s=qteTroll;if(!s)return false;const e=s.troll;
     s.t+=dt;
     if(s.modo==='espera'){
+      if(ent.piloto&&s.t>=.55)accionarQteTroll(REMATE_TROLL[s.paso].accion);
       let pads=[];try{pads=Array.from(navigator.getGamepads?.()||[]).filter(g=>g?.connected&&g.mapping==='standard');}catch{}
-      for(const g of pads){const ahora=g.buttons.map(b=>b.pressed||b.value>.5),antes=s.botones[g.index]||[];s.botones[g.index]=ahora;
+      if(s.modo==='espera')for(const g of pads){const ahora=g.buttons.map(b=>b.pressed||b.value>.5),antes=s.botones[g.index]||[];s.botones[g.index]=ahora;
         for(const accion of REMATE_TROLL)if(accion.mando.some(i=>ahora[i]&&!antes[i])){if(accionarQteTroll(accion.accion))break;else{cerrarQteTroll(false);return true;}}}
       if(s.modo==='espera'&&s.t>=s.tiempo){cerrarQteTroll(false);return true;}
     }else if(s.t>=REMATE_TROLL[s.paso].dur){
