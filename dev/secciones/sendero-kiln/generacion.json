@@ -1,0 +1,335 @@
+{
+  "version": 1,
+  "motor": {
+    "nombre": "@instruktlabs/kiln",
+    "version": "1.1.0",
+    "referencia": "@instruktlabs/kiln@1.1.0",
+    "npmIntegrity": "sha512-Ab1FTUzu4PUeth2bqeG8UyZDHDk1MgKmjddVQ0MmoVHTewJZ+AJsRI+MIFHB+sObMZgWPgqbleuPYIiOmMwDtg=="
+  },
+  "node": "v24.14.1",
+  "exportador": "three",
+  "exportadorExperimental": true,
+  "opciones": {
+    "gltfExporter": "three",
+    "geometryPolicy": "strict",
+    "optimize": "off",
+    "instance": "off"
+  },
+  "fuentePlantilla": "fuente.kiln.js",
+  "plantillaSha256": "9eeb84335561f9e76267f1f0f08f0416df35ee99605a1a40eb9a2efd5130ae7e",
+  "materiales": 1,
+  "observacion": "Kiln ejecutó y exportó estas fuentes. GPU preview y calidad visual se comprueban en el visor de Caoz; no se certifican por QA geométrica.",
+  "modulos": [
+    {
+      "id": "pavimento",
+      "fuente": "fuentes/pavimento.kiln.js",
+      "fuenteSha256": "9eeb84335561f9e76267f1f0f08f0416df35ee99605a1a40eb9a2efd5130ae7e",
+      "glb": "glb/pavimento.glb",
+      "glbSha256": "6d66fad783e7ab60009ab4c96f776a686bf723922005bbb5987fa4bcfa801fe6",
+      "glbBytes": 61372,
+      "triangulos": 528,
+      "warnings": [
+        "Floating parts (no mesh overlap with any sibling, 2cm tol): Piedra_10_astilla_este — Fix: shift \"Piedra_10_astilla_este\" by [0.000, 0.000, -0.077] toward \"Piedra_04_punta_este_corte\", or call snapTo(part, hostPart) to do it automatically."
+      ],
+      "validacionFuente": {
+        "valid": true,
+        "errors": [],
+        "issues": [],
+        "warnings": [],
+        "estimatedTris": 0
+      },
+      "requisitos": {
+        "kind": "kiln.requirements-context.v1",
+        "requirements": {
+          "kind": "kiln.asset-requirements",
+          "schemaVersion": 1,
+          "labels": [],
+          "frame": {
+            "units": "m",
+            "forward": "+X",
+            "up": "+Y",
+            "right": "+Z",
+            "groundY": 0
+          },
+          "requirements": {}
+        },
+        "policyHash": "sha256:9efcec929bf8a510c7dd0e18b687381e3824ff3d26cc20307f601d17535e5f34",
+        "adviceHash": "sha256:ca1f59b45e82e712e06149909000e2bc37b8cf159af70e32847088cecf153268"
+      },
+      "integracion": {
+        "schemaVersion": "kiln.integration-manifest.v1",
+        "analyzerVersion": 1,
+        "artifactSha256": "6d66fad783e7ab60009ab4c96f776a686bf723922005bbb5987fa4bcfa801fe6",
+        "units": "m",
+        "axes": {
+          "forward": "+X",
+          "up": "+Y",
+          "right": "+Z"
+        },
+        "bounds": {
+          "min": [
+            -1.2000000000000002,
+            0,
+            -0.8999999999999999
+          ],
+          "max": [
+            1.2,
+            0.05999999999999999,
+            0.8999999999999999
+          ],
+          "size": [
+            2.4000000000000004,
+            0.05999999999999999,
+            1.7999999999999998
+          ],
+          "center": [
+            -1.1102230246251565e-16,
+            0.029999999999999995,
+            0
+          ]
+        },
+        "pivot": {
+          "convention": "author-origin",
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "ground": {
+          "groundY": 0,
+          "contactTolerance": 0.02,
+          "minY": 0,
+          "offsetToGround": 0,
+          "grounded": true
+        },
+        "defaultScene": {
+          "index": 0,
+          "name": "Caoz · sendero pavimento"
+        },
+        "renderMetrics": {
+          "triangles": 528,
+          "drawCalls": 12,
+          "uniqueGeometries": 12,
+          "uniqueMaterials": 1,
+          "textureCount": 0,
+          "transparentMaterials": 0,
+          "skinned": false
+        },
+        "structuralQa": {
+          "hasDefaultScene": true,
+          "finiteBounds": true,
+          "validatorErrors": 0,
+          "validatorWarnings": 0
+        },
+        "visualQa": "not_assessed"
+      }
+    },
+    {
+      "id": "borde",
+      "fuente": "fuentes/borde.kiln.js",
+      "fuenteSha256": "35683576d937232748e22e308394da2cb922497c15c309e95ae1df1d39ac65d2",
+      "glb": "glb/borde.glb",
+      "glbSha256": "7d3dbdd6de8cc07a951ef74fd97e542152fadc420c47c80fcb16587040397a89",
+      "glbBytes": 36212,
+      "triangulos": 308,
+      "warnings": [],
+      "validacionFuente": {
+        "valid": true,
+        "errors": [],
+        "issues": [],
+        "warnings": [],
+        "estimatedTris": 0
+      },
+      "requisitos": {
+        "kind": "kiln.requirements-context.v1",
+        "requirements": {
+          "kind": "kiln.asset-requirements",
+          "schemaVersion": 1,
+          "labels": [],
+          "frame": {
+            "units": "m",
+            "forward": "+X",
+            "up": "+Y",
+            "right": "+Z",
+            "groundY": 0
+          },
+          "requirements": {}
+        },
+        "policyHash": "sha256:9efcec929bf8a510c7dd0e18b687381e3824ff3d26cc20307f601d17535e5f34",
+        "adviceHash": "sha256:ca1f59b45e82e712e06149909000e2bc37b8cf159af70e32847088cecf153268"
+      },
+      "integracion": {
+        "schemaVersion": "kiln.integration-manifest.v1",
+        "analyzerVersion": 1,
+        "artifactSha256": "7d3dbdd6de8cc07a951ef74fd97e542152fadc420c47c80fcb16587040397a89",
+        "units": "m",
+        "axes": {
+          "forward": "+X",
+          "up": "+Y",
+          "right": "+Z"
+        },
+        "bounds": {
+          "min": [
+            -1.0000000000000002,
+            0,
+            -0.2
+          ],
+          "max": [
+            1,
+            0.24,
+            0.2
+          ],
+          "size": [
+            2,
+            0.24,
+            0.4
+          ],
+          "center": [
+            -1.1102230246251565e-16,
+            0.12,
+            0
+          ]
+        },
+        "pivot": {
+          "convention": "author-origin",
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "ground": {
+          "groundY": 0,
+          "contactTolerance": 0.02,
+          "minY": 0,
+          "offsetToGround": 0,
+          "grounded": true
+        },
+        "defaultScene": {
+          "index": 0,
+          "name": "Caoz · sendero borde"
+        },
+        "renderMetrics": {
+          "triangles": 308,
+          "drawCalls": 7,
+          "uniqueGeometries": 7,
+          "uniqueMaterials": 1,
+          "textureCount": 0,
+          "transparentMaterials": 0,
+          "skinned": false
+        },
+        "structuralQa": {
+          "hasDefaultScene": true,
+          "finiteBounds": true,
+          "validatorErrors": 0,
+          "validatorWarnings": 0
+        },
+        "visualQa": "not_assessed"
+      }
+    },
+    {
+      "id": "hito",
+      "fuente": "fuentes/hito.kiln.js",
+      "fuenteSha256": "8738999c81f3e1fd4bee236f7dbf3d1da533a53f7d342ede863af436b883dc09",
+      "glb": "glb/hito.glb",
+      "glbSha256": "c7502bf0da314bf136b236c96d3bef2b45c564de94fbdd22fe8cb50970204d20",
+      "glbBytes": 25588,
+      "triangulos": 462,
+      "warnings": [],
+      "validacionFuente": {
+        "valid": true,
+        "errors": [],
+        "issues": [],
+        "warnings": [],
+        "estimatedTris": 0
+      },
+      "requisitos": {
+        "kind": "kiln.requirements-context.v1",
+        "requirements": {
+          "kind": "kiln.asset-requirements",
+          "schemaVersion": 1,
+          "labels": [],
+          "frame": {
+            "units": "m",
+            "forward": "+X",
+            "up": "+Y",
+            "right": "+Z",
+            "groundY": 0
+          },
+          "requirements": {}
+        },
+        "policyHash": "sha256:9efcec929bf8a510c7dd0e18b687381e3824ff3d26cc20307f601d17535e5f34",
+        "adviceHash": "sha256:ca1f59b45e82e712e06149909000e2bc37b8cf159af70e32847088cecf153268"
+      },
+      "integracion": {
+        "schemaVersion": "kiln.integration-manifest.v1",
+        "analyzerVersion": 1,
+        "artifactSha256": "c7502bf0da314bf136b236c96d3bef2b45c564de94fbdd22fe8cb50970204d20",
+        "units": "m",
+        "axes": {
+          "forward": "+X",
+          "up": "+Y",
+          "right": "+Z"
+        },
+        "bounds": {
+          "min": [
+            -0.2750000000000001,
+            0,
+            -0.20000000000000004
+          ],
+          "max": [
+            0.275,
+            0.95,
+            0.2
+          ],
+          "size": [
+            0.55,
+            0.95,
+            0.4
+          ],
+          "center": [
+            -2.7755575615628914e-17,
+            0.475,
+            -1.3877787807814457e-17
+          ]
+        },
+        "pivot": {
+          "convention": "author-origin",
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "ground": {
+          "groundY": 0,
+          "contactTolerance": 0.02,
+          "minY": 0,
+          "offsetToGround": 0,
+          "grounded": true
+        },
+        "defaultScene": {
+          "index": 0,
+          "name": "Caoz · sendero hito"
+        },
+        "renderMetrics": {
+          "triangles": 462,
+          "drawCalls": 3,
+          "uniqueGeometries": 3,
+          "uniqueMaterials": 1,
+          "textureCount": 0,
+          "transparentMaterials": 0,
+          "skinned": false
+        },
+        "structuralQa": {
+          "hasDefaultScene": true,
+          "finiteBounds": true,
+          "validatorErrors": 0,
+          "validatorWarnings": 0
+        },
+        "visualQa": "not_assessed"
+      }
+    }
+  ]
+}

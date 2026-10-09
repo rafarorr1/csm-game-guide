@@ -1,0 +1,334 @@
+{
+  "version": 1,
+  "entorno": "Chrome headless, viewport 1280×800 DPR1; simulación guiada por entradas reales.",
+  "fuentesSha256": {
+    "arpg-three-tutorial-kiln.js": "756bf2bfecd8f9bda34cef81a0a94e4cf5a8db171168c13c920442344ac1d598",
+    "arpg-three-tutorial-mundo.js": "cb66c85a1ee21567b3aa397d0246a31020c99903f7074ed37e9fba7a12db3fe3",
+    "ruinas-kiln/datos.js": "46928c092e8e439de0e76a9ff73fea82e307e1322bd8f20137ab0456775e007a",
+    "sendero-kiln/datos.js": "e595296d1bd72a17b3b0ed2b49b9d9a11554944ce7bedf85087ce60e179e822d"
+  },
+  "comprobaciones": [
+    "Carga completa sin errores de JavaScript ni materiales",
+    "Recorrido real de todas las lecciones hasta la entrada a la arena",
+    "Geometría Kiln real incluida en pruebas de AABB de fuego, grieta y corredor",
+    "Pavimento no supera4cm, grieta abierta conserva profundidad de8m",
+    "Limpieza idempotente de seis geometrías y un material",
+    "Exportador incluye ambos archivos de datos y el módulo, ordenados en el cargador"
+  ],
+  "mediciones": [
+    {
+      "vista": "01-sendero-despues-basico",
+      "fecha": "2026-10-09T06:40:32.424Z",
+      "kit": {
+        "disponible": true,
+        "eliminado": false,
+        "motivo": "",
+        "modulos": 6,
+        "materiales": 1,
+        "instancias": 54,
+        "triangulos": 27390,
+        "lotes": 27,
+        "instanciasVisibles": 54,
+        "triangulosVisibles": 27390,
+        "lotesVisibles": 27,
+        "mapasListos": true,
+        "tramo": 2,
+        "culling": true,
+        "rechazadas": 0,
+        "proyectaSombras": false
+      },
+      "costeKiln": {
+        "sinKit": {
+          "llamadas": 53,
+          "triangulos": 183522
+        },
+        "conKit": {
+          "llamadas": 62,
+          "triangulos": 191574
+        },
+        "llamadas": 9,
+        "triangulos": 8052
+      },
+      "resolucion": [
+        1221,
+        754
+      ]
+    },
+    {
+      "vista": "02-parry-detenido",
+      "fecha": "2026-10-09T06:40:33.671Z",
+      "kit": {
+        "disponible": true,
+        "eliminado": false,
+        "motivo": "",
+        "modulos": 6,
+        "materiales": 1,
+        "instancias": 54,
+        "triangulos": 27390,
+        "lotes": 27,
+        "instanciasVisibles": 54,
+        "triangulosVisibles": 27390,
+        "lotesVisibles": 27,
+        "mapasListos": true,
+        "tramo": 4,
+        "culling": true,
+        "rechazadas": 0,
+        "proyectaSombras": false
+      },
+      "costeKiln": {
+        "sinKit": {
+          "llamadas": 63,
+          "triangulos": 185324
+        },
+        "conKit": {
+          "llamadas": 71,
+          "triangulos": 192782
+        },
+        "llamadas": 8,
+        "triangulos": 7458
+      },
+      "resolucion": [
+        1221,
+        754
+      ]
+    },
+    {
+      "vista": "03-emboscada-torbellino",
+      "fecha": "2026-10-09T06:40:35.149Z",
+      "kit": {
+        "disponible": true,
+        "eliminado": false,
+        "motivo": "",
+        "modulos": 6,
+        "materiales": 1,
+        "instancias": 54,
+        "triangulos": 27390,
+        "lotes": 27,
+        "instanciasVisibles": 52,
+        "triangulosVisibles": 26158,
+        "lotesVisibles": 25,
+        "mapasListos": true,
+        "tramo": 6,
+        "culling": true,
+        "rechazadas": 0,
+        "proyectaSombras": false
+      },
+      "costeKiln": {
+        "sinKit": {
+          "llamadas": 69,
+          "triangulos": 205870
+        },
+        "conKit": {
+          "llamadas": 78,
+          "triangulos": 218256
+        },
+        "llamadas": 9,
+        "triangulos": 12386
+      },
+      "resolucion": [
+        1221,
+        754
+      ]
+    },
+    {
+      "vista": "04-tronco-bumeran",
+      "fecha": "2026-10-09T06:40:35.697Z",
+      "kit": {
+        "disponible": true,
+        "eliminado": false,
+        "motivo": "",
+        "modulos": 6,
+        "materiales": 1,
+        "instancias": 54,
+        "triangulos": 27390,
+        "lotes": 27,
+        "instanciasVisibles": 43,
+        "triangulosVisibles": 22176,
+        "lotesVisibles": 21,
+        "mapasListos": true,
+        "tramo": 7,
+        "culling": true,
+        "rechazadas": 0,
+        "proyectaSombras": false
+      },
+      "costeKiln": {
+        "sinKit": {
+          "llamadas": 54,
+          "triangulos": 168810
+        },
+        "conKit": {
+          "llamadas": 63,
+          "triangulos": 180316
+        },
+        "llamadas": 9,
+        "triangulos": 11506
+      },
+      "resolucion": [
+        1221,
+        754
+      ]
+    },
+    {
+      "vista": "05-brecha-salto",
+      "fecha": "2026-10-09T06:40:34.562Z",
+      "kit": {
+        "disponible": true,
+        "eliminado": false,
+        "motivo": "",
+        "modulos": 6,
+        "materiales": 1,
+        "instancias": 54,
+        "triangulos": 27390,
+        "lotes": 27,
+        "instanciasVisibles": 54,
+        "triangulosVisibles": 27390,
+        "lotesVisibles": 27,
+        "mapasListos": true,
+        "tramo": 5,
+        "culling": true,
+        "rechazadas": 0,
+        "proyectaSombras": false
+      },
+      "costeKiln": {
+        "sinKit": {
+          "llamadas": 60,
+          "triangulos": 182970
+        },
+        "conKit": {
+          "llamadas": 71,
+          "triangulos": 193574
+        },
+        "llamadas": 11,
+        "triangulos": 10604
+      },
+      "resolucion": [
+        1221,
+        754
+      ]
+    },
+    {
+      "vista": "06-porton",
+      "fecha": "2026-10-09T06:40:36.459Z",
+      "kit": {
+        "disponible": true,
+        "eliminado": false,
+        "motivo": "",
+        "modulos": 6,
+        "materiales": 1,
+        "instancias": 54,
+        "triangulos": 27390,
+        "lotes": 27,
+        "instanciasVisibles": 43,
+        "triangulosVisibles": 22176,
+        "lotesVisibles": 21,
+        "mapasListos": true,
+        "tramo": 7,
+        "culling": true,
+        "rechazadas": 0,
+        "proyectaSombras": false
+      },
+      "costeKiln": {
+        "sinKit": {
+          "llamadas": 66,
+          "triangulos": 286940
+        },
+        "conKit": {
+          "llamadas": 71,
+          "triangulos": 294442
+        },
+        "llamadas": 5,
+        "triangulos": 7502
+      },
+      "resolucion": [
+        1221,
+        754
+      ]
+    },
+    {
+      "vista": "07-parry-flecha-detenida",
+      "fecha": "2026-10-09T06:40:34.141Z",
+      "kit": {
+        "disponible": true,
+        "eliminado": false,
+        "motivo": "",
+        "modulos": 6,
+        "materiales": 1,
+        "instancias": 54,
+        "triangulos": 27390,
+        "lotes": 27,
+        "instanciasVisibles": 54,
+        "triangulosVisibles": 27390,
+        "lotesVisibles": 27,
+        "mapasListos": true,
+        "tramo": 5,
+        "culling": true,
+        "rechazadas": 0,
+        "proyectaSombras": false
+      },
+      "costeKiln": {
+        "sinKit": {
+          "llamadas": 67,
+          "triangulos": 183090
+        },
+        "conKit": {
+          "llamadas": 77,
+          "triangulos": 192110
+        },
+        "llamadas": 10,
+        "triangulos": 9020
+      },
+      "resolucion": [
+        1221,
+        754
+      ]
+    },
+    {
+      "vista": "08-fuego-dash",
+      "fecha": "2026-10-09T06:40:33.066Z",
+      "kit": {
+        "disponible": true,
+        "eliminado": false,
+        "motivo": "",
+        "modulos": 6,
+        "materiales": 1,
+        "instancias": 54,
+        "triangulos": 27390,
+        "lotes": 27,
+        "instanciasVisibles": 54,
+        "triangulosVisibles": 27390,
+        "lotesVisibles": 27,
+        "mapasListos": true,
+        "tramo": 4,
+        "culling": true,
+        "rechazadas": 0,
+        "proyectaSombras": false
+      },
+      "costeKiln": {
+        "sinKit": {
+          "llamadas": 55,
+          "triangulos": 176938
+        },
+        "conKit": {
+          "llamadas": 65,
+          "triangulos": 186090
+        },
+        "llamadas": 10,
+        "triangulos": 9152
+      },
+      "resolucion": [
+        1221,
+        754
+      ]
+    }
+  ],
+  "metodoCoste": "Mismo fotograma y cámara: dibujar con raíz Kiln oculta y visible; diferencia de renderer.info. La medición no repone las rocas del margen que fueron sustituidas.",
+  "limite": "Los lotes visibles en estado son habilitados por tramo antes del frustum. Las mediciones son llamadas y triángulos enviados, no tiempos GPU ni una promesa de FPS.",
+  "calidadObservada": {
+    "nombre": "Rendimiento",
+    "pixeles": 921600,
+    "sombras": false,
+    "resplandor": false,
+    "nivel": 1,
+    "automatico": false
+  }
+}

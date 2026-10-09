@@ -1,0 +1,319 @@
+{
+  "version": 1,
+  "motor": {
+    "nombre": "@instruktlabs/kiln",
+    "version": "1.1.0",
+    "referencia": "@instruktlabs/kiln@1.1.0",
+    "npmIntegrity": "sha512-Ab1FTUzu4PUeth2bqeG8UyZDHDk1MgKmjddVQ0MmoVHTewJZ+AJsRI+MIFHB+sObMZgWPgqbleuPYIiOmMwDtg=="
+  },
+  "node": "v24.14.1",
+  "exportador": "three",
+  "exportadorExperimental": true,
+  "opcionesKiln": {
+    "gltfExporter": "three",
+    "geometryPolicy": "strict",
+    "optimize": "off",
+    "instance": "off"
+  },
+  "contrato": "GLB estático real de Kiln -> conversor local -> una malla por módulo; sin Kiln ni GLTFLoader durante la partida",
+  "material": {
+    "nombre": "Caoz_Piedra_Compartida",
+    "compartidoEntreModulos": true,
+    "mapasReutilizados": [
+      "../bosque-scenario/roca-color.webp",
+      "../bosque-scenario/roca-normal.webp",
+      "../bosque-scenario/roca-superficie.webp"
+    ],
+    "nuevasImagenes": 0
+  },
+  "preservacionPiezas": "Los GLB/fuentes conservan nodos por piedra. datos.js concatena para una draw call por módulo. Los rangos de índices de este manifiesto permiten extraer fragmentos, pero no implementan colisiones ni destrucción.",
+  "runtime": {
+    "archivo": "datos.js",
+    "bytes": 144595,
+    "sha256": "e595296d1bd72a17b3b0ed2b49b9d9a11554944ce7bedf85087ce60e179e822d"
+  },
+  "revisionVisual": "Pendiente de revisión en la cámara/iluminación real del visor; los checks geométricos no certifican calidad artística ni FPS.",
+  "modulos": [
+    {
+      "id": "pavimento",
+      "nombre": "Adoquines del camino antiguo",
+      "glb": "glb/pavimento.glb",
+      "glbSha256": "6d66fad783e7ab60009ab4c96f776a686bf723922005bbb5987fa4bcfa801fe6",
+      "glbBytes": 61372,
+      "triangulos": 528,
+      "vertices": 1152,
+      "materiales": 1,
+      "dimensiones": [
+        2.4,
+        0.06,
+        1.8
+      ],
+      "color": "COLOR_0 conservado del GLB y multiplicado por baseColorFactor",
+      "piezas": [
+        {
+          "nombre": "Piedra_01_punta_oeste_corte",
+          "primerIndice": 0,
+          "cantidadIndices": 132,
+          "primerVertice": 0,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00847478
+        },
+        {
+          "nombre": "Piedra_02_eje_oeste",
+          "primerIndice": 132,
+          "cantidadIndices": 132,
+          "primerVertice": 96,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.01570148
+        },
+        {
+          "nombre": "Piedra_03_eje_este_corte",
+          "primerIndice": 264,
+          "cantidadIndices": 132,
+          "primerVertice": 192,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.0116581
+        },
+        {
+          "nombre": "Piedra_04_punta_este_corte",
+          "primerIndice": 396,
+          "cantidadIndices": 132,
+          "primerVertice": 288,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00634994
+        },
+        {
+          "nombre": "Piedra_05_hilada_fondo_oeste_corte",
+          "primerIndice": 528,
+          "cantidadIndices": 132,
+          "primerVertice": 384,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00855055
+        },
+        {
+          "nombre": "Piedra_06_hilada_fondo_este",
+          "primerIndice": 660,
+          "cantidadIndices": 132,
+          "primerVertice": 480,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.01345343
+        },
+        {
+          "nombre": "Piedra_07_hilada_frente_oeste",
+          "primerIndice": 792,
+          "cantidadIndices": 132,
+          "primerVertice": 576,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00714655
+        },
+        {
+          "nombre": "Piedra_08_hilada_frente_este_corte",
+          "primerIndice": 924,
+          "cantidadIndices": 132,
+          "primerVertice": 672,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00815139
+        },
+        {
+          "nombre": "Piedra_09_astilla_oeste",
+          "primerIndice": 1056,
+          "cantidadIndices": 132,
+          "primerVertice": 768,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00123787
+        },
+        {
+          "nombre": "Piedra_10_astilla_este",
+          "primerIndice": 1188,
+          "cantidadIndices": 132,
+          "primerVertice": 864,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00111216
+        },
+        {
+          "nombre": "Piedra_11_astilla_fondo",
+          "primerIndice": 1320,
+          "cantidadIndices": 132,
+          "primerVertice": 960,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00087408
+        },
+        {
+          "nombre": "Piedra_12_astilla_frente",
+          "primerIndice": 1452,
+          "cantidadIndices": 132,
+          "primerVertice": 1056,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00101907
+        }
+      ],
+      "comprobaciones": [
+        "GLB2 y chunks completos",
+        "material único",
+        "sin texturas duplicadas",
+        "posiciones/UV/colores finitos",
+        "normales unitarias y orientación exterior",
+        "triángulos no degenerados e índices válidos",
+        "transformaciones fijadas",
+        "base Y=0 y centro XZ=0",
+        "presupuesto de triángulos por módulo respetado"
+      ],
+      "superficiePisada": {
+        "cotaMinima": 0.05034015246674023,
+        "cotaMaxima": 0.05999999999999999,
+        "desnivelMaximo": 0.009659847533259762,
+        "colocacionSugeridaY": -0.025,
+        "nota": "Malla decorativa, sin alterar la altura de pies ni colisiones del juego. Hundir la base deja la superficie aproximadamente entre 2,5 y 3,5 cm."
+      },
+      "fuente": "fuentes/pavimento.kiln.js",
+      "fuenteSha256": "9eeb84335561f9e76267f1f0f08f0416df35ee99605a1a40eb9a2efd5130ae7e",
+      "kilnWarnings": [
+        "Floating parts (no mesh overlap with any sibling, 2cm tol): Piedra_10_astilla_este — Fix: shift \"Piedra_10_astilla_este\" by [0.000, 0.000, -0.077] toward \"Piedra_04_punta_este_corte\", or call snapTo(part, hostPart) to do it automatically."
+      ]
+    },
+    {
+      "id": "borde",
+      "nombre": "Guarnición de piedra erosionada",
+      "glb": "glb/borde.glb",
+      "glbSha256": "7d3dbdd6de8cc07a951ef74fd97e542152fadc420c47c80fcb16587040397a89",
+      "glbBytes": 36212,
+      "triangulos": 308,
+      "vertices": 672,
+      "materiales": 1,
+      "dimensiones": [
+        2,
+        0.24,
+        0.4
+      ],
+      "color": "COLOR_0 conservado del GLB y multiplicado por baseColorFactor",
+      "piezas": [
+        {
+          "nombre": "Piedra_01_guardacanto_0",
+          "primerIndice": 0,
+          "cantidadIndices": 132,
+          "primerVertice": 0,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.01777603
+        },
+        {
+          "nombre": "Piedra_02_guardacanto_1",
+          "primerIndice": 132,
+          "cantidadIndices": 132,
+          "primerVertice": 96,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02234043
+        },
+        {
+          "nombre": "Piedra_03_guardacanto_2",
+          "primerIndice": 264,
+          "cantidadIndices": 132,
+          "primerVertice": 192,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.01682795
+        },
+        {
+          "nombre": "Piedra_04_guardacanto_3",
+          "primerIndice": 396,
+          "cantidadIndices": 132,
+          "primerVertice": 288,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.01875415
+        },
+        {
+          "nombre": "Piedra_05_guardacanto_4",
+          "primerIndice": 528,
+          "cantidadIndices": 132,
+          "primerVertice": 384,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02141181
+        },
+        {
+          "nombre": "Piedra_06_guardacanto_5",
+          "primerIndice": 660,
+          "cantidadIndices": 132,
+          "primerVertice": 480,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02077001
+        },
+        {
+          "nombre": "Piedra_07_fragmento_desprendido",
+          "primerIndice": 792,
+          "cantidadIndices": 132,
+          "primerVertice": 576,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.0015586
+        }
+      ],
+      "comprobaciones": [
+        "GLB2 y chunks completos",
+        "material único",
+        "sin texturas duplicadas",
+        "posiciones/UV/colores finitos",
+        "normales unitarias y orientación exterior",
+        "triángulos no degenerados e índices válidos",
+        "transformaciones fijadas",
+        "base Y=0 y centro XZ=0",
+        "presupuesto de triángulos por módulo respetado"
+      ],
+      "fuente": "fuentes/borde.kiln.js",
+      "fuenteSha256": "35683576d937232748e22e308394da2cb922497c15c309e95ae1df1d39ac65d2",
+      "kilnWarnings": []
+    },
+    {
+      "id": "hito",
+      "nombre": "Hito del sendero antiguo",
+      "glb": "glb/hito.glb",
+      "glbSha256": "c7502bf0da314bf136b236c96d3bef2b45c564de94fbdd22fe8cb50970204d20",
+      "glbBytes": 25588,
+      "triangulos": 462,
+      "vertices": 453,
+      "materiales": 1,
+      "dimensiones": [
+        0.55,
+        0.95,
+        0.4
+      ],
+      "color": "COLOR_0 conservado del GLB y multiplicado por baseColorFactor",
+      "piezas": [
+        {
+          "nombre": "Piedra_01_peana_desgastada",
+          "primerIndice": 0,
+          "cantidadIndices": 132,
+          "primerVertice": 0,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02886903
+        },
+        {
+          "nombre": "Piedra_02_monolito_tallado",
+          "primerIndice": 132,
+          "cantidadIndices": 1122,
+          "primerVertice": 96,
+          "cantidadVertices": 261,
+          "volumenFirmado": 0.08793529
+        },
+        {
+          "nombre": "Piedra_03_laja_al_pie",
+          "primerIndice": 1254,
+          "cantidadIndices": 132,
+          "primerVertice": 357,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00205588
+        }
+      ],
+      "comprobaciones": [
+        "GLB2 y chunks completos",
+        "material único",
+        "sin texturas duplicadas",
+        "posiciones/UV/colores finitos",
+        "normales unitarias y orientación exterior",
+        "triángulos no degenerados e índices válidos",
+        "transformaciones fijadas",
+        "base Y=0 y centro XZ=0",
+        "presupuesto de triángulos por módulo respetado"
+      ],
+      "fuente": "fuentes/hito.kiln.js",
+      "fuenteSha256": "8738999c81f3e1fd4bee236f7dbf3d1da533a53f7d342ede863af436b883dc09",
+      "kilnWarnings": []
+    }
+  ]
+}

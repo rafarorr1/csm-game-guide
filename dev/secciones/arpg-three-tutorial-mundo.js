@@ -17,6 +17,7 @@
     let semilla=147731,cierre=0,eliminado=false,activo=true,encuentroActual=null,ultimoTiempo=null;
     let aperturaHoyo=0,objetivoHoyo=0,intensidadFuego=0,cargaScenario=null;
     const barreras=[],escondites=[],sueloPartido=[];
+    let senderoKiln=null;
     const azar=()=>{semilla=semilla*16807%2147483647;return (semilla-1)/2147483646;};
     const entre=(a,b)=>a+(b-a)*azar(),lim=(v,a,b)=>Math.max(a,Math.min(b,v));
     const bordeCamino=s=>BORDE-lim((s-80)/5,0,1);
@@ -182,6 +183,8 @@
       G.helecho=geo(new THREE.BufferGeometry());G.helecho.setAttribute('position',new THREE.Float32BufferAttribute(p,3));G.helecho.computeVertexNormals();
       M.hierba.side=THREE.DoubleSide;
     }
+    // La vía de Kiln sustituye sólo las rocas de margen donde hay guarnición.
+    senderoKiln=window.CAOZ_TUTORIAL_KILN?.crear(THREE,{grupo:grupoPaisaje,materialPiedra:M.roca});
     let numeroArboles=0;
     for(let indice=0;indice<8;indice++){
       const inicio=-14+indice*12,fin=indice===7?92:inicio+12,centro=(inicio+fin)/2,tramo=new THREE.Group();
@@ -220,7 +223,7 @@
           const ancho=entre(.32,.67),x=s-centro,borde=bordeCamino(s);
           const y=entre(.1,.21),sx=entre(.5,.96),sy=entre(.25,.54),giro=entre(-.9,.9),tono=entre(.69,1.08);
           const desvio=Math.sin(s*41.9+lado*2.7)*.25,fuera=.16+.14*Math.sin(s*17.3+lado),escala=.83+.21*Math.sin(s*5.6-lado);
-          instancia(piedras,x+desvio,y,lado*(borde+ancho+fuera),sx,sy*escala,ancho,giro,tono);
+          if(!senderoKiln?.reemplazaMargen(s,lado))instancia(piedras,x+desvio,y,lado*(borde+ancho+fuera),sx,sy*escala,ancho,giro,tono);
           if(s<82){
             if(azar()<.55)rama(madera,[x-.7,.16,lado*(borde+.03)],[x+.9,.24,lado*(borde+.65)],.11,entre(.8,1.2));
             instancia(helechos,x+entre(-.4,.4),.05,lado*(borde+entre(.55,2.5)),entre(.65,1.1),entre(.7,1.25),entre(.7,1.15),azar()*6.28,entre(.72,1.12));
@@ -445,7 +448,7 @@
       return {encuentro:encuentroActual,limiteS:LIMITES[encuentroActual]??null,
         hoyo:{...HUECO,apertura:aperturaHoyo,abierto:objetivoHoyo===1},
         fuego:{...FUEGO,activo:encuentroActual==='dash',intensidad:intensidadFuego},
-        obstaculoBumeran:zarzas.visible,escenario:{...cargaMateriales,errores:[...cargaMateriales.errores]}};
+        obstaculoBumeran:zarzas.visible,escenario:{...cargaMateriales,errores:[...cargaMateriales.errores]},kiln:senderoKiln?.estado()||null};
     }
     function animarEncuentro(dt,forzar=false){
       const fuegoActivo=encuentroActual==='dash',objetivoFuego=fuegoActivo?1:0;
@@ -510,7 +513,7 @@
       const avance=Number.isFinite(s)?s:0,ahora=Number.isFinite(tiempo)?tiempo:0;
       const dt=ultimoTiempo===null?0:Math.max(0,Math.min(.1,ahora-ultimoTiempo));ultimoTiempo=ahora;
       uniformesFuego.uTiempo.value=ahora;
-      animarEncuentro(dt);
+      animarEncuentro(dt);senderoKiln?.actualizar(avance);
       // Además del frustum de cada lote, se retiran tramos ya lejanos por detrás.
       for(const t of tramos)t.grupo.visible=t.fin>avance-44&&t.inicio<avance+72;
       M.luz.emissiveIntensity=.62+Math.sin(ahora*4.1)*.04;
@@ -601,7 +604,7 @@
           malla.castShadow=false;malla.receiveShadow=true;malla.computeBoundingBox();malla.computeBoundingSphere();malla.matrixAutoUpdate=false;grupoPaisaje.add(malla);
         }));
       }
-      cargaScenario=Promise.allSettled(tareas).then(r=>{cargaMateriales.lista=true;cargaMateriales.errores=r.filter(x=>x.status==='rejected').map(x=>String(x.reason?.message||x.reason));return estado().escenario;});
+      cargaScenario=Promise.allSettled(tareas).then(r=>{if(!eliminado)senderoKiln?.actualizarMaterial();cargaMateriales.lista=true;cargaMateriales.errores=r.filter(x=>x.status==='rejected').map(x=>String(x.reason?.message||x.reason));return estado().escenario;});
       return cargaScenario;
     }
     const inversaOclusion=new THREE.Matrix4(),camaraLocal=new THREE.Vector3(),objetivosLocales=[];
@@ -656,9 +659,11 @@
     }
     function dispose(){
       if(eliminado)return;eliminado=true;
+      senderoKiln?.eliminar();
       grupo.removeFromParent();grupo.traverse(o=>{if(o.isInstancedMesh)o.dispose();});
       for(const g of geometria)g.dispose();for(const m of materiales)m.dispose();for(const t of texturas)t.dispose();grupo.clear();
     }
+    senderoKiln?.actualizar(0);
     puerta(0);grupo.updateMatrixWorld(true);
     return {grupo,grupoPaisaje,porton,punto,coordenadas,limitar,actualizar,actualizarOclusion,oclusion,arboles,puerta,activar,dispose,encuentro,estado,precargar,escondites,
       estaciones:Object.freeze(Array.from({length:8},(_,i)=>({s:(i+1)*10,punto:punto((i+1)*10)}))),

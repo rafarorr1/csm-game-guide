@@ -2,14 +2,34 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-const contexto=vm.createContext({console});contexto.window=contexto;
-for(const f of ['visor-three-vendor.js','arpg-three-tutorial-mundo.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),contexto,{filename:f});
+const contexto=vm.createContext({console,atob});contexto.window=contexto;
+for(const f of ['visor-three-vendor.js','ruinas-kiln/datos.js','sendero-kiln/datos.js','arpg-three-tutorial-kiln.js','arpg-three-tutorial-mundo.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),contexto,{filename:f});
 const T=contexto.CAOZ_THREE.THREE,escena=new T.Scene(),m=contexto.CAOZ_ARPG_TUTORIAL_MUNDO.crear(T,{escena});
 let tiempo=0;
 const paso=segundos=>{for(let t=0;t<segundos;t+=1/60){tiempo+=1/60;m.actualizar({tiempo,s:53});}escena.updateMatrixWorld(true);};
 const resolver=(s,opciones={})=>m.coordenadas(m.limitar(m.punto(s),.45,opciones)).s;
 const altura=(s,z=0)=>{escena.updateMatrixWorld(true);const p=m.punto(s,z);p.y=10;const r=new T.Raycaster(p,new T.Vector3(0,-1,0));return r.intersectObjects(m.grupoPaisaje.children,true).filter(h=>h.object.visible&&h.object.parent.visible)[0]?.point.y;};
 const aproximar=(v,esperado,mensaje)=>assert(Math.abs(v-esperado)<1e-6,`${mensaje}: ${v} != ${esperado}`);
+
+// El kit real debe estar presente: comprobar sólo el paisaje de respaldo ocultaría una carga fallida.
+const kit=m.grupoPaisaje.getObjectByName('Tutorial · vía y ruinas de Kiln'),estadoKit=m.estado().kiln;
+assert(kit&&estadoKit.disponible&&estadoKit.instancias>0,'El sendero incluye las geometrías exportadas de Kiln');
+assert.equal(estadoKit.modulos,6);assert.equal(estadoKit.materiales,1);
+assert.equal(estadoKit.rechazadas,0,'La distribución diseñada cabe completa en las reservas del sendero');
+assert(estadoKit.triangulos<=30000,'La decoración completa respeta el presupuesto de 30.000 triángulos');
+const geometriaKit=new Set(),materialesKit=new Set(),matrizKit=new T.Matrix4(),cajaKit=new T.Box3();
+kit.traverse(o=>{
+ if(!o.isInstancedMesh)return;
+ geometriaKit.add(o.geometry);materialesKit.add(o.material);
+ assert(!o.castShadow,'La decoración no añade pases de sombras');
+ for(let i=0;i<o.count;i++){
+  o.getMatrixAt(i,matrizKit);cajaKit.copy(o.geometry.boundingBox).applyMatrix4(matrizKit).translate(o.parent.position);
+  for(const [a,b,z] of [[33.9,36.8,4.8],[51.5,56,6.8]])assert(!(cajaKit.max.x>a&&cajaKit.min.x<b&&cajaKit.max.z>-z&&cajaKit.min.z<z),'Una pieza invade fuego o grieta');
+  if(o.userData.kiln.tipo==='pavimento')assert(cajaKit.max.y<=.04001,'Las losas no elevan el suelo sobre los pies');
+  else assert(cajaKit.min.z>=4.299||cajaKit.max.z<=-4.299,'Una pieza sólida invade el corredor');
+ }
+});
+assert.equal(geometriaKit.size,6);assert.equal(materialesKit.size,1);
 
 m.encuentro('mover');paso(.8);assert.equal(m.estado().limiteS,null);
 aproximar(resolver(15),15,'El camino inicial permite caminar');
@@ -90,5 +110,10 @@ m.actualizarOclusion(camara,[haciaFuera]);assert(arbol.occlusion.oculto,'La hist
 camara.position.copy(m.grupo.localToWorld(new T.Vector3(caja.max.x+10,centro.y,centro.z)));camara.updateMatrixWorld(true);
 m.actualizarOclusion(camara,[haciaFuera]);assert(!arbol.occlusion.oculto,'La copa regresa cuando deja de invadir el primer plano');
 m.activar(false);assert.equal(m.oclusion.ocultos,0);aproximar(resolver(190),190,'Fuera del tutorial no hay colisión residual');
+assert(!kit.parent.visible,'El kit queda oculto junto al paisaje al salir del tutorial');
+let geometriasEliminadas=0,materialesEliminados=0;
+for(const g of geometriaKit)g.addEventListener('dispose',()=>geometriasEliminadas++);
+for(const material of materialesKit)material.addEventListener('dispose',()=>materialesEliminados++);
 m.dispose();assert.equal(escena.children.length,0);assert.doesNotThrow(()=>m.dispose());
+assert.equal(geometriasEliminadas,6);assert.equal(materialesEliminados,1);
 console.log('OK · Aventura del bosque: fuego exclusivo de dash a 20/30/60 fps, parry cuerpo a cuerpo/flecha, barranco, losas, salto, barricadas, escondites, búmeran y limpieza.');
