@@ -1,0 +1,67 @@
+{
+  "fecha": "2026-10-09",
+  "rol": "Lead designer / dirección de arte",
+  "dictamen": "Aprobado como primera pasada Alpha del bosque, encuentros y lectura de entrada a la ciudad; no aprobación AAA final.",
+  "evidencia": [
+    "outputs/tutorial-aventura/01-sendero-despues-basico.png",
+    "outputs/tutorial-aventura/02-parry-detenido.png",
+    "outputs/tutorial-aventura/03-emboscada-torbellino.png",
+    "outputs/tutorial-aventura/04-tronco-bumeran.png",
+    "outputs/tutorial-aventura/05-brecha-salto.png",
+    "outputs/tutorial-aventura/06-porton.png",
+    "work/arpg/outputs/tutorial-aventura/final-18.png",
+    "work/arpg/outputs/tutorial-aventura/final-64.png",
+    "work/arpg/outputs/tutorial-aventura/final-72.png",
+    "outputs/tutorial-aventura-arte/roble-horneado-revision/roble-color-revision.png",
+    "work/arpg/outputs/tutorial-aventura/puerta-final-antes.png",
+    "work/arpg/outputs/tutorial-aventura/puerta-final-cruzando.png",
+    "work/arpg/outputs/tutorial-aventura/puerta-final-dentro.png"
+  ],
+  "verificacion": {
+    "mapasCargados": 12,
+    "roblesScenario": 6,
+    "erroresMateriales": 0,
+    "pruebaRendimiento": "Las capturas usan avance determinista; fps0 no es una medición de rendimiento real. No se promete60fps a partir de estas capturas."
+  },
+  "elementos": [
+    {
+      "elemento": "Suelo húmedo y sendero",
+      "estado": "Aprobado Alpha",
+      "criterio": "Tierra, hojarasca y musgo coherentes; camino legible por delimitación y valor.",
+      "siguienteMejora": "Reducir detalle de alta frecuencia en el centro del sendero."
+    },
+    {
+      "elemento": "Corteza, ramas, raíces, troncos caídos",
+      "estado": "Aprobado Alpha",
+      "criterio": "Material mate compartido y desgaste compatible con casas; siluetas de obstáculos visibles."
+    },
+    {
+      "elemento": "Rocas, estratos y brecha",
+      "estado": "Aprobado Alpha",
+      "criterio": "El corte interrumpe el camino de forma visible, tiene paredes y profundidad real, sin suelo flotando por encima."
+    },
+    {
+      "elemento": "Pinos, helechos y arbustos del atlas",
+      "estado": "Aprobado Alpha",
+      "criterio": "Siluetas recortadas reemplazan conos/bolas; copas próximas ocultadas para mantener legible combate/HUD.",
+      "siguienteMejora": "Más variación de ramas y transición visual al ocultarlas; pino no tiene malla3D generada por Scenario."
+    },
+    {
+      "elemento": "Roble3D de Trellis",
+      "estado": "Aprobado Alpha para entorno isométrico",
+      "criterio": "5900tris, UV nuevas, atlas1024 corregido marrón/oliva; fuente con follaje gris fue rechazada antes de integración definitiva.",
+      "siguienteMejora": "Retopología y UV de mayor ocupación para planos cercanos; no primerísimos planos."
+    },
+    {
+      "elemento": "Farol de Scenario",
+      "estado": "Reutilización aprobada",
+      "criterio": "Mismo modelo aprobado de casas, material compartido y brillo moderado, sin nuevas sombras caras."
+    },
+    {
+      "elemento": "Portón/muralla existente",
+      "estado": "Aprobado Alpha después de corregir oclusión",
+      "criterio": "Revisadas capturas antes/cruzando/dentro: Adreida visible durante la entrada y dintel restaurado al regresar al juego normal.",
+      "siguienteMejora": "La piedra conserva el modelado anterior, susceptible de una pasada futura de detalle."
+    }
+  ]
+}

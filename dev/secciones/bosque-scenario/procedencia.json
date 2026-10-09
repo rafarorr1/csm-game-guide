@@ -1,0 +1,252 @@
+{
+  "nombre": "Bosque de Tomsage · Tutorial aventura",
+  "fecha": "2026-10-09",
+  "team_id": "team_fusHPzE5VJ4KYZ3QPyxC2Eaa",
+  "project_id": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "coleccion": "col_gNKgrJmSqLKn7Rm2NbVpQYBE",
+  "generaciones": [
+    {
+      "name": "suelo",
+      "model_id": "model_scenario-texture",
+      "parameters": {
+        "prompt": "Material para Caoz ARPG: fantasía medieval oscura de realismo estilizado, formas naturales creíbles, acabado mate, paleta desaturada oliva, marrón húmedo y gris pizarra. Solo superficie perfectamente plana vista perpendicularmente, iluminación difusa neutra sin sombras direccionales, sin objetos elevados, sin perspectiva, sin texto. Textura continua repetible en ambos ejes. Suelo de bosque húmedo: tierra marrón oscura compactada y arcillosa, pequeños granos minerales, hojas de roble caídas descompuestas dispersas, agujas de pino, musgo verde oscuro en manchas irregulares. Escala física 3 metros por tesela. 75% tierra visible, hojarasca sutil sin hojas gigantes, pequeñas raíces finas. No grandes charcos ni adoquines.",
+        "width": 1024,
+        "height": 1024,
+        "quality": "high",
+        "eraseSeam": true
+      },
+      "job_id": "job_652XP5mEbVxhCoKEAWneNMJB",
+      "status": "success",
+      "asset_id": "asset_nf4FK3LFL3nrgx7P5H3Ru7ou",
+      "cuCost": 33
+    },
+    {
+      "name": "corteza",
+      "model_id": "model_scenario-texture",
+      "parameters": {
+        "prompt": "Material para Caoz ARPG: fantasía medieval oscura de realismo estilizado, formas naturales creíbles, acabado mate, paleta desaturada oliva, marrón húmedo y gris pizarra. Solo superficie perfectamente plana vista perpendicularmente, iluminación difusa neutra sin sombras direccionales, sin objetos elevados, sin perspectiva, sin texto. Textura continua repetible en ambos ejes. Corteza vieja de tronco de roble y pino, fibras y fisuras predominantemente verticales, marrón grisáceo oscuro, relieve irregular legible, líquenes gris verdoso muy sutiles y pequeñas manchas de musgo. Sin rama entera ni árbol, solo corteza desenrollada. Escala física 1 metro ancho x 2 metros alto.",
+        "width": 1024,
+        "height": 1024,
+        "quality": "high",
+        "eraseSeam": true
+      },
+      "job_id": "job_6ZC3mADcYb9gRKJcUsnKKKYv",
+      "status": "success",
+      "asset_id": "asset_61QHCVRKxbCmMqKojY14UXh9",
+      "cuCost": 33
+    },
+    {
+      "name": "roca",
+      "model_id": "model_scenario-texture",
+      "parameters": {
+        "prompt": "Material para Caoz ARPG: fantasía medieval oscura de realismo estilizado, formas naturales creíbles, acabado mate, paleta desaturada oliva, marrón húmedo y gris pizarra. Solo superficie perfectamente plana vista perpendicularmente, iluminación difusa neutra sin sombras direccionales, sin objetos elevados, sin perspectiva, sin texto. Textura continua repetible en ambos ejes. Roca de pizarra y granito erosionado de bosque, gris frío medio oscuro, grietas naturales angulares profundas pero pocas, vetas finas, líquenes y pequeños parches de musgo oliva en 15% de la superficie. Color plano sin luz horneada. Escala física 2 metros por tesela. Sin rocas individuales ni objetos.",
+        "width": 1024,
+        "height": 1024,
+        "quality": "high",
+        "eraseSeam": true
+      },
+      "job_id": "job_pVu5852hA9NDG71uZmq3KKDB",
+      "status": "success",
+      "asset_id": "asset_7PyvbrsCc9zyaUsXP3UJ7uEo",
+      "cuCost": 33
+    },
+    {
+      "name": "follaje",
+      "model_id": "model_openai-gpt-image-2-5-sunburst",
+      "parameters": {
+        "prompt": "Atlas RGBA de follaje para Caoz ARPG, fantasía medieval oscura, realismo estilizado muy detallado, color verde oliva desaturado, textura mate sin brillos ni sombras. FONDO TRANSPARENTE REAL. Exactamente CUATRO elementos AISLADOS que no se tocan, cuadrícula 2x2 con margen transparente de 40 píxeles alrededor de cada celda. Arriba izquierda: una rama frondosa de pino vista plana frontal, agujas agrupadas en mechones verdes legibles y ramas marrones. Arriba derecha: una rama de roble con 15 hojas lobuladas y tallos finos, vista frontal plana. Abajo izquierda: un helecho arqueado completo visto frontal con 9 frondas elegantes y foliolos detallados. Abajo derecha: arbusto bajo y denso completo con pequeñas hojas ovaladas verdes, dos ramas visibles. Cada elemento ocupa casi toda su celda, sin etiquetas, sin macetas, sin tierra, sin pedestal, sin resplandor, sin decoración. Luz difusa neutra, detalles que resisten verse pequeños en un ARPG isométrico.",
+        "width": 1024,
+        "height": 1024,
+        "quality": "high",
+        "background": "transparent",
+        "numOutputs": 1
+      },
+      "job_id": "job_Qq43J1ci6TeVYXnUmoPr8K8Y",
+      "status": "success",
+      "asset_id": "asset_oNUEc3q2vQoqT4ckhqqfUP4z",
+      "cuCost": 12
+    },
+    {
+      "name": "pino",
+      "model_id": "model_openai-gpt-image-2-5-sunburst",
+      "parameters": {
+        "prompt": "Concepto de activo 3D individual para Caoz ARPG, fantasía medieval oscura de realismo estilizado, materiales mate detallados con color oliva desaturado, corteza marrón grisácea. Referencia solo para lenguaje de materiales artesanal y paleta; no copiar habitación. Un pino forestal adulto de ocho metros de altura, tronco irregular visible y varias ramas leñosas asimétricas, copa esbelta de agujas agrupadas en masas orgánicas bien recortadas, NO cono perfecto, huecos pequeños entre ramas y silueta natural. Árbol entero de base a copa aislado centrado sobre fondo gris claro uniforme. Vista tres cuartos. Sin suelo, base, maceta, roca, casa, personaje, texto, sombras proyectadas ni objetos adicionales. Texturas sin luz horneada, iluminación difusa neutra. Construcción legible para reconstrucción 3D, no miles de agujas sueltas.",
+        "referenceImages": [
+          "asset_MEz2eqvKQoFfw5qbutUFzD43"
+        ],
+        "width": 1024,
+        "height": 1280,
+        "quality": "high",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "job_id": "job_vFWVqdWykjpbPVdrFCSRm7ej",
+      "status": "success",
+      "asset_id": "asset_1k5VmtHgzctpRYk1rfL5oBYQ",
+      "cuCost": 12
+    },
+    {
+      "name": "roble",
+      "model_id": "model_openai-gpt-image-2-5-sunburst",
+      "parameters": {
+        "prompt": "Concepto de activo 3D individual para Caoz ARPG, fantasía medieval oscura de realismo estilizado, materiales mate detallados con color oliva desaturado, corteza marrón grisácea. Referencia solo para lenguaje de materiales artesanal y paleta; no copiar habitación. Un roble forestal joven de siete metros de altura, tronco ligeramente retorcido visible con raíces expuestas y ramas leñosas asimétricas, copa ancha irregular con grupos separados de hojas, silueta elegante de bosque oscuro. Árbol entero de base a copa aislado centrado sobre fondo gris claro uniforme. Vista tres cuartos. Sin suelo, base, maceta, roca, casa, personaje, texto, sombras proyectadas ni objetos adicionales. Texturas sin luz horneada, iluminación difusa neutra. Construcción legible para reconstrucción 3D, no miles de agujas sueltas.",
+        "referenceImages": [
+          "asset_MEz2eqvKQoFfw5qbutUFzD43"
+        ],
+        "width": 1024,
+        "height": 1280,
+        "quality": "high",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "job_id": "job_Cev6DiwZhawayeh6rp4sfPnD",
+      "status": "success",
+      "asset_id": "asset_AEZWktv6z1W4FuXywFJUTSwU",
+      "cuCost": 12
+    },
+    {
+      "name": "roble-3d",
+      "model_id": "model_trellis-2",
+      "parameters": {
+        "image": "asset_AEZWktv6z1W4FuXywFJUTSwU",
+        "resolution": 512,
+        "decimationTarget": 100000,
+        "textureSize": 1024
+      },
+      "job_id": "job_sNSAGwvfMYuKDNkgEgrYxePm",
+      "status": "success",
+      "asset_id": "asset_Pp79W459ukK2MaReiJ74bWfX",
+      "cuCost": 38,
+      "triangulosOriginal": 95842,
+      "triangulosRuntime": 5900,
+      "preparacion": "Decimate en Blender5.2.2 a5900triángulos, UV reconstruidas y horneado emisión desde fuente original. Corrección artística local de follaje grisclaro de Trellis a oliva y corteza marrón. Atlas1024, Yarriba/altura1/baseY0/centroXZ0, geometría compartida instanciada.",
+      "normal": "El proveedor no entregó mapa normal: textura normal plana, volumen por normales de vértice.",
+      "revisionGeometria": "outputs/tutorial-aventura-arte/roble-horneado-revision/roble-color-revision.png",
+      "revisionUV": {
+        "solapamientoPorcentaje": 0.001,
+        "carasInvertidas": 0,
+        "carasAreaCero": 0,
+        "errorAngularP95": 15.26,
+        "ocupacionAtlas": 0.0948,
+        "nota": "Muchísimas islas de follaje consumen margen. Aceptación limitada a árboles de entorno en cámara isométrica; no primerísimo plano ni acabado AAA final."
+      },
+      "sha256GlbFinal": "93d4018474153a37d6d2c303be62b998cf79e7ce92f3979f1d7a351507719cd9"
+    }
+  ],
+  "reutilizados": {
+    "farol": "asset_Uv64is8QQVgFJyXA7pVyouXR",
+    "estilo": "asset_MEz2eqvKQoFfw5qbutUFzD43"
+  },
+  "notas": {
+    "normal": "OpenGL derivada de luminancia; aproximación, no medida.",
+    "superficie": "R=1 sin AO añadido,G=rugosidad,B=altura aproximada; no usar B como metalness.",
+    "foliage": "RGBA alphaTest .45, no transparencia mezclada ni depthWrite false."
+  },
+  "costeCU": 173,
+  "mallas3D": {
+    "estado": "Roble generado con Trellis2 e integrado; pino resuelto con atlas Scenario y geometría artesanal instanciada.",
+    "alternativas": [
+      {
+        "modelo": "model_tripo-v3-1-image-to-3d",
+        "costeCotizadoCadaUnaCU": 45,
+        "estado": "Dos solicitudes rechazadas antes de crear job por cuota custom-generation: actionValue1459/actionLimit1500. No cobradas."
+      },
+      {
+        "modelo": "model_trellis-2",
+        "costeCotizadoCU": 38,
+        "estado": "Generación de roble completada."
+      },
+      {
+        "modelo": "model_hunyuan-3.1",
+        "costeCotizadoCU": 120,
+        "estado": "Solo cotización; no ejecutado."
+      },
+      {
+        "modelo": "Meshy7.1/Pixal3D/PATINA",
+        "estado": "No accesibles con el plan actual; no se modificó suscripción."
+      }
+    ],
+    "limitacion": "No hay malla de pino generada por Scenario. Los pinos utilizan ramas del atlas generado, troncos y ramas de geometría compartida. No se afirma calidad AAA alcanzada."
+  },
+  "coleccionVerificada": true,
+  "activosRuntime": [
+    {
+      "archivo": "arboles-datos.js",
+      "bytes": 659496,
+      "sha256": "5550ec3497c60c111a12301bb7569ca3f19956405c00a65e1033f53f1cec5e69"
+    },
+    {
+      "archivo": "corteza-color.webp",
+      "bytes": 388012,
+      "sha256": "2c1af07f555561642105e6c2052cd9423a137c46c910a58d4ae67299f0da1c16"
+    },
+    {
+      "archivo": "corteza-normal.webp",
+      "bytes": 123744,
+      "sha256": "47cc44c2a429bef4eb840f565940106153db0e7d6fc4eed71297ecd4ffe9a087"
+    },
+    {
+      "archivo": "corteza-superficie.webp",
+      "bytes": 33990,
+      "sha256": "b4d717bf62f1834d157efc08b61466a2aae40a52bdfb4ea4f611c69d88c7d926"
+    },
+    {
+      "archivo": "follaje-atlas.webp",
+      "bytes": 449808,
+      "sha256": "7e43afc68d1e75c22e109fc673fb7c8b7fef306261ae868dd245c7d79fc4a473"
+    },
+    {
+      "archivo": "roble-color.webp",
+      "bytes": 354714,
+      "sha256": "abf481fbcaf0d899ce762aa9ee70aabfbffd24d5ec4585b3646ceb802e24807b"
+    },
+    {
+      "archivo": "roble-normal.webp",
+      "bytes": 54,
+      "sha256": "712d1371e11f98059ba3bf11c374f30255662b89867042c3423a3e8b290da97b"
+    },
+    {
+      "archivo": "roca-color.webp",
+      "bytes": 379360,
+      "sha256": "6407ab6b4f259fc61dd73101dc954caf3d5073df1d1900b3f960232ddc662507"
+    },
+    {
+      "archivo": "roca-normal.webp",
+      "bytes": 113526,
+      "sha256": "61cbc56196b747f20aa547c1f3ef0462da869609f219dbc9c8b0175626228f95"
+    },
+    {
+      "archivo": "roca-superficie.webp",
+      "bytes": 34382,
+      "sha256": "e45d96d7e70907bf07503c8e07ed62a87f48c848fb58e1c3236693774d71fea4"
+    },
+    {
+      "archivo": "suelo-color.webp",
+      "bytes": 375346,
+      "sha256": "1204d600921d3fc73b96d93b86c4313e158dc51c4585eaeaae8320d91565074b"
+    },
+    {
+      "archivo": "suelo-normal.webp",
+      "bytes": 119254,
+      "sha256": "9da1c43cc971ce9001d7c568a3720422898b74fbecd43621a2a3826043bd23fe"
+    },
+    {
+      "archivo": "suelo-superficie.webp",
+      "bytes": 39530,
+      "sha256": "398dd43362bb9ef8ba6c9dc54e8dd3561c1e40908ea12faf10b431b217b46945"
+    }
+  ],
+  "bytesRuntime": 3071216,
+  "presupuesto": {
+    "texturas": 12,
+    "resolucionAlbedoMateriales": 1024,
+    "resolucionNormalesSuperficie": 512,
+    "atlasFollaje": 1024,
+    "atlasRoble": 1024,
+    "lucesNuevasConSombra": 0,
+    "triangulosRoble": 5900,
+    "instanciasRoblePrevistas": 6
+  },
+  "revisionArte": "revision-arte.json",
+  "estadoArte": "Primera pasada Alpha aprobada para bosque, encuentros y entrada tras corrección del dintel."
+}

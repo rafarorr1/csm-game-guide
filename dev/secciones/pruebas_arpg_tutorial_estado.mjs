@@ -43,13 +43,13 @@ tutorial.paso(.1,{avance:70,vivo:false});assert.equal(tutorial.estado().avance,2
 assert(!tutorial.evento('impacto-cargado'),'Un personaje caído no completa acciones');
 tutorial.paso(.1,{avance:24,vivo:true});assert(tutorial.evento('impacto-cargado',{cargaCompleta:true}));
 
-// Adelantarse por el sendero conserva el reto pendiente; no impone un límite de avance.
+// La máquina conserva el reto pendiente incluso si recibe un avance fuera del encuentro.
 tutorial.paso(.1,{avance:83});assert.equal(tutorial.estado().avance,83);assert.equal(tutorial.objetivo.id,'dash');assert(!tutorial.bloquea);
 assert(tutorial.evento('dash'));assert.equal(tutorial.objetivo.id,'parry');assert(tutorial.objetivo.disponible);
 assert(!tutorial.evento('parry',{perfecto:false}));assert(tutorial.evento('parry',{perfecto:true}));
 for(const evento of ['impacto-salto','impacto-torbellino','impacto-boomerang'])assert(tutorial.evento(evento));
 assert.equal(tutorial.objetivo.id,'ulti');assert(!tutorial.finalizar(),'No puede terminar antes de entrar');
-assert(tutorial.evento('ulti'));assert.equal(tutorial.objetivo.id,'puerta');
+assert(!tutorial.evento('ulti'),'Invocar no sustituye un golpe real del aliado');assert(tutorial.evento('impacto-aliado'));assert.equal(tutorial.objetivo.id,'puerta');
 assert.equal(lecciones.at(-1).id,'puerta','Abre la puerta en cuanto se aprende la ulti');assert.equal(entradas.length,0);
 assert.equal(tutorial.estado().fase,'puerta');assert(!tutorial.bloquea);
 assert.equal(hijos(escenario,'apTutorialPaso').textContent,'9 / 9 completados');
