@@ -7,7 +7,7 @@
     const HUECO=Object.freeze({desde:52,hasta:55.5,semiancho:6.3,profundidad:8});
     // El dash recorre 2.72 m en .2 s; 2.3 m de brasas y dos márgenes de .12 m caben en uno.
     const FUEGO=Object.freeze({desde:34.2,hasta:36.5,semiancho:4.5,margen:.12});
-    const LIMITES=Object.freeze({basico:19,cargado:29,dash:39,parry:46,'parry-flecha':49,salto:61,torbellino:70,boomerang:76,ulti:83});
+    const LIMITES=Object.freeze({basico:19,cargado:29,parry:46,'parry-flecha':49,salto:61,torbellino:70,boomerang:76,ulti:83});
     const origen=new THREE.Vector3(-C*26-C*LARGO,0,13+S*LARGO);
     const grupo=new THREE.Group(),grupoPaisaje=new THREE.Group(),porton=new THREE.Group();
     grupo.name='Tutorial · camino del bosque a Tomsage';
@@ -193,7 +193,11 @@
         const s=entre(inicio,Math.min(fin,79));if(s>75&&azar()<.7)continue;
         const lado=n%2?1:-1,z=lado*entre(s>72?12:7.1,35),x=s-centro;
         const alto=entre(6.8,12.6),ancho=entre(1.45,2.75),radio=entre(.22,.43),giro=entre(0,Math.PI*2),tono=entre(.76,1.17);
-        const conifera=azar()<.68;arbolActual={x:s,z,alto,ancho,conifera,giro};
+        const conifera=azar()<.68;
+        // La cámara mira desde z positivo: ese margen queda bajo y sin árboles en primer plano.
+        // Consumir el azar de sus raíces conserva intactos el bosque de fondo y el paisaje bajo.
+        if(lado>0){if(z<12)for(let r=0;r<3;r++)azar();continue;}
+        arbolActual={x:s,z,alto,ancho,conifera,giro};
         Object.defineProperty(arbolActual,'occlusion',{value:{caja:new THREE.Box3(),slots:[],oculto:false}});arboles.push(arbolActual);
         instancia(madera,x,alto*.34,z,radio,alto*.68,radio,giro,tono);
         if(conifera){
@@ -568,7 +572,7 @@
           cajaPieza.copy(g.boundingBox).applyMatrix4(matriz).translate(p.malla.parent.position);a.occlusion.caja.union(cajaPieza);
         }}
       }));
-      // Las mallas completas se reservan para seis primeros planos por especie disponible.
+      // Las mallas completas se reservan para seis árboles del fondo por especie disponible.
       // Las siluetas lejanas siguen siendo tarjetas instanciadas; nunca se clona un material por árbol.
       for(const tipo of ['pino','roble']){
         const datos=window.CAOZ_BOSQUE_ARBOLES_DATOS?.[tipo];if(!datos)continue;
@@ -580,9 +584,9 @@
           if(datos.index)g.setIndex(new THREE.BufferAttribute(decodificar(datos.index,Uint16Array),1));
           g.computeBoundingBox();g.computeBoundingSphere();
           const material=mat(0xffffff,{map:mapa,normalMap:normal,normalScale:new THREE.Vector2(.4,.4),roughness:.98,envMapIntensity:.06});
-          const candidatos=arboles.filter(a=>a.conifera===(tipo==='pino')&&Math.abs(a.z)<14&&a.x>1&&a.x<80),elegidos=[],usados=new Set();
-          for(const [i,s] of [6,20,34,48,62,74].entries()){
-            const lado=i%2?1:-1,dist=a=>Math.pow(a.x-s,2)+Math.pow(a.z-lado*9,2)*2;
+          const candidatos=arboles.filter(a=>a.conifera===(tipo==='pino')&&a.z<0&&a.z>-14&&a.x>1&&a.x<80),elegidos=[],usados=new Set();
+          for(const s of [6,20,34,48,62,74]){
+            const dist=a=>Math.pow(a.x-s,2)+Math.pow(a.z+9,2)*2;
             const a=candidatos.filter(a=>!usados.has(a)).sort((a,b)=>dist(a)-dist(b))[0];if(a){usados.add(a);elegidos.push(a);}
           }
           if(!elegidos.length)return;

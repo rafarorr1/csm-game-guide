@@ -19,10 +19,10 @@ for(const tutorial of [false,true]){
     indicesArboles.get(slot.malla).add(slot.indice);
   }
   const distribucion=JSON.stringify(bosque.arboles),colisiones=JSON.stringify(obstaculos);
-  const a=tutorial?bosque.arboles.find(a=>a.z>7&&a.z<12&&a.x>2&&a.x<70&&a.occlusion.slots.length>5):bosque.arboles[0];
+  const a=tutorial?bosque.arboles.find(a=>a.z< -7&&a.z> -12&&a.x>2&&a.x<70&&a.occlusion.slots.length>5):bosque.arboles[0];
   assert(a,'Hay un árbol con piezas reales que puede cruzar la vista');
   const mundo=(x,y,z)=>bosque.grupo.localToWorld(new T.Vector3(x,y,z));
-  const objetivo=mundo(a.x,0,tutorial?0:a.z-10);
+  const objetivo=mundo(a.x,0,a.z-10);
   camara.position.copy(mundo(a.x,14,a.z+10));
   assert(bosque.actualizarOclusion(camara,[objetivo])>0);
   assert.equal(a.occlusion.oculto,true,'Un árbol entre la cámara y el héroe se oculta');
