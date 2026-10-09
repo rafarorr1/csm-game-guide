@@ -379,6 +379,14 @@ Las cajas y barriles se construyen en `casas-three.js` mediante `utileria('caja'
 
 ## Caoz ARPG (ARPG en three.js, proyecto paralelo)
 
+### Prueba de Kiln · ruinas modulares
+
+`arpg-kiln.html` es un estudio aislado de tres muros bajos de piedra y musgo: recto (704 triángulos), esquina en L (1.100) y remate roto (704). Abre `http://127.0.0.1:8878/dev/secciones/arpg-kiln.html` con el servidor local. Permite girar la cámara, revisar la malla, alternar las texturas y el color de musgo, comparar la escala con 1,8 m y descargar cada GLB.
+
+Las fuentes editables, los GLB exportados realmente con Kiln 1.1.0 y su conversor están en `ruinas-kiln/`. El exportador Three de Kiln es experimental y se eligió para conservar los colores de vértice. Los GLB guardan las piedras nombradas por separado; el conversor aplica sus transformaciones y las fusiona en una geometría por módulo. El visor reutiliza los mapas de roca de `bosque-scenario/`, un único material de piedra y un `InstancedMesh` por tipo. Kiln se usa durante la preparación, sin cargarse en el navegador. Estos recursos no forman parte de la precarga ni del paquete publicado del juego.
+
+El visor compara 0, 1, 30 y 100 repeticiones con cámara, resolución y sombras constantes. En «El conjunto», una repetición equivale a tres módulos. Las métricas distinguen geometría única por instancia, envíos de muros, pases de sombras y escena completa. El tiempo CPU de `renderer.render` sólo mide el envío de comandos; el intervalo rAF incluye la espera del navegador y no es una medición aislada de GPU ni garantiza los FPS del juego completo. El caso 0 sirve como referencia del suelo y la iluminación.
+
 ### Tutorial · Camino a Tomsage
 
 Las partidas individuales de Adreida en la etapa 1 empiezan en un bosque, con un sendero de 85 metros que avanza hacia la derecha de la pantalla y desemboca en la puerta suroeste. El recorrido enseña diez acciones mediante encuentros programados:

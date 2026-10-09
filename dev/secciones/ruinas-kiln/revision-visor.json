@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "fecha": "2026-10-09T06:25:01.933Z",
+  "navegador": "155.0.8059.39",
+  "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2 Max, Unspecified Version)",
+  "entorno": "Chrome headless, viewport 1440×1000, DPR 1; canvas 1058×700. Visor aislado, sin combate.",
+  "fuentesSha256": {
+    "arpg-kiln.html": "6cc666691f4a8b8bbd83cc953636569fb3e9a1ef8af0eaa9f689b3743d7bc252",
+    "arpg-kiln.css": "40a85d675047ea165db016749c4db9bb3f3fe3d5e93da509bed88bebc5846854",
+    "arpg-kiln.js": "b08e2d2aed347d33891e7c431b80f4f7e9606db628419de2c407179337ec9f0d",
+    "ruinas-kiln/datos.js": "46928c092e8e439de0e76a9ff73fea82e307e1322bd8f20137ab0456775e007a"
+  },
+  "comprobaciones": [
+    "Carga sin errores JavaScript, consola ni HTTP 4xx/5xx",
+    "Controles de selección, órbita, textura, musgo, malla y escala",
+    "Descarga de los tres GLB con MIME model/gltf-binary",
+    "Interfaz de 390 px sin desbordamiento horizontal",
+    "Vista y sombras: tres lotes constantes de muros para 3, 90 y 300 módulos",
+    "Revisión visual de tres módulos, conjunto, malla, referencia humana y móvil"
+  ],
+  "comparacion": {
+    "fecha": "2026-10-09T06:25:01.933Z",
+    "resultados": [
+      {
+        "cantidad": 0,
+        "modulo": "conjunto",
+        "piezas": 0,
+        "lotes": 0,
+        "triangulosMuros": 0,
+        "llamadas": 1,
+        "triangulosEscena": 2,
+        "llamadasMuros": 0,
+        "llamadasMurosVista": 0,
+        "llamadasMurosSombra": 0,
+        "muestras": 180,
+        "cpu": {
+          "media": 0.1638889127307468,
+          "p50": 0.20000004768371582,
+          "p95": 0.20000004768371582
+        },
+        "raf": {
+          "media": 16.666111111111114,
+          "p50": 16.699999999999818,
+          "p95": 16.700000000000728
+        },
+        "resolucion": [
+          1058,
+          700
+        ],
+        "dpr": 1,
+        "material": {
+          "texturas": true,
+          "musgo": true,
+          "wireframe": false
+        },
+        "nota": "CPU mide renderer.render (envío); rAF mide intervalos entre callbacks. No se mide tiempo de GPU.",
+        "deltaCpuP95": 0
+      },
+      {
+        "cantidad": 1,
+        "modulo": "conjunto",
+        "piezas": 3,
+        "lotes": 3,
+        "triangulosMuros": 2508,
+        "llamadas": 7,
+        "triangulosEscena": 5018,
+        "llamadasMuros": 6,
+        "llamadasMurosVista": 3,
+        "llamadasMurosSombra": 3,
+        "muestras": 180,
+        "cpu": {
+          "media": 0.19166666666666668,
+          "p50": 0.20000004768371582,
+          "p95": 0.2999999523162842
+        },
+        "raf": {
+          "media": 16.66611111111111,
+          "p50": 16.69999999999891,
+          "p95": 16.700000000000728
+        },
+        "resolucion": [
+          1058,
+          700
+        ],
+        "dpr": 1,
+        "material": {
+          "texturas": true,
+          "musgo": true,
+          "wireframe": false
+        },
+        "nota": "CPU mide renderer.render (envío); rAF mide intervalos entre callbacks. No se mide tiempo de GPU.",
+        "deltaCpuP95": 0.09999990463256836
+      },
+      {
+        "cantidad": 30,
+        "modulo": "conjunto",
+        "piezas": 90,
+        "lotes": 3,
+        "triangulosMuros": 75240,
+        "llamadas": 7,
+        "triangulosEscena": 150482,
+        "llamadasMuros": 6,
+        "llamadasMurosVista": 3,
+        "llamadasMurosSombra": 3,
+        "muestras": 180,
+        "cpu": {
+          "media": 0.1799999753634135,
+          "p50": 0.20000004768371582,
+          "p95": 0.2999999523162842
+        },
+        "raf": {
+          "media": 16.666111111111118,
+          "p50": 16.69999999999891,
+          "p95": 16.700000000000728
+        },
+        "resolucion": [
+          1058,
+          700
+        ],
+        "dpr": 1,
+        "material": {
+          "texturas": true,
+          "musgo": true,
+          "wireframe": false
+        },
+        "nota": "CPU mide renderer.render (envío); rAF mide intervalos entre callbacks. No se mide tiempo de GPU.",
+        "deltaCpuP95": 0.09999990463256836
+      },
+      {
+        "cantidad": 100,
+        "modulo": "conjunto",
+        "piezas": 300,
+        "lotes": 3,
+        "triangulosMuros": 250800,
+        "llamadas": 7,
+        "triangulosEscena": 501602,
+        "llamadasMuros": 6,
+        "llamadasMurosVista": 3,
+        "llamadasMurosSombra": 3,
+        "muestras": 180,
+        "cpu": {
+          "media": 0.1716666579246521,
+          "p50": 0.19999980926513672,
+          "p95": 0.2999999523162842
+        },
+        "raf": {
+          "media": 16.666111111111118,
+          "p50": 16.69999999999709,
+          "p95": 16.799999999999272
+        },
+        "resolucion": [
+          1058,
+          700
+        ],
+        "dpr": 1,
+        "material": {
+          "texturas": true,
+          "musgo": true,
+          "wireframe": false
+        },
+        "nota": "CPU mide renderer.render (envío); rAF mide intervalos entre callbacks. No se mide tiempo de GPU.",
+        "deltaCpuP95": 0.09999990463256836
+      }
+    ],
+    "encuadreFijo": true,
+    "sombrasFijas": true,
+    "referenciaEscala": false
+  },
+  "limite": "No mide GPU directamente ni predice FPS en combate u otros equipos. Temporizadores CPU con resolución limitada; no interpretar décimas como mejoras reproducibles."
+}

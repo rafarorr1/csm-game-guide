@@ -1,0 +1,590 @@
+{
+  "version": 1,
+  "motor": {
+    "nombre": "@instruktlabs/kiln",
+    "version": "1.1.0",
+    "referencia": "@instruktlabs/kiln@1.1.0",
+    "npmIntegrity": "sha512-Ab1FTUzu4PUeth2bqeG8UyZDHDk1MgKmjddVQ0MmoVHTewJZ+AJsRI+MIFHB+sObMZgWPgqbleuPYIiOmMwDtg=="
+  },
+  "node": "v24.14.1",
+  "exportador": "three",
+  "exportadorExperimental": true,
+  "opcionesKiln": {
+    "gltfExporter": "three",
+    "geometryPolicy": "strict",
+    "optimize": "off",
+    "instance": "off"
+  },
+  "contrato": "GLB estático real de Kiln -> conversor local -> una malla por módulo; sin Kiln ni GLTFLoader durante la partida",
+  "material": {
+    "nombre": "Caoz_Piedra_Compartida",
+    "compartidoEntreModulos": true,
+    "mapasReutilizados": [
+      "../bosque-scenario/roca-color.webp",
+      "../bosque-scenario/roca-normal.webp",
+      "../bosque-scenario/roca-superficie.webp"
+    ],
+    "nuevasImagenes": 0
+  },
+  "preservacionPiezas": "Los GLB/fuentes conservan nodos por piedra. datos.js concatena para una draw call por módulo. Los rangos de índices de este manifiesto permiten extraer fragmentos, pero no implementan destrucción.",
+  "runtime": {
+    "archivo": "datos.js",
+    "bytes": 341669,
+    "sha256": "46928c092e8e439de0e76a9ff73fea82e307e1322bd8f20137ab0456775e007a"
+  },
+  "revisionVisual": "Pendiente de revisión en la cámara/iluminación real del visor; los checks geométricos no certifican calidad artística ni FPS.",
+  "modulos": [
+    {
+      "id": "recto",
+      "nombre": "Muro quebrado",
+      "glb": "glb/recto.glb",
+      "glbSha256": "80e3a8ec8941d05c74043a46e4d5f4b892c750b52dc78fbdb101db34e23d7f1c",
+      "glbBytes": 81456,
+      "triangulos": 704,
+      "vertices": 1536,
+      "materiales": 1,
+      "dimensiones": [
+        2,
+        0.86,
+        0.42
+      ],
+      "color": "COLOR_0 conservado del GLB y multiplicado por baseColorFactor",
+      "piezas": [
+        {
+          "nombre": "Piedra_01_base_1",
+          "primerIndice": 0,
+          "cantidadIndices": 132,
+          "primerVertice": 0,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02794762
+        },
+        {
+          "nombre": "Piedra_02_base_2",
+          "primerIndice": 132,
+          "cantidadIndices": 132,
+          "primerVertice": 96,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03122108
+        },
+        {
+          "nombre": "Piedra_03_base_3",
+          "primerIndice": 264,
+          "cantidadIndices": 132,
+          "primerVertice": 192,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02716494
+        },
+        {
+          "nombre": "Piedra_04_base_4",
+          "primerIndice": 396,
+          "cantidadIndices": 132,
+          "primerVertice": 288,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.0338514
+        },
+        {
+          "nombre": "Piedra_05_base_5",
+          "primerIndice": 528,
+          "cantidadIndices": 132,
+          "primerVertice": 384,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02966045
+        },
+        {
+          "nombre": "Piedra_06_media_1",
+          "primerIndice": 660,
+          "cantidadIndices": 132,
+          "primerVertice": 480,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.04126031
+        },
+        {
+          "nombre": "Piedra_07_media_2",
+          "primerIndice": 792,
+          "cantidadIndices": 132,
+          "primerVertice": 576,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03530977
+        },
+        {
+          "nombre": "Piedra_08_media_3",
+          "primerIndice": 924,
+          "cantidadIndices": 132,
+          "primerVertice": 672,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.04190959
+        },
+        {
+          "nombre": "Piedra_09_media_4",
+          "primerIndice": 1056,
+          "cantidadIndices": 132,
+          "primerVertice": 768,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03327942
+        },
+        {
+          "nombre": "Piedra_10_coronacion_izquierda_1",
+          "primerIndice": 1188,
+          "cantidadIndices": 132,
+          "primerVertice": 864,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02755961
+        },
+        {
+          "nombre": "Piedra_11_coronacion_izquierda_2",
+          "primerIndice": 1320,
+          "cantidadIndices": 132,
+          "primerVertice": 960,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03742078
+        },
+        {
+          "nombre": "Piedra_12_coronacion_derecha_1",
+          "primerIndice": 1452,
+          "cantidadIndices": 132,
+          "primerVertice": 1056,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.01611873
+        },
+        {
+          "nombre": "Piedra_13_coronacion_derecha_2",
+          "primerIndice": 1584,
+          "cantidadIndices": 132,
+          "primerVertice": 1152,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02225547
+        },
+        {
+          "nombre": "Piedra_14_rotura_alta",
+          "primerIndice": 1716,
+          "cantidadIndices": 132,
+          "primerVertice": 1248,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.01323009
+        },
+        {
+          "nombre": "Piedra_15_laja_caida_centro",
+          "primerIndice": 1848,
+          "cantidadIndices": 132,
+          "primerVertice": 1344,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00603433
+        },
+        {
+          "nombre": "Piedra_16_laja_coronacion",
+          "primerIndice": 1980,
+          "cantidadIndices": 132,
+          "primerVertice": 1440,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00204293
+        }
+      ],
+      "comprobaciones": [
+        "GLB2 y chunks completos",
+        "material único",
+        "sin texturas duplicadas",
+        "posiciones/UV/colores finitos",
+        "normales unitarias y orientación exterior",
+        "triángulos no degenerados e índices válidos",
+        "transformaciones fijadas",
+        "base Y=0 y centro XZ=0",
+        "presupuesto <=1500 triángulos"
+      ],
+      "fuente": "fuentes/recto.kiln.js",
+      "fuenteSha256": "60af3be6516f5843123933775a8bcc32acdf2f0a8739017ce692566947d28aab",
+      "kilnWarnings": []
+    },
+    {
+      "id": "esquina",
+      "nombre": "Esquina en ruinas",
+      "glb": "glb/esquina.glb",
+      "glbSha256": "46ecd43092f88f978c5bb520e75a72fb1519f8851b5aba309532f4a51cf5ca66",
+      "glbBytes": 126932,
+      "triangulos": 1100,
+      "vertices": 2400,
+      "materiales": 1,
+      "dimensiones": [
+        2,
+        0.84,
+        2
+      ],
+      "color": "COLOR_0 conservado del GLB y multiplicado por baseColorFactor",
+      "piezas": [
+        {
+          "nombre": "Piedra_01_esquinero_0",
+          "primerIndice": 0,
+          "cantidadIndices": 132,
+          "primerVertice": 0,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03350186
+        },
+        {
+          "nombre": "Piedra_02_brazo_x_0_1",
+          "primerIndice": 132,
+          "cantidadIndices": 132,
+          "primerVertice": 96,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02859426
+        },
+        {
+          "nombre": "Piedra_03_brazo_x_0_2",
+          "primerIndice": 264,
+          "cantidadIndices": 132,
+          "primerVertice": 192,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03022696
+        },
+        {
+          "nombre": "Piedra_04_brazo_x_0_3",
+          "primerIndice": 396,
+          "cantidadIndices": 132,
+          "primerVertice": 288,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02720553
+        },
+        {
+          "nombre": "Piedra_05_brazo_x_0_4",
+          "primerIndice": 528,
+          "cantidadIndices": 132,
+          "primerVertice": 384,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02901568
+        },
+        {
+          "nombre": "Piedra_06_brazo_z_0_1",
+          "primerIndice": 660,
+          "cantidadIndices": 132,
+          "primerVertice": 480,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03255187
+        },
+        {
+          "nombre": "Piedra_07_brazo_z_0_2",
+          "primerIndice": 792,
+          "cantidadIndices": 132,
+          "primerVertice": 576,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02445091
+        },
+        {
+          "nombre": "Piedra_08_brazo_z_0_3",
+          "primerIndice": 924,
+          "cantidadIndices": 132,
+          "primerVertice": 672,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03087085
+        },
+        {
+          "nombre": "Piedra_09_brazo_z_0_4",
+          "primerIndice": 1056,
+          "cantidadIndices": 132,
+          "primerVertice": 768,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02823789
+        },
+        {
+          "nombre": "Piedra_10_esquinero_1",
+          "primerIndice": 1188,
+          "cantidadIndices": 132,
+          "primerVertice": 864,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03148976
+        },
+        {
+          "nombre": "Piedra_11_brazo_x_1_1",
+          "primerIndice": 1320,
+          "cantidadIndices": 132,
+          "primerVertice": 960,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.04242832
+        },
+        {
+          "nombre": "Piedra_12_brazo_x_1_2",
+          "primerIndice": 1452,
+          "cantidadIndices": 132,
+          "primerVertice": 1056,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03661002
+        },
+        {
+          "nombre": "Piedra_13_brazo_x_1_3",
+          "primerIndice": 1584,
+          "cantidadIndices": 132,
+          "primerVertice": 1152,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.04769856
+        },
+        {
+          "nombre": "Piedra_14_brazo_z_1_1",
+          "primerIndice": 1716,
+          "cantidadIndices": 132,
+          "primerVertice": 1248,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03390476
+        },
+        {
+          "nombre": "Piedra_15_brazo_z_1_2",
+          "primerIndice": 1848,
+          "cantidadIndices": 132,
+          "primerVertice": 1344,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.04290568
+        },
+        {
+          "nombre": "Piedra_16_brazo_z_1_3",
+          "primerIndice": 1980,
+          "cantidadIndices": 132,
+          "primerVertice": 1440,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.04470444
+        },
+        {
+          "nombre": "Piedra_17_esquinero_2",
+          "primerIndice": 2112,
+          "cantidadIndices": 132,
+          "primerVertice": 1536,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.0341041
+        },
+        {
+          "nombre": "Piedra_18_brazo_x_2_1",
+          "primerIndice": 2244,
+          "cantidadIndices": 132,
+          "primerVertice": 1632,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02654115
+        },
+        {
+          "nombre": "Piedra_19_brazo_x_2_2",
+          "primerIndice": 2376,
+          "cantidadIndices": 132,
+          "primerVertice": 1728,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.01867152
+        },
+        {
+          "nombre": "Piedra_20_brazo_z_2_1",
+          "primerIndice": 2508,
+          "cantidadIndices": 132,
+          "primerVertice": 1824,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03129767
+        },
+        {
+          "nombre": "Piedra_21_brazo_z_2_2",
+          "primerIndice": 2640,
+          "cantidadIndices": 132,
+          "primerVertice": 1920,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02301046
+        },
+        {
+          "nombre": "Piedra_22_brazo_z_2_3",
+          "primerIndice": 2772,
+          "cantidadIndices": 132,
+          "primerVertice": 2016,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.0201645
+        },
+        {
+          "nombre": "Piedra_23_remate_esquinero",
+          "primerIndice": 2904,
+          "cantidadIndices": 132,
+          "primerVertice": 2112,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.01355309
+        },
+        {
+          "nombre": "Piedra_24_laja_brazo_x",
+          "primerIndice": 3036,
+          "cantidadIndices": 132,
+          "primerVertice": 2208,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00531044
+        },
+        {
+          "nombre": "Piedra_25_laja_brazo_z",
+          "primerIndice": 3168,
+          "cantidadIndices": 132,
+          "primerVertice": 2304,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00475146
+        }
+      ],
+      "comprobaciones": [
+        "GLB2 y chunks completos",
+        "material único",
+        "sin texturas duplicadas",
+        "posiciones/UV/colores finitos",
+        "normales unitarias y orientación exterior",
+        "triángulos no degenerados e índices válidos",
+        "transformaciones fijadas",
+        "base Y=0 y centro XZ=0",
+        "presupuesto <=1500 triángulos"
+      ],
+      "fuente": "fuentes/esquina.kiln.js",
+      "fuenteSha256": "edf49a27088d1fec8a27cc3a3d7d6e416034964a1da428af9cda4aa26dec5834",
+      "kilnWarnings": []
+    },
+    {
+      "id": "remate",
+      "nombre": "Remate escalonado",
+      "glb": "glb/remate.glb",
+      "glbSha256": "98982bc7a56f3cd22fdb3f2bac88d1f42167cd7638e98cfc194cb4af518cde75",
+      "glbBytes": 81500,
+      "triangulos": 704,
+      "vertices": 1536,
+      "materiales": 1,
+      "dimensiones": [
+        2,
+        0.88,
+        0.42
+      ],
+      "color": "COLOR_0 conservado del GLB y multiplicado por baseColorFactor",
+      "piezas": [
+        {
+          "nombre": "Piedra_01_base_1",
+          "primerIndice": 0,
+          "cantidadIndices": 132,
+          "primerVertice": 0,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03962096
+        },
+        {
+          "nombre": "Piedra_02_base_2",
+          "primerIndice": 132,
+          "cantidadIndices": 132,
+          "primerVertice": 96,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.0297371
+        },
+        {
+          "nombre": "Piedra_03_base_3",
+          "primerIndice": 264,
+          "cantidadIndices": 132,
+          "primerVertice": 192,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03597207
+        },
+        {
+          "nombre": "Piedra_04_base_4",
+          "primerIndice": 396,
+          "cantidadIndices": 132,
+          "primerVertice": 288,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02555171
+        },
+        {
+          "nombre": "Piedra_05_base_5",
+          "primerIndice": 528,
+          "cantidadIndices": 132,
+          "primerVertice": 384,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.0318375
+        },
+        {
+          "nombre": "Piedra_06_segundo_escalon_1",
+          "primerIndice": 660,
+          "cantidadIndices": 132,
+          "primerVertice": 480,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03114207
+        },
+        {
+          "nombre": "Piedra_07_segundo_escalon_2",
+          "primerIndice": 792,
+          "cantidadIndices": 132,
+          "primerVertice": 576,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.04216402
+        },
+        {
+          "nombre": "Piedra_08_segundo_escalon_3",
+          "primerIndice": 924,
+          "cantidadIndices": 132,
+          "primerVertice": 672,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03076984
+        },
+        {
+          "nombre": "Piedra_09_segundo_escalon_4",
+          "primerIndice": 1056,
+          "cantidadIndices": 132,
+          "primerVertice": 768,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02576168
+        },
+        {
+          "nombre": "Piedra_10_tercer_escalon_1",
+          "primerIndice": 1188,
+          "cantidadIndices": 132,
+          "primerVertice": 864,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.03543243
+        },
+        {
+          "nombre": "Piedra_11_tercer_escalon_2",
+          "primerIndice": 1320,
+          "cantidadIndices": 132,
+          "primerVertice": 960,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02667584
+        },
+        {
+          "nombre": "Piedra_12_tercer_escalon_3",
+          "primerIndice": 1452,
+          "cantidadIndices": 132,
+          "primerVertice": 1056,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.01445134
+        },
+        {
+          "nombre": "Piedra_13_remate_superior",
+          "primerIndice": 1584,
+          "cantidadIndices": 132,
+          "primerVertice": 1152,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.02295793
+        },
+        {
+          "nombre": "Piedra_14_laja_segundo",
+          "primerIndice": 1716,
+          "cantidadIndices": 132,
+          "primerVertice": 1248,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00467091
+        },
+        {
+          "nombre": "Piedra_15_laja_ultimo",
+          "primerIndice": 1848,
+          "cantidadIndices": 132,
+          "primerVertice": 1344,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00533293
+        },
+        {
+          "nombre": "Piedra_16_fractura_superior",
+          "primerIndice": 1980,
+          "cantidadIndices": 132,
+          "primerVertice": 1440,
+          "cantidadVertices": 96,
+          "volumenFirmado": 0.00385291
+        }
+      ],
+      "comprobaciones": [
+        "GLB2 y chunks completos",
+        "material único",
+        "sin texturas duplicadas",
+        "posiciones/UV/colores finitos",
+        "normales unitarias y orientación exterior",
+        "triángulos no degenerados e índices válidos",
+        "transformaciones fijadas",
+        "base Y=0 y centro XZ=0",
+        "presupuesto <=1500 triángulos"
+      ],
+      "fuente": "fuentes/remate.kiln.js",
+      "fuenteSha256": "9acbe467e9bc000a1a640d6f9bedae06fe035f464d5218a970e55106b21255d4",
+      "kilnWarnings": []
+    }
+  ]
+}

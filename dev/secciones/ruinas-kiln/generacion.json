@@ -1,0 +1,333 @@
+{
+  "version": 1,
+  "motor": {
+    "nombre": "@instruktlabs/kiln",
+    "version": "1.1.0",
+    "referencia": "@instruktlabs/kiln@1.1.0",
+    "npmIntegrity": "sha512-Ab1FTUzu4PUeth2bqeG8UyZDHDk1MgKmjddVQ0MmoVHTewJZ+AJsRI+MIFHB+sObMZgWPgqbleuPYIiOmMwDtg=="
+  },
+  "node": "v24.14.1",
+  "exportador": "three",
+  "exportadorExperimental": true,
+  "opciones": {
+    "gltfExporter": "three",
+    "geometryPolicy": "strict",
+    "optimize": "off",
+    "instance": "off"
+  },
+  "fuentePlantilla": "fuente.kiln.js",
+  "plantillaSha256": "60af3be6516f5843123933775a8bcc32acdf2f0a8739017ce692566947d28aab",
+  "materiales": 1,
+  "observacion": "Kiln ejecutó y exportó estas fuentes. GPU preview y calidad visual se comprueban en el visor de Caoz; no se certifican por QA geométrica.",
+  "modulos": [
+    {
+      "id": "recto",
+      "fuente": "fuentes/recto.kiln.js",
+      "fuenteSha256": "60af3be6516f5843123933775a8bcc32acdf2f0a8739017ce692566947d28aab",
+      "glb": "glb/recto.glb",
+      "glbSha256": "80e3a8ec8941d05c74043a46e4d5f4b892c750b52dc78fbdb101db34e23d7f1c",
+      "glbBytes": 81456,
+      "triangulos": 704,
+      "warnings": [],
+      "validacionFuente": {
+        "valid": true,
+        "errors": [],
+        "issues": [],
+        "warnings": [],
+        "estimatedTris": 0
+      },
+      "requisitos": {
+        "kind": "kiln.requirements-context.v1",
+        "requirements": {
+          "kind": "kiln.asset-requirements",
+          "schemaVersion": 1,
+          "labels": [],
+          "frame": {
+            "units": "m",
+            "forward": "+X",
+            "up": "+Y",
+            "right": "+Z",
+            "groundY": 0
+          },
+          "requirements": {}
+        },
+        "policyHash": "sha256:9efcec929bf8a510c7dd0e18b687381e3824ff3d26cc20307f601d17535e5f34",
+        "adviceHash": "sha256:ca1f59b45e82e712e06149909000e2bc37b8cf159af70e32847088cecf153268"
+      },
+      "integracion": {
+        "schemaVersion": "kiln.integration-manifest.v1",
+        "analyzerVersion": 1,
+        "artifactSha256": "80e3a8ec8941d05c74043a46e4d5f4b892c750b52dc78fbdb101db34e23d7f1c",
+        "units": "m",
+        "axes": {
+          "forward": "+X",
+          "up": "+Y",
+          "right": "+Z"
+        },
+        "bounds": {
+          "min": [
+            -0.9999999999999998,
+            0,
+            -0.21000000000000002
+          ],
+          "max": [
+            0.9999999999999999,
+            0.86,
+            0.21
+          ],
+          "size": [
+            1.9999999999999996,
+            0.86,
+            0.42000000000000004
+          ],
+          "center": [
+            5.551115123125783e-17,
+            0.43,
+            -1.3877787807814457e-17
+          ]
+        },
+        "pivot": {
+          "convention": "author-origin",
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "ground": {
+          "groundY": 0,
+          "contactTolerance": 0.02,
+          "minY": 0,
+          "offsetToGround": 0,
+          "grounded": true
+        },
+        "defaultScene": {
+          "index": 0,
+          "name": "Caoz · ruina recto"
+        },
+        "renderMetrics": {
+          "triangles": 704,
+          "drawCalls": 16,
+          "uniqueGeometries": 16,
+          "uniqueMaterials": 1,
+          "textureCount": 0,
+          "transparentMaterials": 0,
+          "skinned": false
+        },
+        "structuralQa": {
+          "hasDefaultScene": true,
+          "finiteBounds": true,
+          "validatorErrors": 0,
+          "validatorWarnings": 0
+        },
+        "visualQa": "not_assessed"
+      }
+    },
+    {
+      "id": "esquina",
+      "fuente": "fuentes/esquina.kiln.js",
+      "fuenteSha256": "edf49a27088d1fec8a27cc3a3d7d6e416034964a1da428af9cda4aa26dec5834",
+      "glb": "glb/esquina.glb",
+      "glbSha256": "46ecd43092f88f978c5bb520e75a72fb1519f8851b5aba309532f4a51cf5ca66",
+      "glbBytes": 126932,
+      "triangulos": 1100,
+      "warnings": [],
+      "validacionFuente": {
+        "valid": true,
+        "errors": [],
+        "issues": [],
+        "warnings": [],
+        "estimatedTris": 0
+      },
+      "requisitos": {
+        "kind": "kiln.requirements-context.v1",
+        "requirements": {
+          "kind": "kiln.asset-requirements",
+          "schemaVersion": 1,
+          "labels": [],
+          "frame": {
+            "units": "m",
+            "forward": "+X",
+            "up": "+Y",
+            "right": "+Z",
+            "groundY": 0
+          },
+          "requirements": {}
+        },
+        "policyHash": "sha256:9efcec929bf8a510c7dd0e18b687381e3824ff3d26cc20307f601d17535e5f34",
+        "adviceHash": "sha256:ca1f59b45e82e712e06149909000e2bc37b8cf159af70e32847088cecf153268"
+      },
+      "integracion": {
+        "schemaVersion": "kiln.integration-manifest.v1",
+        "analyzerVersion": 1,
+        "artifactSha256": "46ecd43092f88f978c5bb520e75a72fb1519f8851b5aba309532f4a51cf5ca66",
+        "units": "m",
+        "axes": {
+          "forward": "+X",
+          "up": "+Y",
+          "right": "+Z"
+        },
+        "bounds": {
+          "min": [
+            -1.0000000000000002,
+            0,
+            -1
+          ],
+          "max": [
+            1,
+            0.8399999999999999,
+            0.9999999999999998
+          ],
+          "size": [
+            2,
+            0.8399999999999999,
+            1.9999999999999998
+          ],
+          "center": [
+            -1.1102230246251565e-16,
+            0.41999999999999993,
+            -1.1102230246251565e-16
+          ]
+        },
+        "pivot": {
+          "convention": "author-origin",
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "ground": {
+          "groundY": 0,
+          "contactTolerance": 0.02,
+          "minY": 0,
+          "offsetToGround": 0,
+          "grounded": true
+        },
+        "defaultScene": {
+          "index": 0,
+          "name": "Caoz · ruina esquina"
+        },
+        "renderMetrics": {
+          "triangles": 1100,
+          "drawCalls": 25,
+          "uniqueGeometries": 25,
+          "uniqueMaterials": 1,
+          "textureCount": 0,
+          "transparentMaterials": 0,
+          "skinned": false
+        },
+        "structuralQa": {
+          "hasDefaultScene": true,
+          "finiteBounds": true,
+          "validatorErrors": 0,
+          "validatorWarnings": 0
+        },
+        "visualQa": "not_assessed"
+      }
+    },
+    {
+      "id": "remate",
+      "fuente": "fuentes/remate.kiln.js",
+      "fuenteSha256": "9acbe467e9bc000a1a640d6f9bedae06fe035f464d5218a970e55106b21255d4",
+      "glb": "glb/remate.glb",
+      "glbSha256": "98982bc7a56f3cd22fdb3f2bac88d1f42167cd7638e98cfc194cb4af518cde75",
+      "glbBytes": 81500,
+      "triangulos": 704,
+      "warnings": [],
+      "validacionFuente": {
+        "valid": true,
+        "errors": [],
+        "issues": [],
+        "warnings": [],
+        "estimatedTris": 0
+      },
+      "requisitos": {
+        "kind": "kiln.requirements-context.v1",
+        "requirements": {
+          "kind": "kiln.asset-requirements",
+          "schemaVersion": 1,
+          "labels": [],
+          "frame": {
+            "units": "m",
+            "forward": "+X",
+            "up": "+Y",
+            "right": "+Z",
+            "groundY": 0
+          },
+          "requirements": {}
+        },
+        "policyHash": "sha256:9efcec929bf8a510c7dd0e18b687381e3824ff3d26cc20307f601d17535e5f34",
+        "adviceHash": "sha256:ca1f59b45e82e712e06149909000e2bc37b8cf159af70e32847088cecf153268"
+      },
+      "integracion": {
+        "schemaVersion": "kiln.integration-manifest.v1",
+        "analyzerVersion": 1,
+        "artifactSha256": "98982bc7a56f3cd22fdb3f2bac88d1f42167cd7638e98cfc194cb4af518cde75",
+        "units": "m",
+        "axes": {
+          "forward": "+X",
+          "up": "+Y",
+          "right": "+Z"
+        },
+        "bounds": {
+          "min": [
+            -1,
+            0,
+            -0.21
+          ],
+          "max": [
+            1.0000000000000002,
+            0.8800000000000001,
+            0.21
+          ],
+          "size": [
+            2,
+            0.8800000000000001,
+            0.42
+          ],
+          "center": [
+            1.1102230246251565e-16,
+            0.44000000000000006,
+            0
+          ]
+        },
+        "pivot": {
+          "convention": "author-origin",
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "ground": {
+          "groundY": 0,
+          "contactTolerance": 0.02,
+          "minY": 0,
+          "offsetToGround": 0,
+          "grounded": true
+        },
+        "defaultScene": {
+          "index": 0,
+          "name": "Caoz · ruina remate"
+        },
+        "renderMetrics": {
+          "triangles": 704,
+          "drawCalls": 16,
+          "uniqueGeometries": 16,
+          "uniqueMaterials": 1,
+          "textureCount": 0,
+          "transparentMaterials": 0,
+          "skinned": false
+        },
+        "structuralQa": {
+          "hasDefaultScene": true,
+          "finiteBounds": true,
+          "validatorErrors": 0,
+          "validatorWarnings": 0
+        },
+        "visualQa": "not_assessed"
+      }
+    }
+  ]
+}

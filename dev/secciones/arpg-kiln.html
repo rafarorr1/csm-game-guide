@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="__CSP__">
+  <title>Ruinas de Kiln · Caoz</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./arpg-kiln.css">
+  <script src="./visor-three-vendor.js"></script>
+  <script src="./ruinas-kiln/datos.js"></script>
+  <script src="./arpg-kiln.js" defer></script>
+</head>
+<body>
+<main class="klShell">
+  <header class="klHeader">
+    <div class="klBrand" aria-hidden="true">C</div>
+    <div class="klHeading">
+      <p class="klEyebrow">CAOZ ARPG · TALLER DE ARTE</p>
+      <h1>Ruinas de Kiln<span>Estudio de módulos</span></h1>
+    </div>
+    <a class="klBack" href="./arpg-three.html">Volver al mundo <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <div class="klStudio">
+    <section class="klStage" id="escenario" aria-label="Visor tridimensional de las ruinas">
+      <canvas id="lienzo" aria-label="Muros de piedra y musgo; arrastra en vista libre para girar"></canvas>
+      <div class="klStageTop">
+        <div><p class="klEyebrow">BIBLIOTECA DE ARQUITECTURA</p><h2 id="tituloVista">El conjunto</h2><p id="descripcionVista">Tres formas de un mismo lugar.</p></div>
+        <span class="klLive" id="carga"><i></i> Preparando</span>
+      </div>
+      <div id="etiquetas" class="klLabels" aria-hidden="true"></div>
+      <div class="klCamera" role="group" aria-label="Tipo de cámara">
+        <button type="button" data-vista="isometrica" aria-pressed="true">Isométrica</button>
+        <button type="button" data-vista="libre" aria-pressed="false">Libre</button>
+        <button type="button" class="klFrame" id="encuadrar" title="Volver a encuadrar la selección" aria-label="Volver a encuadrar">⌗</button>
+      </div>
+      <div class="klStageBottom"><p id="ayudaCamara">Rueda para acercar · Vista libre para girar</p><p id="resumenEscena">Preparando geometría…</p></div>
+      <div class="klError" id="errorVisor" role="alert" hidden></div>
+    </section>
+
+    <aside class="klPanel" aria-label="Controles de las ruinas">
+      <section class="klPanelSection">
+        <div class="klSectionHeading"><h2>Selección</h2><span>01—03</span></div>
+        <div class="klModels" role="group" aria-label="Módulo visible">
+          <button type="button" data-modulo="conjunto" aria-pressed="true"><span class="klModelNumber">✣</span><span><b>El conjunto</b><small>Las tres piezas originales</small></span><span class="klSelected">↗</span></button>
+          <button type="button" data-modulo="recto" aria-pressed="false"><span class="klModelNumber">01</span><span><b>Muro recto</b><small>Sillares y coronación irregular</small></span><span class="klSelected">↗</span></button>
+          <button type="button" data-modulo="esquina" aria-pressed="false"><span class="klModelNumber">02</span><span><b>Esquina en L</b><small>Un encuentro entre dos muros</small></span><span class="klSelected">↗</span></button>
+          <button type="button" data-modulo="remate" aria-pressed="false"><span class="klModelNumber">03</span><span><b>Remate roto</b><small>El borde de la ruina</small></span><span class="klSelected">↗</span></button>
+        </div>
+      </section>
+      <section class="klPanelSection">
+        <div class="klSectionHeading"><h2>Superficie</h2><span>PIEDRA / MUSGO</span></div>
+        <label class="klToggle"><span>Texturas de piedra</span><input id="texturas" type="checkbox" checked><i aria-hidden="true"></i></label>
+        <label class="klToggle"><span>Musgo y pátina</span><input id="musgo" type="checkbox" checked><i aria-hidden="true"></i></label>
+        <label class="klToggle"><span>Malla de alambre</span><input id="wireframe" type="checkbox"><i aria-hidden="true"></i></label>
+        <label class="klToggle"><span>Referencia de 1,8 m</span><input id="escala" type="checkbox"><i aria-hidden="true"></i></label>
+      </section>
+      <section class="klPanelSection klRepeatSection">
+        <div class="klSectionHeading"><h2>Repetición</h2><span>INSTANCIAS</span></div>
+        <div class="klRepeat" role="group" aria-label="Cantidad de repeticiones">
+          <button type="button" data-cantidad="0" aria-pressed="false">0</button>
+          <button type="button" data-cantidad="1" aria-pressed="true">1</button>
+          <button type="button" data-cantidad="30" aria-pressed="false">30</button>
+          <button type="button" data-cantidad="100" aria-pressed="false">100</button>
+        </div>
+        <p id="notaRepeticion">Una repetición del conjunto contiene tres piezas.</p>
+      </section>
+      <div class="klMaterialNote"><span class="klSwatch" aria-hidden="true"></span><p><b>Un material compartido</b><span>Piedra, relieve y color por vértice.</span></p></div>
+    </aside>
+  </div>
+
+  <section class="klMetrics" aria-label="Coste de la escena actual">
+    <div><p>Piezas activas</p><strong id="metPiezas">—</strong><small id="metLotes">— lotes de instancias</small></div>
+    <div><p>Geometría de los muros</p><strong id="metTriangulos">—</strong><small>Triángulos, sin repetir los pases</small></div>
+    <div><p>Envíos de los muros</p><strong id="metMuros">—</strong><small id="metPasesMuros">Vista + sombras</small></div>
+    <div><p>Escena completa</p><strong id="metEscena">—</strong><small id="metPasesEscena">Envíos y triángulos de todos los pases</small></div>
+    <div><p>CPU · envío p95</p><strong id="metCPU">—</strong><small>Tiempo de renderer.render</small></div>
+    <div><p>Fotograma · rAF p95</p><strong id="metRAF">—</strong><small id="metMuestras">Estabilizando la escena</small></div>
+  </section>
+
+  <section class="klDetails">
+    <div class="klSpec">
+      <p class="klEyebrow">GEOMETRÍA ORIGINAL · RUNTIME LOCAL</p>
+      <h2>Del taller al mundo.</h2>
+      <p>Geometría exportada de Kiln, con las roturas y el volumen de la piedra. Cada módulo conserva una sola geometría y comparte el mismo material al repetirse.</p>
+      <div id="fichas" class="klCards" aria-label="Dimensiones de los módulos"></div>
+    </div>
+    <div class="klBenchmark">
+      <div class="klBenchmarkHeading"><div><p class="klEyebrow">PRUEBA DE REPETICIÓN</p><h2>¿Cuánto cuesta la ruina?</h2></div><button type="button" id="comparar" class="klPrimary">Comparar 0 / 1 / 30 / 100 <span aria-hidden="true">→</span></button></div>
+      <p>La prueba mantiene el mismo encuadre, resolución y sombra. El caso 0 mide el suelo y la iluminación, antes de añadir los muros.</p>
+      <div class="klTableWrap"><table><caption class="klSrOnly">Resultados de la comparación de repetición</caption><thead><tr><th>Repetición</th><th>Piezas</th><th>Tri. muros</th><th>Envíos totales</th><th>CPU p95</th><th>rAF p95</th></tr></thead><tbody id="resultados"><tr><td colspan="6" class="klEmpty">La medición aparecerá aquí.</td></tr></tbody></table></div>
+      <p class="klMeasurementNote" id="notaMedicion">90 fotogramas de estabilización + 180 muestras por caso. CPU mide el envío, no el tiempo de la GPU. rAF incluye la espera del navegador.</p>
+    </div>
+  </section>
+  <footer class="klFooter"><p id="estado" role="status" aria-live="polite">Preparando los módulos de Kiln…</p><span>CAOZ · ESTUDIO LOCAL</span></footer>
+</main>
+</body>
+</html>
