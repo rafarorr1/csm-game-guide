@@ -116,13 +116,16 @@
     const material=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},uGlifos:{value:glifos},uResolucion:{value:new THREE.Vector2(2,2)},uCuadricula:{value:new THREE.Vector2(110,50)}},depthTest:false,depthWrite:false,toneMapped:false,
       vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',
       fragmentShader:`uniform sampler2D tDiffuse,uGlifos;uniform vec2 uResolucion,uCuadricula;varying vec2 vUv;
-        void main(){vec2 celda=uResolucion/uCuadricula,indice=floor(gl_FragCoord.xy/celda),centro=(indice+.5)*celda/uResolucion,radio=.22/uCuadricula;
-          vec3 color=(texture2D(tDiffuse,centro+vec2(-radio.x,-radio.y)).rgb+texture2D(tDiffuse,centro+vec2(radio.x,-radio.y)).rgb+texture2D(tDiffuse,centro+vec2(-radio.x,radio.y)).rgb+texture2D(tDiffuse,centro+vec2(radio.x,radio.y)).rgb)*.25;
-          float luz=clamp(dot(color,vec3(.2126,.7152,.0722))*2.,0.,1.),glifo=floor(pow(luz,.68)*9.99),localX=fract(gl_FragCoord.x/celda.x),localY=fract(gl_FragCoord.y/celda.y);
-          float tinta=texture2D(uGlifos,vec2((glifo+localX)/10.,localY)).a*smoothstep(.018,.075,luz);
-          vec3 fondo=vec3(.009,.012,.019);gl_FragColor=vec4(mix(fondo,color*1.55,tinta),1.);}`});
+        float brillo(vec2 p){vec3 c=texture2D(tDiffuse,p).rgb;return dot(pow(max(c,vec3(0.)),vec3(.78)),vec3(.2126,.7152,.0722));}
+        void main(){vec2 celda=uResolucion/uCuadricula,indice=floor(gl_FragCoord.xy/celda),centro=(indice+.5)*celda/uResolucion,paso=celda/uResolucion,radio=.22/uCuadricula;
+          vec3 cruda=(texture2D(tDiffuse,centro+vec2(-radio.x,-radio.y)).rgb+texture2D(tDiffuse,centro+vec2(radio.x,-radio.y)).rgb+texture2D(tDiffuse,centro+vec2(-radio.x,radio.y)).rgb+texture2D(tDiffuse,centro+vec2(radio.x,radio.y)).rgb)*.25;
+          vec3 color=pow(max(cruda,vec3(0.)),vec3(.78)),fondoFuente=texture2D(tDiffuse,vec2(.01,.01)).rgb;float cobertura=smoothstep(.004,.028,length(cruda-fondoFuente));
+          float gx=brillo(centro+vec2(paso.x,0.))-brillo(centro-vec2(paso.x,0.)),gy=brillo(centro+vec2(0.,paso.y))-brillo(centro-vec2(0.,paso.y));
+          float borde=clamp(length(vec2(gx,gy))*3.4,0.,1.),luz=clamp(dot(color,vec3(.2126,.7152,.0722))*1.8,0.,1.),tono=max(luz,borde*.88),glifo=floor(pow(tono,.68)*9.99),localX=fract(gl_FragCoord.x/celda.x),localY=fract(gl_FragCoord.y/celda.y);
+          float tinta=texture2D(uGlifos,vec2((glifo+localX)/10.,localY)).a*cobertura*smoothstep(.025,.17,tono);
+          vec3 fondo=vec3(.009,.012,.019);gl_FragColor=vec4(mix(fondo,color*1.4,tinta),1.);}`});
     const escenaPaso=new THREE.Scene(),camaraPaso=new THREE.OrthographicCamera(-1,1,1,-1,0,1);escenaPaso.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),material));
-    return {enabled:asciiPreview,needsSwap:true,clear:false,renderToScreen:false,uniforms:material.uniforms,setSize(w,h){this.uniforms.uResolucion.value.set(w,h);this.uniforms.uCuadricula.value.set(92,Math.max(1,.82*h*92/w));},
+    return {enabled:asciiPreview,needsSwap:true,clear:false,renderToScreen:false,uniforms:material.uniforms,setSize(w,h){this.uniforms.uResolucion.value.set(w,h);this.uniforms.uCuadricula.value.set(78,Math.max(1,.82*h*78/w));},
       render(r,escribir,leer){this.uniforms.tDiffuse.value=leer.texture;r.setRenderTarget(this.renderToScreen?null:escribir);if(this.clear)r.clear();r.render(escenaPaso,camaraPaso);},dispose(){material.dispose();glifos.dispose();}};
   }
   const pasoASCII=crearPasoASCII();
@@ -339,6 +342,7 @@
   }
   // Luces: luna azul con sombras (sigue a Adreida), cielo tenue y la luz que ella lleva (el radio de luz de Diablo).
   const hemi=new THREE.HemisphereLight(0x829abd,0x29251f,.5);escena.add(hemi);
+  const luzAscii=asciiPreview?new THREE.DirectionalLight(0xffddb5,2.4):null;if(luzAscii){luzAscii.position.set(-4,8,10);luzAscii.target.position.set(0,0,4);escena.add(luzAscii,luzAscii.target);}
   const clima=window.CAOZ_ARPG_CLIMA.fabrica(THREE,escena,{obstaculos,techos:casasFundidas.userData.ocultacion.cajas,abierto:ABIERTO,reducido,perforar:impactoFX.perforar});
   const luna=new THREE.DirectionalLight(0xc1d6ff,2.1);luna.castShadow=true;luna.shadow.mapSize.set(CAPTURA?2048:1024,CAPTURA?2048:1024);luna.shadow.radius=3;luna.shadow.blurSamples=12;luna.shadow.bias=-.0004;luna.shadow.normalBias=.03;
   Object.assign(luna.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:70});escena.add(luna,luna.target);
@@ -1936,7 +1940,7 @@
   function temblar(f){if(!reducido)vista.temblor=Math.max(vista.temblor,f);}
   esc.addEventListener('wheel',e=>{if(EDITOR_CINE)return;e.preventDefault();vista.dist=Math.max(.65,Math.min(1.45,vista.dist*(e.deltaY>0?1.08:.93)));},{passive:false});
   function pasoCamara(dt,dtReal=dt){const retrato=camara.aspect<.9;const vivos=jugadores.filter(h=>h.vivo),centro=new V3();for(const h of vivos)centro.add(h.pos);centro.divideScalar(vivos.length||1);if(asciiPreview&&enemigos[0])centro.copy(heroe.pos).add(enemigos[0].pos).multiplyScalar(.5);const planoEntrada=cinematicaTroll?.encuadre();vista.foco.lerp(planoEntrada?.foco||(vivos.length||asciiPreview?centro:heroe.pos),Math.min(1,dt*6));vista.temblor=Math.max(0,vista.temblor*Math.exp(-dtReal*9));
-    const separacion=vivos.length>1?plano(vivos[0].pos,vivos[1].pos):0,metaD=asciiPreview?5:planoEntrada?planoEntrada.distancia/Math.min(1,camara.aspect):Math.max(21*vista.dist,14+separacion*2.2/Math.min(1,camara.aspect)),D=(vista.distanciaActual+=(metaD-vista.distanciaActual)*(1-Math.exp(-dt*4))),el=.92,tr=vista.temblor,t=(vista.tiempoSacudida+=dtReal);
+    const separacion=vivos.length>1?plano(vivos[0].pos,vivos[1].pos):0,metaD=asciiPreview?7.4:planoEntrada?planoEntrada.distancia/Math.min(1,camara.aspect):Math.max(21*vista.dist,14+separacion*2.2/Math.min(1,camara.aspect)),D=(vista.distanciaActual+=(metaD-vista.distanciaActual)*(1-Math.exp(-dt*4))),el=.92,tr=vista.temblor,t=(vista.tiempoSacudida+=dtReal);
     escena.fog.near=D*.48;escena.fog.far=D*2.5;
     anguloTutorial+=( (entradaTutorial?Math.PI/6*(1-Math.min(1,entradaTutorial.t/3.7)):enTutorial()?Math.PI/6:0)-anguloTutorial)*(1-Math.exp(-dtReal*2));
     camara.position.set(vista.foco.x+Math.sin(anguloTutorial)*Math.cos(el)*D+(Math.sin(t*43)+Math.sin(t*71)*.3)*tr*.48,vista.foco.y+Math.sin(el)*D+(Math.cos(t*49)+Math.cos(t*67)*.25)*tr*.35,vista.foco.z+Math.cos(anguloTutorial)*Math.cos(el)*D);camara.lookAt(vista.foco.x,vista.foco.y+.8,vista.foco.z);camara.rotateZ(Math.sin(t*47)*tr*.008);
@@ -2082,7 +2086,7 @@
     return true;
   }
   // Enlace de revisión: reproduce esta transición sin tener que superar las dos cuadrillas.
-  function prepararVistaEntrada(){if(asciiPreview){ol.i=0;ol.cola=[];ol.auto=false;ol.descanso=null;for(const e of [...enemigos]){cancelarAtaque(e);liberarModeloTroll(e.m);}enemigos.length=0;heroe.pos.set(-1.1,0,4);heroe.alto=0;const goblin=crearEnemigo('goblin',1.1,4,{quieto:true});goblin.sinBotin=true;goblin.dir=rumbo(goblin.pos,heroe.pos);heroe.dir=rumbo(heroe.pos,goblin.pos);const sujetos=new Set([heroe.m.raiz,goblin.m.raiz]);for(const objeto of escena.children)if(!objeto.isLight&&!sujetos.has(objeto))objeto.visible=false;vista.distanciaActual=5;vista.dist=.5;return;}if(!ABIERTO&&q.get('entrada')==='mago'){iniciarFinalMago();const plano=q.get('plano');if(plano&&Object.hasOwn(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES,plano)){const avanzar=()=>{presion.rutas=0;finalMago.paso(1/60);pasoParticulas(1/60);pasoEscombros(1/60);impactoFX.paso(1/60);};for(let i=0;i<2400&&finalMago.estado().fase!==plano;i++)avanzar();const momento=Math.max(0,Math.min(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES[plano]-.05,Number(q.get('momento'))||.6));for(let i=0;i<Math.ceil(momento*60);i++)avanzar();}return;}if(!ABIERTO&&q.get('entrada')==='casa'){ol.i=6;ol.cola=[];ol.auto=true;llaveDelRecaudador=true;heroe.llaves++;heroe.pos.fromArray(casaGoblin.estado().puerta).add(new V3(0,0,1));const jefe=crearEnemigo('troll',0,0,{quieto:true});jefe.sinBotin=true;morir(jefe);return;}if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
+  function prepararVistaEntrada(){if(asciiPreview){ol.i=0;ol.cola=[];ol.auto=false;ol.descanso=null;for(const e of [...enemigos]){cancelarAtaque(e);liberarModeloTroll(e.m);}enemigos.length=0;heroe.pos.set(-1.4,0,4);heroe.alto=0;const goblin=crearEnemigo('goblin',1.4,4,{quieto:true});goblin.sinBotin=true;goblin.dir=rumbo(goblin.pos,heroe.pos);heroe.dir=rumbo(heroe.pos,goblin.pos);const sujetos=new Set([heroe.m.raiz,goblin.m.raiz]);for(const objeto of escena.children)if(!objeto.isLight&&!sujetos.has(objeto))objeto.visible=false;vista.distanciaActual=7.4;vista.dist=.5;return;}if(!ABIERTO&&q.get('entrada')==='mago'){iniciarFinalMago();const plano=q.get('plano');if(plano&&Object.hasOwn(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES,plano)){const avanzar=()=>{presion.rutas=0;finalMago.paso(1/60);pasoParticulas(1/60);pasoEscombros(1/60);impactoFX.paso(1/60);};for(let i=0;i<2400&&finalMago.estado().fase!==plano;i++)avanzar();const momento=Math.max(0,Math.min(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES[plano]-.05,Number(q.get('momento'))||.6));for(let i=0;i<Math.ceil(momento*60);i++)avanzar();}return;}if(!ABIERTO&&q.get('entrada')==='casa'){ol.i=6;ol.cola=[];ol.auto=true;llaveDelRecaudador=true;heroe.llaves++;heroe.pos.fromArray(casaGoblin.estado().puerta).add(new V3(0,0,1));const jefe=crearEnemigo('troll',0,0,{quieto:true});jefe.sinBotin=true;morir(jefe);return;}if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
 
   /* ---- Actualización por cuadro ----------------------------------------------------------- */
   let listo=false,simple=false;const poses={};
@@ -2201,7 +2205,7 @@
     // El presupuesto normal admite 1080p nativos; el inspector puede fijar el búfer aunque su vista sea menor.
     const dpr=fija?1:CAPTURA?Math.min(devicePixelRatio||1,2):Math.min(devicePixelRatio||1,1.25,Math.sqrt(calidad.estado().pixeles/(W*H)))*escalaRender;
     const post=efectos.oclusion||efectos.resplandor||asciiPreview,clave=[W,H,dpr,post,efectos.oclusion,efectos.resplandor,asciiPreview].join('/');if(clave===ultimoTamano)return;ultimoTamano=clave;medidorGPU?.reiniciar();
-    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(post?dpr:1);composer.setSize(post?W:2,post?H:2);camara.aspect=W/H;if(!finalMago?.activa)camara.fov=W/H<.9?44:asciiPreview?40:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;
+    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(post?dpr:1);composer.setSize(post?W:2,post?H:2);camara.aspect=W/H;if(!finalMago?.activa)camara.fov=W/H<.9?44:asciiPreview?44:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;
   }
   function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;luna.castShadow=efectos.sombras;oclusion.enabled=efectos.oclusion;resplandor.enabled=efectos.resplandor;for(const c of document.querySelectorAll('[data-efecto]'))c.checked=!!efectos[c.dataset.efecto];medir();}
   const selectorCalidad=$('calidadGrafica');if(selectorCalidad){selectorCalidad.value=modoCalidad;selectorCalidad.onchange=()=>{modoCalidad=selectorCalidad.value;calidad.elegir(modoCalidad);aplicarCalidad();try{localStorage.setItem('caoz-arpg-calidad',modoCalidad);}catch{}};}
