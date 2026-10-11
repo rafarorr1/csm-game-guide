@@ -20,6 +20,11 @@ body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:12px}
 html[data-captura] body{padding:0}
 html[data-captura] .apShell>*:not(.apEscenario){display:none}
 html[data-captura] .apEscenario{height:100vh;border:0;border-radius:0}
+/* Prueba vertical de ASCII: el encuadre muestra sólo a Adreida y al goblin. */
+html[data-ascii-preview] body{padding:0}
+html[data-ascii-preview] .apShell>*:not(.apEscenario){display:none}
+html[data-ascii-preview] .apEscenario{height:100dvh;min-height:0;border:0;border-radius:0}
+html[data-ascii-preview] #escenario>:not(canvas){display:none!important}
 
 [hidden]{display:none!important}
 .apPruebaPiso{position:static;padding:10px 12px;margin:12px 0;border:1px solid #e7bb5533;border-radius:5px;background:#10191d;color:#eadcbf;font:12px/1.4 system-ui,sans-serif;text-align:left}

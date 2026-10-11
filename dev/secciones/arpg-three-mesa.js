@@ -31,6 +31,8 @@
   const camarasCine=window.CAOZ_ARPG_CINE_CAMARA.crear(window.CAOZ_THREE.THREE);
   if(!EDITOR_CINE&&q.get('toma')==='local'){try{tomaCine=window.CAOZ_ARPG_CINE_CAMARA.validar(JSON.parse(localStorage.getItem(window.CAOZ_ARPG_CINE_CAMARA.CLAVE)));}catch(e){console.warn('No se pudo cargar la toma local:',e.message);}}
   const COOP=q.get('coop')==='1',DOS_MANDOS=q.get('mandos')==='2',ABIERTO=q.get('mundo')==='abierto';
+  const asciiPreview=q.get('ascii')==='1'&&q.get('entrada')==='ascii';
+  if(asciiPreview)document.documentElement.dataset.asciiPreview='';
   const FACTOR_COOP=COOP?2:1;
   const estilo=window.CAOZ_ARPG_ESTILO.crear();
   let finalMago=null,cinematicaTroll=null,llaveEntradaTroll=null,casaGoblin=null,casaVisitable=null,llaveDelRecaudador=false,alphaTerminada=false;
@@ -105,6 +107,25 @@
   // La oclusión sólo oculta puntos y líneas en su pasada de normales; las llamas, haces y marcas (transparentes) tampoco deben hacer sombra de contacto.
   {const ocultar=oclusion._overrideVisibility.bind(oclusion);oclusion._overrideVisibility=function(){ocultar();escena.traverse(n=>{if(n.visible&&(n.material?.transparent||n.material?.userData?.sinOclusion)){n.visible=false;this._visibilityCache.push(n);}});};}
   const resplandor=new UnrealBloomPass(new THREE.Vector2(2,2),.175,.45,1.05),salida=new OutputPass();
+  // La cuadrícula decide la densidad; cada glifo toma el color medio de su celda.
+  function crearPasoASCII(){
+    const caracteres=' .:-=+*#%@',ancho=16,alto=20,atlas=document.createElement('canvas');atlas.width=ancho*caracteres.length;atlas.height=alto;const lapiz=atlas.getContext('2d');
+    lapiz.fillStyle='#fff';lapiz.font='17px monospace';lapiz.textAlign='center';lapiz.textBaseline='middle';
+    for(let i=1;i<caracteres.length;i++)lapiz.fillText(caracteres[i],i*ancho+ancho/2,alto/2+1);
+    const glifos=new THREE.CanvasTexture(atlas);glifos.magFilter=THREE.NearestFilter;glifos.minFilter=THREE.NearestFilter;glifos.generateMipmaps=false;
+    const material=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},uGlifos:{value:glifos},uResolucion:{value:new THREE.Vector2(2,2)},uCuadricula:{value:new THREE.Vector2(110,50)}},depthTest:false,depthWrite:false,toneMapped:false,
+      vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',
+      fragmentShader:`uniform sampler2D tDiffuse,uGlifos;uniform vec2 uResolucion,uCuadricula;varying vec2 vUv;
+        void main(){vec2 celda=uResolucion/uCuadricula,indice=floor(gl_FragCoord.xy/celda),centro=(indice+.5)*celda/uResolucion,radio=.22/uCuadricula;
+          vec3 color=(texture2D(tDiffuse,centro+vec2(-radio.x,-radio.y)).rgb+texture2D(tDiffuse,centro+vec2(radio.x,-radio.y)).rgb+texture2D(tDiffuse,centro+vec2(-radio.x,radio.y)).rgb+texture2D(tDiffuse,centro+vec2(radio.x,radio.y)).rgb)*.25;
+          float luz=clamp(dot(color,vec3(.2126,.7152,.0722))*2.,0.,1.),glifo=floor(pow(luz,.68)*9.99),localX=fract(gl_FragCoord.x/celda.x),localY=fract(gl_FragCoord.y/celda.y);
+          float tinta=texture2D(uGlifos,vec2((glifo+localX)/10.,localY)).a*smoothstep(.018,.075,luz);
+          vec3 fondo=vec3(.009,.012,.019);gl_FragColor=vec4(mix(fondo,color*1.55,tinta),1.);}`});
+    const escenaPaso=new THREE.Scene(),camaraPaso=new THREE.OrthographicCamera(-1,1,1,-1,0,1);escenaPaso.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),material));
+    return {enabled:asciiPreview,needsSwap:true,clear:false,renderToScreen:false,uniforms:material.uniforms,setSize(w,h){this.uniforms.uResolucion.value.set(w,h);this.uniforms.uCuadricula.value.set(92,Math.max(1,.82*h*92/w));},
+      render(r,escribir,leer){this.uniforms.tDiffuse.value=leer.texture;r.setRenderTarget(this.renderToScreen?null:escribir);if(this.clear)r.clear();r.render(escenaPaso,camaraPaso);},dispose(){material.dispose();glifos.dispose();}};
+  }
+  const pasoASCII=crearPasoASCII();
   // Oclusión y halo trabajan a media resolución; la escena y el HUD conservan su detalle.
   // El compositor vuelve a llamar setSize al redimensionar: aplicar la escala en cada pasada.
   for(const pasada of [oclusion,resplandor]){const ajustar=pasada.setSize.bind(pasada);pasada.setSize=(w,h)=>ajustar(pasada.enabled?Math.max(32,Math.round(w*.5)):2,pasada.enabled?Math.max(32,Math.round(h*.5)):2);}
@@ -124,7 +145,7 @@
     const dibujarOclusion=oclusion.render.bind(oclusion);
     oclusion.render=(r,...args)=>{const actualizar=r.shadowMap.autoUpdate;r.shadowMap.autoUpdate=false;try{return dibujarOclusion(r,...args);}finally{r.shadowMap.autoUpdate=actualizar;}};
   }
-  for(const p of [pasoRender,oclusion,saneado,resplandor,salida])composer.addPass(p);
+  for(const p of [pasoRender,oclusion,saneado,resplandor,pasoASCII,salida])composer.addPass(p);
   // Para la revisión: un punto que pinta NaN a propósito (comprueba que el saneado evita los cuadros negros).
   const puntoNaN=new THREE.Mesh(new THREE.PlaneGeometry(.3,.3).rotateX(-Math.PI/2),new THREE.ShaderMaterial({uniforms:{uCero:{value:0}},vertexShader:'void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
     fragmentShader:'uniform float uCero;void main(){float n=uCero/uCero;gl_FragColor=vec4(n,n,n,1.);}'}));puntoNaN.visible=false;escena.add(puntoNaN);
@@ -1914,8 +1935,8 @@
   const vista={dist:1,distanciaActual:21,temblor:0,tiempoSacudida:0,foco:new V3(0,0,4)};
   function temblar(f){if(!reducido)vista.temblor=Math.max(vista.temblor,f);}
   esc.addEventListener('wheel',e=>{if(EDITOR_CINE)return;e.preventDefault();vista.dist=Math.max(.65,Math.min(1.45,vista.dist*(e.deltaY>0?1.08:.93)));},{passive:false});
-  function pasoCamara(dt,dtReal=dt){const retrato=camara.aspect<.9;const vivos=jugadores.filter(h=>h.vivo),centro=new V3();for(const h of vivos)centro.add(h.pos);centro.divideScalar(vivos.length||1);const planoEntrada=cinematicaTroll?.encuadre();vista.foco.lerp(planoEntrada?.foco||(vivos.length?centro:heroe.pos),Math.min(1,dt*6));vista.temblor=Math.max(0,vista.temblor*Math.exp(-dtReal*9));
-    const separacion=vivos.length>1?plano(vivos[0].pos,vivos[1].pos):0,metaD=planoEntrada?planoEntrada.distancia/Math.min(1,camara.aspect):Math.max(21*vista.dist,14+separacion*2.2/Math.min(1,camara.aspect)),D=(vista.distanciaActual+=(metaD-vista.distanciaActual)*(1-Math.exp(-dt*4))),el=.92,tr=vista.temblor,t=(vista.tiempoSacudida+=dtReal);
+  function pasoCamara(dt,dtReal=dt){const retrato=camara.aspect<.9;const vivos=jugadores.filter(h=>h.vivo),centro=new V3();for(const h of vivos)centro.add(h.pos);centro.divideScalar(vivos.length||1);if(asciiPreview&&enemigos[0])centro.copy(heroe.pos).add(enemigos[0].pos).multiplyScalar(.5);const planoEntrada=cinematicaTroll?.encuadre();vista.foco.lerp(planoEntrada?.foco||(vivos.length||asciiPreview?centro:heroe.pos),Math.min(1,dt*6));vista.temblor=Math.max(0,vista.temblor*Math.exp(-dtReal*9));
+    const separacion=vivos.length>1?plano(vivos[0].pos,vivos[1].pos):0,metaD=asciiPreview?5:planoEntrada?planoEntrada.distancia/Math.min(1,camara.aspect):Math.max(21*vista.dist,14+separacion*2.2/Math.min(1,camara.aspect)),D=(vista.distanciaActual+=(metaD-vista.distanciaActual)*(1-Math.exp(-dt*4))),el=.92,tr=vista.temblor,t=(vista.tiempoSacudida+=dtReal);
     escena.fog.near=D*.48;escena.fog.far=D*2.5;
     anguloTutorial+=( (entradaTutorial?Math.PI/6*(1-Math.min(1,entradaTutorial.t/3.7)):enTutorial()?Math.PI/6:0)-anguloTutorial)*(1-Math.exp(-dtReal*2));
     camara.position.set(vista.foco.x+Math.sin(anguloTutorial)*Math.cos(el)*D+(Math.sin(t*43)+Math.sin(t*71)*.3)*tr*.48,vista.foco.y+Math.sin(el)*D+(Math.cos(t*49)+Math.cos(t*67)*.25)*tr*.35,vista.foco.z+Math.cos(anguloTutorial)*Math.cos(el)*D);camara.lookAt(vista.foco.x,vista.foco.y+.8,vista.foco.z);camara.rotateZ(Math.sin(t*47)*tr*.008);
@@ -2061,7 +2082,7 @@
     return true;
   }
   // Enlace de revisión: reproduce esta transición sin tener que superar las dos cuadrillas.
-  function prepararVistaEntrada(){if(!ABIERTO&&q.get('entrada')==='mago'){iniciarFinalMago();const plano=q.get('plano');if(plano&&Object.hasOwn(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES,plano)){const avanzar=()=>{presion.rutas=0;finalMago.paso(1/60);pasoParticulas(1/60);pasoEscombros(1/60);impactoFX.paso(1/60);};for(let i=0;i<2400&&finalMago.estado().fase!==plano;i++)avanzar();const momento=Math.max(0,Math.min(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES[plano]-.05,Number(q.get('momento'))||.6));for(let i=0;i<Math.ceil(momento*60);i++)avanzar();}return;}if(!ABIERTO&&q.get('entrada')==='casa'){ol.i=6;ol.cola=[];ol.auto=true;llaveDelRecaudador=true;heroe.llaves++;heroe.pos.fromArray(casaGoblin.estado().puerta).add(new V3(0,0,1));const jefe=crearEnemigo('troll',0,0,{quieto:true});jefe.sinBotin=true;morir(jefe);return;}if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
+  function prepararVistaEntrada(){if(asciiPreview){ol.i=0;ol.cola=[];ol.auto=false;ol.descanso=null;for(const e of [...enemigos]){cancelarAtaque(e);liberarModeloTroll(e.m);}enemigos.length=0;heroe.pos.set(-1.1,0,4);heroe.alto=0;const goblin=crearEnemigo('goblin',1.1,4,{quieto:true});goblin.sinBotin=true;goblin.dir=rumbo(goblin.pos,heroe.pos);heroe.dir=rumbo(heroe.pos,goblin.pos);const sujetos=new Set([heroe.m.raiz,goblin.m.raiz]);for(const objeto of escena.children)if(!objeto.isLight&&!sujetos.has(objeto))objeto.visible=false;vista.distanciaActual=5;vista.dist=.5;return;}if(!ABIERTO&&q.get('entrada')==='mago'){iniciarFinalMago();const plano=q.get('plano');if(plano&&Object.hasOwn(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES,plano)){const avanzar=()=>{presion.rutas=0;finalMago.paso(1/60);pasoParticulas(1/60);pasoEscombros(1/60);impactoFX.paso(1/60);};for(let i=0;i<2400&&finalMago.estado().fase!==plano;i++)avanzar();const momento=Math.max(0,Math.min(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES[plano]-.05,Number(q.get('momento'))||.6));for(let i=0;i<Math.ceil(momento*60);i++)avanzar();}return;}if(!ABIERTO&&q.get('entrada')==='casa'){ol.i=6;ol.cola=[];ol.auto=true;llaveDelRecaudador=true;heroe.llaves++;heroe.pos.fromArray(casaGoblin.estado().puerta).add(new V3(0,0,1));const jefe=crearEnemigo('troll',0,0,{quieto:true});jefe.sinBotin=true;morir(jefe);return;}if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
 
   /* ---- Actualización por cuadro ----------------------------------------------------------- */
   let listo=false,simple=false;const poses={};
@@ -2179,8 +2200,8 @@
     const W=fija?.ancho||Math.max(1,b.width),H=fija?.alto||Math.max(1,b.height);
     // El presupuesto normal admite 1080p nativos; el inspector puede fijar el búfer aunque su vista sea menor.
     const dpr=fija?1:CAPTURA?Math.min(devicePixelRatio||1,2):Math.min(devicePixelRatio||1,1.25,Math.sqrt(calidad.estado().pixeles/(W*H)))*escalaRender;
-    const post=efectos.oclusion||efectos.resplandor,clave=[W,H,dpr,post,efectos.oclusion,efectos.resplandor].join('/');if(clave===ultimoTamano)return;ultimoTamano=clave;medidorGPU?.reiniciar();
-    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(post?dpr:1);composer.setSize(post?W:2,post?H:2);camara.aspect=W/H;if(!finalMago?.activa)camara.fov=W/H<.9?44:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;
+    const post=efectos.oclusion||efectos.resplandor||asciiPreview,clave=[W,H,dpr,post,efectos.oclusion,efectos.resplandor,asciiPreview].join('/');if(clave===ultimoTamano)return;ultimoTamano=clave;medidorGPU?.reiniciar();
+    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(post?dpr:1);composer.setSize(post?W:2,post?H:2);camara.aspect=W/H;if(!finalMago?.activa)camara.fov=W/H<.9?44:asciiPreview?40:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;
   }
   function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;luna.castShadow=efectos.sombras;oclusion.enabled=efectos.oclusion;resplandor.enabled=efectos.resplandor;for(const c of document.querySelectorAll('[data-efecto]'))c.checked=!!efectos[c.dataset.efecto];medir();}
   const selectorCalidad=$('calidadGrafica');if(selectorCalidad){selectorCalidad.value=modoCalidad;selectorCalidad.onchange=()=>{modoCalidad=selectorCalidad.value;calidad.elegir(modoCalidad);aplicarCalidad();try{localStorage.setItem('caoz-arpg-calidad',modoCalidad);}catch{}};}
@@ -2222,7 +2243,7 @@
   rotulos();
   function negro(){const px=new Uint8Array(4),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;let s=0;for(let k=0;k<9;k++){gl.readPixels(Math.floor(W*(.2+.3*(k%3))),Math.floor(H*(.2+.3*Math.floor(k/3))),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);s+=px[0]+px[1]+px[2];}return s<27;}
   function dibujar(){renderer.info.reset();medidorGPU?.iniciar();
-    try{if(casaGoblin?.interior)renderer.render(casaGoblin.escena,casaGoblin.camara(camara.aspect));else if(simple||!efectos.oclusion&&!efectos.resplandor)renderer.render(escena,camara);else composer.render();}finally{medidorGPU?.terminar();}
+    try{if(casaGoblin?.interior)renderer.render(casaGoblin.escena,casaGoblin.camara(camara.aspect));else if(!asciiPreview&&(simple||!efectos.oclusion&&!efectos.resplandor))renderer.render(escena,camara);else composer.render();}finally{medidorGPU?.terminar();}
   }
   // Algunos navegadores integrados mantienen visibles varias pestañas: sólo la última activada renderiza.
   let partidaActiva=true;
